@@ -36,11 +36,11 @@ In Railway → your service → **Variables**:
 |-----|--------|
 | `FLASK_APP` | `app:create_app` |
 | `FLASK_ENV` | `production` |
-| `DATABASE_URL` | Supabase Transaction pooler URI (port 6543) |
+| `DATABASE_URL` | postgresql://postgres:UcNUN6mSQKVAdVOq@db.ejbrslppplbraljaifaz.supabase.co:5432/postgres |
 | `SECRET_KEY` | random string (`python -c "import secrets; print(secrets.token_urlsafe(32))"`) |
 | `JWT_SECRET_KEY` | random string |
 | `WTF_CSRF_SECRET_KEY` | random string |
-| `CORS_ORIGINS` | `https://YOUR-APP.vercel.app,http://localhost:3000` |
+| `CORS_ORIGINS` | `https://yamada.vercel.app,http://localhost:3000` |
 | `MAIL_BACKEND` | `smtp` |
 | `MAIL_SERVER` | `smtp.gmail.com` |
 | `MAIL_PORT` | `587` |

@@ -22,7 +22,8 @@ def upgrade():
         batch_op.alter_column('request_status',
                existing_type=mysql.VARCHAR(length=255),
                type_=sa.Enum('ACCEPTED', 'REJECTED', 'PENDING', name='storerequeststatus'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='request_status::storerequeststatus')
 
     # ### end Alembic commands ###
 
@@ -33,6 +34,7 @@ def downgrade():
         batch_op.alter_column('request_status',
                existing_type=sa.Enum('ACCEPTED', 'REJECTED', 'PENDING', name='storerequeststatus'),
                type_=mysql.VARCHAR(length=255),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='request_status::text')
 
     # ### end Alembic commands ###
