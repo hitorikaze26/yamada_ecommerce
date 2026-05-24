@@ -5,6 +5,12 @@ Revises: 193d70db8d79
 Create Date: 2025-12-11 21:33:00.000000
 
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from dialect_helpers import bool_false_default
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -26,7 +32,7 @@ def upgrade():
         sa.Column("role", sa.String(length=50), nullable=True),
         sa.Column("page", sa.String(length=100), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("read", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+        sa.Column("read", sa.Boolean(), nullable=False, server_default=bool_false_default()),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],

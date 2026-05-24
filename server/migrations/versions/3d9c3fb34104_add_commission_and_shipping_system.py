@@ -5,6 +5,12 @@ Revises: 34a5b6d32064
 Create Date: 2026-05-06 18:30:02.653043
 
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from dialect_helpers import is_postgresql, is_mysql
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -54,10 +60,16 @@ def upgrade():
     )
     
     # Insert default commission settings
-    op.execute("""
-        INSERT INTO commission_settings (commission_rate, applies_to_product_price_only, is_active, created_at)
-        VALUES (0.10, 1, 1, NOW())
-    """)
+    if is_postgresql():
+        op.execute("""
+            INSERT INTO commission_settings (commission_rate, applies_to_product_price_only, is_active, created_at)
+            VALUES (0.10, true, true, NOW())
+        """)
+    elif is_mysql():
+        op.execute("""
+            INSERT INTO commission_settings (commission_rate, applies_to_product_price_only, is_active, created_at)
+            VALUES (0.10, 1, 1, NOW())
+        """)
 
 
 def downgrade():

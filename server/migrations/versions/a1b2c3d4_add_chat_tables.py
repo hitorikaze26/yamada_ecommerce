@@ -5,6 +5,12 @@ Revises: 52de6d36d6b0
 Create Date: 2026-05-21 10:00:00.000000
 
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from dialect_helpers import bool_false_default
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -53,7 +59,7 @@ def upgrade():
         sa.Column("conversation_id", sa.BIGINT(), nullable=False),
         sa.Column("user_id", sa.BIGINT(), nullable=False),
         sa.Column("participant_role", sa.String(length=32), nullable=False),
-        sa.Column("is_pinned", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+        sa.Column("is_pinned", sa.Boolean(), nullable=False, server_default=bool_false_default()),
         sa.Column("last_read_at", sa.DateTime(), nullable=True),
         sa.Column("unread_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.ForeignKeyConstraint(
@@ -103,7 +109,7 @@ def upgrade():
         "user_presence",
         sa.Column("user_id", sa.BIGINT(), nullable=False),
         sa.Column("last_seen_at", sa.DateTime(), nullable=False),
-        sa.Column("is_online", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+        sa.Column("is_online", sa.Boolean(), nullable=False, server_default=bool_false_default()),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("user_id"),
     )

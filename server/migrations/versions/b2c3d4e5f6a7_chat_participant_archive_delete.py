@@ -5,6 +5,12 @@ Revises: a1b2c3d4e5f6
 Create Date: 2026-05-22 10:00:00.000000
 
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from dialect_helpers import bool_false_default
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -18,7 +24,7 @@ depends_on = None
 def upgrade():
     op.add_column(
         "conversation_participants",
-        sa.Column("is_archived", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+        sa.Column("is_archived", sa.Boolean(), nullable=False, server_default=bool_false_default()),
     )
     op.add_column(
         "conversation_participants",
