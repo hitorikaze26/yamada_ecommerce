@@ -141,19 +141,8 @@ def upgrade():
         for column in ("dti_path", "bir_tin_path", "business_permit_path"):
             _add_string_column("store_registrations", column)
 
-    if table_exists("store_registrations") and is_postgresql():
-        op.execute(
-            """
-            UPDATE store_registrations
-            SET request_status = CASE request_status::text
-                WHEN '1' THEN 'ACCEPTED'
-                WHEN '2' THEN 'REJECTED'
-                WHEN '3' THEN 'PENDING'
-                ELSE request_status::text
-            END
-            WHERE request_status::text IN ('1', '2', '3')
-            """
-        )
+    # request_status on Supabase is already storerequeststatus enum
+    # (ACCEPTED / REJECTED / PENDING). Do not assign plain text here.
 
 
 def downgrade():
