@@ -1,18 +1,25 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const PROTECTED_PREFIXES = ["/admin", "/checkout", "/buyer", "/seller", "/rider"]
+const COOKIE_PROTECTED_PREFIXES = ["/checkout", "/buyer", "/seller", "/rider"]
 
-function requiresAuth(pathname: string): boolean {
-  return PROTECTED_PREFIXES.some(
+function requiresCookieGate(pathname: string): boolean {
+  return COOKIE_PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   )
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (!requiresAuth(pathname)) {
+  // Admin pages are guarded in-app by ProtectedRoute + backend @admin_required().
+  // Do not gate /admin here because API-domain auth cookies are not readable
+  // on the frontend domain when deployed cross-origin (Vercel + Railway).
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    return NextResponse.next()
+  }
+
+  if (!requiresCookieGate(pathname)) {
     return NextResponse.next()
   }
 
@@ -24,9 +31,6 @@ export function middleware(request: NextRequest) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = "/auth/login"
     loginUrl.searchParams.set("redirect", pathname)
-    if (pathname.startsWith("/admin")) {
-      loginUrl.searchParams.set("role", "admin")
-    }
     return NextResponse.redirect(loginUrl)
   }
 
