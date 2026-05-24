@@ -16,6 +16,31 @@ from .extensions import (
 )
 from config import config
 
+# Match production + preview Vercel deployments (credentials require a specific origin).
+_VERCEL_ORIGIN_PATTERN = r"^https://[\w-]+\.vercel\.app$"
+
+
+def _cors_allowed_origins() -> list[str]:
+    """Parse CORS_ORIGINS and add safe production defaults."""
+    raw = os.environ.get(
+        "CORS_ORIGINS",
+        "http://127.0.0.1:3000,http://localhost:3000",
+    )
+    origins: list[str] = []
+    seen: set[str] = set()
+    for part in raw.replace(";", ",").split(","):
+        origin = part.strip().strip('"').strip("'")
+        if origin and origin not in seen:
+            seen.add(origin)
+            origins.append(origin)
+
+    if os.environ.get("FLASK_ENV", "development") == "production":
+        if _VERCEL_ORIGIN_PATTERN not in seen:
+            origins.append(_VERCEL_ORIGIN_PATTERN)
+
+    return origins
+
+
 def create_app(test_config=None):
     load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
     # Explicitly configure static folder so uploaded documents under app/static
@@ -58,16 +83,7 @@ def create_app(test_config=None):
 
     CORS(
         app,
-        resources={r"/api/*": {
-            "origins": [
-                origin.strip()
-                for origin in os.environ.get(
-                    "CORS_ORIGINS",
-                    "http://127.0.0.1:3000,http://localhost:3000",
-                ).split(",")
-                if origin.strip()
-            ],
-        }},
+        resources={r"/api/*": {"origins": _cors_allowed_origins()}},
         supports_credentials=True,
     )
 
