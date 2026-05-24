@@ -137,20 +137,45 @@ def upgrade():
         )
 
     # Change status column from ProblemReportStatus enum to ReportStatus enum
-    # MySQL ENUM change requires column alter
     if 'status' in pr_columns:
-        op.alter_column('problem_reports', 'status',
-                        existing_type=sa.Enum('PENDING', 'REVIEWED', 'RESOLVED',
-                                             name='problemreportstatus'),
-                        type_=sa.Enum('PENDING', 'UNDER_REVIEW', 'INVESTIGATING',
-                                     'RESOLVED', 'DISMISSED', name='reportstatus'),
-                        existing_server_default=sa.text("'pending'"),
-                        server_default=sa.text("'pending'"),
-                        nullable=False)
+        if bind.dialect.name == 'postgresql':
+            reportstatus = sa.Enum(
+                'PENDING', 'UNDER_REVIEW', 'INVESTIGATING',
+                'RESOLVED', 'DISMISSED', name='reportstatus',
+            )
+            reportstatus.create(bind, checkfirst=True)
+            op.execute(
+                "ALTER TABLE problem_reports "
+                "ALTER COLUMN status TYPE reportstatus "
+                "USING (CASE status::text "
+                "WHEN 'pending' THEN 'PENDING'::reportstatus "
+                "WHEN 'reviewed' THEN 'UNDER_REVIEW'::reportstatus "
+                "WHEN 'resolved' THEN 'RESOLVED'::reportstatus "
+                "WHEN 'PENDING' THEN 'PENDING'::reportstatus "
+                "WHEN 'REVIEWED' THEN 'UNDER_REVIEW'::reportstatus "
+                "WHEN 'RESOLVED' THEN 'RESOLVED'::reportstatus "
+                "ELSE 'PENDING'::reportstatus END)"
+            )
+            op.execute(
+                "ALTER TABLE problem_reports "
+                "ALTER COLUMN status SET DEFAULT 'PENDING'::reportstatus"
+            )
+        else:
+            op.alter_column('problem_reports', 'status',
+                            existing_type=sa.Enum('PENDING', 'REVIEWED', 'RESOLVED',
+                                                 name='problemreportstatus'),
+                            type_=sa.Enum('PENDING', 'UNDER_REVIEW', 'INVESTIGATING',
+                                         'RESOLVED', 'DISMISSED', name='reportstatus'),
+                            existing_server_default=sa.text("'pending'"),
+                            server_default=sa.text("'pending'"),
+                            nullable=False)
 
     # Drop old rider_id column (replaced by target_user_id)
     if 'rider_id' in pr_columns:
-        op.drop_constraint('problem_reports_ibfk_4', 'problem_reports', type_='foreignkey')
+        for fk in inspector.get_foreign_keys('problem_reports'):
+            if 'rider_id' in fk.get('constrained_columns', []):
+                op.drop_constraint(fk['name'], 'problem_reports', type_='foreignkey')
+                break
         op.drop_column('problem_reports', 'rider_id')
 
     # Drop old category column (replaced by report_type_id)
@@ -197,14 +222,35 @@ def downgrade():
 
     # Revert status enum
     if 'status' in pr_columns:
-        op.alter_column('problem_reports', 'status',
-                        existing_type=sa.Enum('PENDING', 'UNDER_REVIEW', 'INVESTIGATING',
-                                             'RESOLVED', 'DISMISSED', name='reportstatus'),
-                        type_=sa.Enum('PENDING', 'REVIEWED', 'RESOLVED',
-                                     name='problemreportstatus'),
-                        existing_server_default=sa.text("'pending'"),
-                        server_default=sa.text("'pending'"),
-                        nullable=False)
+        if bind.dialect.name == 'postgresql':
+            problemreportstatus = sa.Enum(
+                'pending', 'reviewed', 'resolved', name='problemreportstatus',
+            )
+            problemreportstatus.create(bind, checkfirst=True)
+            op.execute(
+                "ALTER TABLE problem_reports "
+                "ALTER COLUMN status TYPE problemreportstatus "
+                "USING (CASE status::text "
+                "WHEN 'PENDING' THEN 'pending'::problemreportstatus "
+                "WHEN 'UNDER_REVIEW' THEN 'reviewed'::problemreportstatus "
+                "WHEN 'INVESTIGATING' THEN 'reviewed'::problemreportstatus "
+                "WHEN 'RESOLVED' THEN 'resolved'::problemreportstatus "
+                "WHEN 'DISMISSED' THEN 'resolved'::problemreportstatus "
+                "ELSE 'pending'::problemreportstatus END)"
+            )
+            op.execute(
+                "ALTER TABLE problem_reports "
+                "ALTER COLUMN status SET DEFAULT 'pending'::problemreportstatus"
+            )
+        else:
+            op.alter_column('problem_reports', 'status',
+                            existing_type=sa.Enum('PENDING', 'UNDER_REVIEW', 'INVESTIGATING',
+                                                 'RESOLVED', 'DISMISSED', name='reportstatus'),
+                            type_=sa.Enum('PENDING', 'REVIEWED', 'RESOLVED',
+                                         name='problemreportstatus'),
+                            existing_server_default=sa.text("'pending'"),
+                            server_default=sa.text("'pending'"),
+                            nullable=False)
 
     # Drop new columns (reverse order)
     drop_cols = ['resolved_at', 'updated_at', 'resolved_by', 'admin_notes',
