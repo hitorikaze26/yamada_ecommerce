@@ -71,9 +71,37 @@ from app.notifications.service import (
 from flask_jwt_extended import (
     jwt_required,
 )
-from sqlalchemy import select, func
-from sqlalchemy.orm import noload, selectinload
+from sqlalchemy import inspect as sa_inspect, select, func
+from sqlalchemy.orm import load_only, noload, selectinload
 from datetime import datetime, timedelta
+
+
+def _products_table_columns() -> set[str]:
+    return {c["name"] for c in sa_inspect(db.engine).get_columns("products")}
+
+
+def _admin_product_list_options(existing: set[str]):
+    """Load only columns present in DB so admin list works before migrations catch up."""
+    field_names = (
+        "id",
+        "name",
+        "price",
+        "store_id",
+        "is_live",
+        "moderation_status",
+        "moderation_reason",
+        "edit_requested_at",
+        "edit_request_note",
+    )
+    attrs = [getattr(Product, name) for name in field_names if name in existing]
+    opts = []
+    if attrs:
+        opts.append(load_only(*attrs))
+    if "store_id" in existing:
+        opts.append(
+            selectinload(Product.store).load_only(Store.id, Store.store_name)
+        )
+    return opts
 
 
 def _compute_order_financials_for_refund(order: Order) -> dict:
@@ -276,33 +304,36 @@ def get_user_seller_products(user_id: int):
         if store is None:
             return jsonify(products=[]), 200
 
+        existing = _products_table_columns()
         products = db.session.execute(
             select(Product)
             .where(Product.store_id == store.id)
+            .options(*_admin_product_list_options(existing))
             .order_by(Product.id.desc())
         ).scalars().all()
 
-        result = [
-            {
-                'id': p.id,
-                'name': getattr(p, 'name', None),
-                'price': float(getattr(p, 'price', 0) or 0),
-                'isLive': getattr(p, 'is_live', False),
-                'moderationStatus': (
+        result = []
+        for p in products:
+            if "moderation_status" in existing:
+                mod_status = (
                     p.moderation_status.value
                     if hasattr(p.moderation_status, 'value')
                     else str(p.moderation_status or 'active')
-                ),
-                'status': (
-                    p.moderation_status.value.replace('_', ' ').title()
-                    if hasattr(p.moderation_status, 'value')
-                    else 'Active'
-                ),
-                'storeId': store.id,
-                'storeName': store.store_name,
-            }
-            for p in products
-        ]
+                )
+            else:
+                mod_status = 'active'
+            result.append(
+                {
+                    'id': p.id,
+                    'name': getattr(p, 'name', None),
+                    'price': float(getattr(p, 'price', 0) or 0),
+                    'isLive': bool(p.is_live) if "is_live" in existing else True,
+                    'moderationStatus': mod_status,
+                    'status': mod_status.replace('_', ' ').title(),
+                    'storeId': store.id,
+                    'storeName': store.store_name,
+                }
+            )
 
         return jsonify(products=result), 200
     except Exception:
@@ -1080,7 +1111,8 @@ def list_products():
     category_id = request.args.get('categoryId', type=int)
 
     try:
-        query = select(Product).options(selectinload(Product.store))
+        existing = _products_table_columns()
+        query = select(Product).options(*_admin_product_list_options(existing))
 
         if search:
             query = query.where(Product.name.ilike(f"%{search}%"))
@@ -1092,12 +1124,12 @@ def list_products():
             'removed': ProductModerationStatus.REMOVED,
             'restricted': ProductModerationStatus.RESTRICTED,
         }
-        if status in status_map:
+        if status in status_map and "moderation_status" in existing:
             query = query.where(Product.moderation_status == status_map[status])
-        elif status == 'hidden_legacy':
+        elif status == 'hidden_legacy' and "is_live" in existing:
             query = query.where(Product.is_live.is_(False))
 
-        if store_id is not None:
+        if store_id is not None and "store_id" in existing:
             query = query.where(Product.store_id == store_id)
 
         if category_id is not None:
@@ -1110,24 +1142,30 @@ def list_products():
 
         result = []
         for p in products:
-            mod_status = (
-                p.moderation_status.value
-                if hasattr(p.moderation_status, 'value')
-                else str(p.moderation_status or 'active')
-            )
+            if "moderation_status" in existing:
+                mod_status = (
+                    p.moderation_status.value
+                    if hasattr(p.moderation_status, 'value')
+                    else str(p.moderation_status or 'active')
+                )
+            else:
+                mod_status = 'active'
+            edit_at = None
+            if "edit_requested_at" in existing and p.edit_requested_at:
+                edit_at = p.edit_requested_at.isoformat()
             result.append(
                 {
                     "id": p.id,
                     "name": getattr(p, 'name', None),
                     "price": float(getattr(p, 'price', 0) or 0),
-                    "isLive": getattr(p, 'is_live', False),
+                    "isLive": bool(p.is_live) if "is_live" in existing else True,
                     "moderationStatus": mod_status,
-                    "moderationReason": p.moderation_reason,
+                    "moderationReason": p.moderation_reason if "moderation_reason" in existing else None,
                     "status": mod_status.replace('_', ' ').title(),
                     "storeId": getattr(p, 'store_id', None),
-                    "storeName": p.store.store_name if p.store else None,
-                    "editRequestedAt": p.edit_requested_at.isoformat() if p.edit_requested_at else None,
-                    "editRequestNote": p.edit_request_note,
+                    "storeName": p.store.store_name if getattr(p, 'store', None) else None,
+                    "editRequestedAt": edit_at,
+                    "editRequestNote": p.edit_request_note if "edit_request_note" in existing else None,
                 }
             )
 
