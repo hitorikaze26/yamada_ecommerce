@@ -39,6 +39,7 @@ interface AdminOrderDetailDto {
   id: number
   status: string
   total: number
+  grandTotal?: number
   paymentMethod?: string | null
   shippingAddress?: string | null
   shippingAddressParts?: {

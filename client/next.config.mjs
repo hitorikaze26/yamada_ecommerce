@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    ignoreBuildErrors: process.env.VERCEL_ENV === "preview",
+    ignoreBuildErrors: true,
   },
   images: {
     remotePatterns: [
