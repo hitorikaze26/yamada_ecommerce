@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Icon } from "@/components/ui/icon"
 import { adminApi } from "@/lib/api"
+import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 import { CATEGORIES, type CategoryId } from "@/lib/types"
 
 interface AdminCategoryRow {
@@ -23,11 +24,10 @@ export default function AdminCategoriesPage() {
       setError(null)
       try {
         const res = await adminApi.getCategories()
-        const apiCategories: AdminCategoryRow[] = res.data.categories || []
-        setCategories(apiCategories)
+        setCategories(unwrapAdminList<AdminCategoryRow>(res.data, ["categories"]))
       } catch (err) {
         console.error("Failed to load categories", err)
-        setError("Failed to load categories. Please try again.")
+        setError(getAdminFetchError(err, "Failed to load categories. Please try again."))
       } finally {
         setIsLoading(false)
       }

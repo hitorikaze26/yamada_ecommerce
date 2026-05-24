@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { adminApi } from "@/lib/api"
+import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 import { toast } from "sonner"
 
 interface CouponDto {
@@ -51,10 +52,10 @@ export default function AdminCouponsPage() {
     setError(null)
     try {
       const res = await adminApi.getCoupons()
-      setCoupons((res.data.coupons as CouponDto[]) ?? [])
+      setCoupons(unwrapAdminList<CouponDto>(res.data, ["coupons"]))
     } catch (err) {
       console.error("Failed to load coupons", err)
-      setError("Failed to load coupons.")
+      setError(getAdminFetchError(err, "Failed to load coupons."))
     } finally {
       setIsLoading(false)
     }

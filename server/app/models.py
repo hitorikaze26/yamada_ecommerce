@@ -153,6 +153,21 @@ class Base(DeclarativeBase):
 db=SQLAlchemy(model_class=Base)
 
 
+def _user_avatar_path(user: "User") -> str | None:
+    """Best-effort avatar path from rider, buyer, or seller profile."""
+    for attr in ("rider_profile", "buyer_profile", "seller"):
+        try:
+            profile = getattr(user, attr, None)
+            if profile is None:
+                continue
+            path = getattr(profile, "avatar_path", None)
+            if path:
+                return path
+        except Exception:
+            continue
+    return None
+
+
 @dataclass
 class User(Base):
     __tablename__='user'
@@ -258,7 +273,7 @@ class User(Base):
             "archivedAt": self.archived_at.isoformat() if self.archived_at else None,
             "role": primary_role,
             "user_role": user_roles,
-            "avatar": self.rider_profile.avatar_path if hasattr(self, 'rider_profile') and self.rider_profile else None,
+            "avatar": _user_avatar_path(self),
             "buyerProfile": buyer_profile_data,
             "buyer_profile": buyer_profile_data,
             "createdAt": self.created_at.isoformat() if self.created_at else None,

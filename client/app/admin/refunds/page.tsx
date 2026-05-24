@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { adminApi } from "@/lib/api"
+import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 import { toast } from "sonner"
 
 interface AdminRefundDto {
@@ -52,9 +53,9 @@ export default function AdminRefundsPage() {
     setError(null)
     try {
       const res = await adminApi.getRefundRequests(showAll ? { all: true } : { queue: "disputes" })
-      setRefunds((res.data.refunds as AdminRefundDto[]) ?? [])
-    } catch {
-      setError("Failed to load refund disputes.")
+      setRefunds(unwrapAdminList<AdminRefundDto>(res.data, ["refunds"]))
+    } catch (err) {
+      setError(getAdminFetchError(err, "Failed to load refund disputes."))
       setRefunds([])
     } finally {
       setIsLoading(false)

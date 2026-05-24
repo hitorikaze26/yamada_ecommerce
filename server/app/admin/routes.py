@@ -50,6 +50,7 @@ from app.utils.static_urls import public_static_url
 from app.order.routes import _serialize_order, ADMIN_COMMISSION_RATE, RIDER_FIXED_EARNING, RIDER_FEE_ADMIN_SHARE_PERCENT, RIDER_FEE_SELLER_SHARE_PERCENT
 from app.admin.privacy import (
     serialize_user_for_admin,
+    serialize_users_for_admin,
     serialize_order_for_admin,
     serialize_refund_for_admin,
 )
@@ -132,31 +133,34 @@ def _serialize_admin_refund(r: RefundRequest) -> dict:
 
 
 @admin_bp.get('/get-users')
+@admin_bp.get('/users')
 @jwt_required()
 @admin_required()
 def getUsers():
-    role_filter = (request.args.get('role') or '').strip().lower()
-    stmt = select(User).options(
-        selectinload(User.roles).selectinload(UserRole.role),
-        selectinload(User.buyer_profile),
-        selectinload(User.seller),
-        selectinload(User.rider_profile),
-    ).order_by(User.id.desc())
-    if role_filter:
-        stmt = (
-            stmt.join(User.roles)
-            .join(UserRole.role)
-            .where(func.lower(Role.name) == role_filter)
-            .distinct()
-        )
-    users = db.session.execute(stmt).scalars().all()
-    usersJSON = [serialize_user_for_admin(user) for user in users]
+    from flask import current_app
 
+    role_filter = (request.args.get('role') or '').strip().lower()
     try:
+        stmt = select(User).options(
+            selectinload(User.roles).selectinload(UserRole.role),
+            selectinload(User.buyer_profile),
+            selectinload(User.seller),
+            selectinload(User.rider_profile),
+        ).order_by(User.id.desc())
+        if role_filter:
+            stmt = (
+                stmt.join(User.roles)
+                .join(UserRole.role)
+                .where(func.lower(Role.name) == role_filter)
+                .distinct()
+            )
+        users = db.session.execute(stmt).scalars().all()
+        usersJSON = serialize_users_for_admin(users)
         return jsonify(users=usersJSON), 200
-    except Exception:
+    except Exception as exc:
+        current_app.logger.exception("[admin/get-users] failed: %s", exc)
         db.session.rollback()
-        return jsonify(msg='Error occurred!'), 500
+        return jsonify(msg='Error loading users. Check server logs and database migrations.'), 500
 
 
 @admin_bp.get('/users/<int:user_id>/orders')
@@ -843,22 +847,29 @@ def get_rider_detail(user_id):
 @jwt_required()
 @admin_required()
 def getStoreRegistrations():
-    storeRegistrations = db.session.execute(
-        select(StoreRegistration)
-        .where(StoreRegistration.request_status == StoreRequestStatus.PENDING)
-        .options(
-            selectinload(StoreRegistration.user),
-            selectinload(StoreRegistration.seller),
-        )
-        .order_by(StoreRegistration.created_at.desc())
-    ).scalars().all()
-    storeRegistrationsJSON = [registration.to_json() for registration in storeRegistrations]
+    from flask import current_app
 
     try:
+        storeRegistrations = db.session.execute(
+            select(StoreRegistration)
+            .where(StoreRegistration.request_status == StoreRequestStatus.PENDING)
+            .options(
+                selectinload(StoreRegistration.user),
+                selectinload(StoreRegistration.seller),
+            )
+            .order_by(StoreRegistration.created_at.desc())
+        ).scalars().all()
+        storeRegistrationsJSON = []
+        for registration in storeRegistrations:
+            try:
+                storeRegistrationsJSON.append(registration.to_json())
+            except Exception:
+                continue
         return jsonify(StoreRegistrations=storeRegistrationsJSON), 200
-    except:
+    except Exception as exc:
+        current_app.logger.exception("[admin/get-store-registrations] failed: %s", exc)
         db.session.rollback()
-        return jsonify(msg='Error occurred!'), 500
+        return jsonify(msg='Error loading store registrations.'), 500
     
 @admin_bp.post('/accept-store-registration/<int:registration_id>')
 @jwt_required()

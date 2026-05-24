@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { adminApi, resolveImageUrl } from "@/lib/api"
 import { adminUserDisplayName, normalizeAdminUser } from "@/lib/admin-user"
+import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 import { Icon } from "@/components/ui/icon"
 import { GlassAlert } from "@/components/ui/glass-alert"
 
@@ -43,11 +44,11 @@ function AdminRidersContent() {
       setError(null)
       try {
         const res = await adminApi.getUsers({ role: "rider" })
-        const users = (res.data as { users?: Record<string, unknown>[] })?.users || []
+        const users = unwrapAdminList<Record<string, unknown>>(res.data, ["users"])
         setRiders(users.map((u) => normalizeAdminUser(u) as AdminUser))
       } catch (e) {
         console.error("Failed to load riders", e)
-        setError("Failed to load rider list. Please try again.")
+        setError(getAdminFetchError(e, "Failed to load rider list. Please try again."))
       } finally {
         setIsLoading(false)
       }
@@ -150,7 +151,7 @@ function AdminRidersContent() {
       setDetail((res.data as any)?.rider ?? null)
     } catch (e) {
       console.error("Failed to load rider detail", e)
-      setDetailError("Failed to load rider details. The backend endpoint may not be available.")
+      setDetailError(getAdminFetchError(e, "Failed to load rider details. Please try again."))
     } finally {
       setDetailLoading(false)
     }

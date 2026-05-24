@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { Icon } from "@/components/ui/icon"
 import { adminReportsApi } from "@/lib/api"
+import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 import { toast } from "sonner"
 
 interface ProblemReportListDto {
@@ -38,10 +39,10 @@ export default function AdminReportsPage() {
         status: statusFilter || undefined,
         reporterRole: roleFilter || undefined,
       })
-      setReports((res.data.reports as ProblemReportListDto[]) ?? [])
+      setReports(unwrapAdminList<ProblemReportListDto>(res.data, ["reports"]))
     } catch (err) {
       console.error("Failed to load problem reports", err)
-      setError("Failed to load problem reports. Please try again.")
+      setError(getAdminFetchError(err, "Failed to load problem reports. Please try again."))
     } finally {
       setIsLoading(false)
     }

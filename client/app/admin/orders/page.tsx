@@ -5,6 +5,7 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { adminApi } from "@/lib/api"
+import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 
 const tabs = ["all", "pending", "processing", "shipped", "delivered", "cancelled"]
 
@@ -116,7 +117,7 @@ export default function AdminOrdersPage() {
       if (status === 404) {
         setDetailError("Order not found.")
       } else {
-        setDetailError("Failed to load order details. Please try again.")
+        setDetailError(getAdminFetchError(err, "Failed to load order details. Please try again."))
       }
     } finally {
       setDetailLoading(false)
@@ -135,7 +136,7 @@ export default function AdminOrdersPage() {
       setError(null)
       try {
         const res = await adminApi.getOrders()
-        setOrders((res.data.orders as AdminOrderDto[]) ?? [])
+        setOrders(unwrapAdminList<AdminOrderDto>(res.data, ["orders"]))
       } catch (err: unknown) {
         const status = (err as { response?: { status?: number } })?.response?.status
         if (status === 404) {
@@ -143,10 +144,7 @@ export default function AdminOrdersPage() {
           setError(null)
         } else {
           console.error("Failed to load orders", err)
-          const msg =
-            (err as { response?: { data?: { msg?: string } } })?.response?.data?.msg ||
-            "Failed to load orders. Please try again."
-          setError(msg)
+          setError(getAdminFetchError(err, "Failed to load orders. Please try again."))
         }
       } finally {
         setIsLoading(false)

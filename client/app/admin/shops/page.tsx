@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/icon"
 import { GlassAlert } from "@/components/ui/glass-alert"
 import { adminApi, resolveImageUrl } from "@/lib/api"
 import { CATEGORIES } from "@/lib/types"
+import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 
 interface StoreRegistrationDto {
   [key: string]: unknown
@@ -46,7 +47,7 @@ function AdminShopsContent() {
       setError(null)
       try {
         const res = await adminApi.getApprovals()
-        setRegistrations(res.data.StoreRegistrations ?? [])
+        setRegistrations(unwrapAdminList(res.data, ["StoreRegistrations"]))
       } catch (err: any) {
         console.error("Failed to load store registrations", err)
         const status = err?.response?.status
@@ -54,8 +55,9 @@ function AdminShopsContent() {
           showAlert("Admin session expired. Please log in again.", "error")
           router.push("/auth/admin")
         } else {
-          setError("Failed to load store registrations. Please try again.")
-          showAlert("Failed to load store registrations. Please try again.", "error")
+          const message = getAdminFetchError(err, "Failed to load store registrations. Please try again.")
+          setError(message)
+          showAlert(message, "error")
         }
       } finally {
         setIsLoading(false)
@@ -72,7 +74,7 @@ function AdminShopsContent() {
         setIsLoading(true)
         setError(null)
         const res = await adminApi.getStores()
-        setAcceptedStores(res.data.stores ?? [])
+        setAcceptedStores(unwrapAdminList(res.data, ["stores"]))
       } catch (err: any) {
         console.error("Failed to load stores", err)
         const status = err?.response?.status
@@ -80,8 +82,9 @@ function AdminShopsContent() {
           showAlert("Admin session expired. Please log in again.", "error")
           router.push("/auth/admin")
         } else {
-          setError("Failed to load stores. Please try again.")
-          showAlert("Failed to load stores. Please try again.", "error")
+          const message = getAdminFetchError(err, "Failed to load stores. Please try again.")
+          setError(message)
+          showAlert(message, "error")
         }
       } finally {
         setIsLoading(false)

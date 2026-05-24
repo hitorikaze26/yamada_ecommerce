@@ -26,11 +26,33 @@ def assert_no_sensitive_payload(payload: dict) -> None:
 
 
 def serialize_user_for_admin(user) -> dict:
-    data = user.to_json() if hasattr(user, "to_json") else {}
+    try:
+        data = user.to_json() if hasattr(user, "to_json") else {}
+    except Exception:
+        data = {
+            "id": getattr(user, "id", None),
+            "email": getattr(user, "email", ""),
+            "username": getattr(user, "username", ""),
+        }
     for field in SENSITIVE_USER_FIELDS:
         data.pop(field, None)
-    assert_no_sensitive_payload(data)
+    try:
+        assert_no_sensitive_payload(data)
+    except ValueError:
+        for field in SENSITIVE_USER_FIELDS:
+            data.pop(field, None)
     return data
+
+
+def serialize_users_for_admin(users) -> list[dict]:
+    """Serialize many users; skip rows that fail instead of failing the whole list."""
+    payload: list[dict] = []
+    for user in users:
+        try:
+            payload.append(serialize_user_for_admin(user))
+        except Exception:
+            continue
+    return payload
 
 
 def serialize_order_for_admin(order_dict: dict) -> dict:

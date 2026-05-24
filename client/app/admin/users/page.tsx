@@ -13,6 +13,7 @@ import {
   userNeedsApproval,
   type NormalizedAdminUser,
 } from "@/lib/admin-user"
+import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 
 const tabs = ["all", "active", "inactive"]
 
@@ -80,11 +81,16 @@ function AdminUsersContent() {
     setError(null)
     try {
       const res = await adminApi.getUsers()
-      setUsers((res.data.users ?? []).map((u) => normalizeAdminUser(u as Record<string, unknown>)))
+      setUsers(
+        unwrapAdminList<Record<string, unknown>>(res.data, ["users"]).map((u) =>
+          normalizeAdminUser(u),
+        ),
+      )
     } catch (err) {
       console.error("Failed to load users", err)
-      setError("Failed to load users. Please try again.")
-      showAlert("Failed to load users. Please try again.", "error")
+      const message = getAdminFetchError(err, "Failed to load users. Please try again.")
+      setError(message)
+      showAlert(message, "error")
     } finally {
       setIsLoading(false)
     }
@@ -275,7 +281,7 @@ function AdminUsersContent() {
         setDetailData([])
         setDetailError(null)
       } else {
-        setDetailError("Failed to load details. Please try again.")
+        setDetailError(getAdminFetchError(err, "Failed to load details. Please try again."))
       }
     } finally {
       setDetailLoading(false)
