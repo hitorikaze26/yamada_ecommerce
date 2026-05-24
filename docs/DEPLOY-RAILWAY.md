@@ -64,18 +64,29 @@ Optional: `OPENROUTESERVICE_API_KEY`, `TWILIO_*`
 
 ## 6. Seed admin (one time)
 
-Railway → service → **Shell** (or CLI):
+Run these **on Railway’s network**, not from a home PC that cannot reach Supabase (Globe / many ISPs block ports `5432` and `6543` → `timeout expired` on `pooler.supabase.com`).
+
+### Option A — Railway dashboard Shell (recommended)
+
+1. Railway → **yamada_ecommerce** service → **Shell** tab.
+2. Ensure variables include `FLASK_APP=app:create_app` (not `create_ap`).
+3. Run:
 
 ```bash
 flask seed-admin
 flask seed-report-types
 ```
 
-Or with Railway CLI from `server/`:
+### Option B — Railway CLI over SSH
+
+`railway run` runs the command **on your PC** with Railway env vars (alias: `local`). It will **still timeout** to Supabase from the Philippines / blocked ISPs.
+
+Use SSH into the deployed container instead (requires `~/.ssh` key — `ssh-keygen -t ed25519` once):
 
 ```bash
-railway run flask seed-admin
-railway run flask seed-report-types
+cd server
+railway ssh flask seed-admin
+railway ssh flask seed-report-types
 ```
 
 ## 7. Deploy Vercel (web)
@@ -107,6 +118,8 @@ Then `flutter build apk`.
 
 | Issue | Fix |
 |-------|-----|
+| `flask seed-admin` timeout from PC | Network block to Supabase; use **Railway Shell** or `railway ssh`, not `railway run` |
+| `create_ap` / `No such command 'db'` | Set `FLASK_APP=app:create_app` (exact spelling), redeploy |
 | Pre-deploy migrate fails | Check Deploy Logs; verify `DATABASE_URL` and `FLASK_APP=app:create_app` |
 | Health check fails | Increase timeout in `railway.json`; check gunicorn logs |
 | CORS on login | Add exact Vercel URL to `CORS_ORIGINS` on Railway |
