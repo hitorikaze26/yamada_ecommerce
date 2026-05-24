@@ -240,7 +240,7 @@ Your Supabase **Transaction pooler** connection string is the correct format —
 4. Config is in [`server/railway.json`](server/railway.json):
    - **Build:** `pip install -r requirements.txt`
    - **Pre-deploy:** `flask db upgrade`
-   - **Start:** `gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT --timeout 120 wsgi:app`
+   - **Start:** `gunicorn --worker-class gthread -w 1 --threads 100 --bind 0.0.0.0:$PORT --timeout 120 wsgi:app`
    - **Health check:** `/api/health`
 5. **Settings → Networking → Generate Domain** for a public URL.
 6. Set environment variables:

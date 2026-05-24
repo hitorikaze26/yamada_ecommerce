@@ -6,7 +6,7 @@
   },
   "deploy": {
     "preDeployCommand": ["flask db upgrade"],
-    "startCommand": "gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT --timeout 120 wsgi:app",
+    "startCommand": "gunicorn --worker-class gthread -w 1 --threads 100 --bind 0.0.0.0:$PORT --timeout 120 wsgi:app",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE"

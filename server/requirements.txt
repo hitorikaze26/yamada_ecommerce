@@ -20,4 +20,3 @@ flask-cors
 Flask-SocketIO
 twilio
 gunicorn
-eventlet

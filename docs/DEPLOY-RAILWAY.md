@@ -108,7 +108,7 @@ Then `flutter build apk`.
 | Issue | Fix |
 |-------|-----|
 | Pre-deploy migrate fails | Check Deploy Logs; verify `DATABASE_URL` and `FLASK_APP=app:create_app` |
-| Health check fails | Increase timeout in `railway.json`; check gunicorn/eventlet logs |
+| Health check fails | Increase timeout in `railway.json`; check gunicorn logs |
 | CORS on login | Add exact Vercel URL to `CORS_ORIGINS` on Railway |
 | Build can't find gunicorn | Ensure `pip install -r requirements.txt` runs; check `requirements.txt` |
 | Emails not sent | Set `MAIL_*` variables on Railway |
