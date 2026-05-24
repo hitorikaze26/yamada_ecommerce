@@ -5,7 +5,7 @@ Full-stack e-commerce platform with buyer, seller, rider, and admin roles. This 
 | App | Stack | Port / target |
 |-----|-------|---------------|
 | [`client/`](client/) | Next.js 16, React 19, TypeScript, Tailwind | Web — local `:3000`, deploy on **Vercel** |
-| [`server/`](server/) | Flask, SQLAlchemy, Socket.IO, JWT | API — local `:5000`, deploy on **Render** |
+| [`server/`](server/) | Flask, SQLAlchemy, Socket.IO, JWT | API — local `:5000`, deploy on **Railway** |
 | [`mobile_ecomm/`](mobile_ecomm/) | Flutter, Riverpod, Dio | Mobile — local device/emulator, optional store release |
 
 ## Architecture
@@ -19,7 +19,7 @@ Full-stack e-commerce platform with buyer, seller, rider, and admin roles. This 
        └────────┬───────────┘
                 ▼
        ┌─────────────────┐
-       │  Render (Flask) │
+       │ Railway (Flask) │
        │  + Socket.IO    │
        └────────┬────────┘
                 │
@@ -176,9 +176,13 @@ Ensure migrations are applied: `flask db upgrade` (creates `password_reset_code`
 ### Step 1 — Supabase (database)
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Go to **Project Settings → Database** and copy the **Connection string** (URI mode).
-3. Use the **Transaction pooler** URL on Render if you hit connection limits.
-4. Set as `DATABASE_URL` on Render (the server auto-normalizes `postgres://` to `postgresql+psycopg2://`).
+2. Go to **Project Settings → Database → Connection string**.
+3. **Windows / home networks:** Supabase **Direct** (`db.<ref>.supabase.co`) is often **IPv6-only** and will **timeout**. Use **Transaction pooler** instead (IPv4):
+   - Host: `aws-1-ap-northeast-1.pooler.supabase.com`
+   - Port: **6543**
+   - User: `postgres.<your-project-ref>` (e.g. `postgres.ejbrslppplbraljaifaz`)
+4. For **Railway**, use the same **Transaction pooler** URL (`:6543`) as `DATABASE_URL`.
+5. Set as `DATABASE_URL` (the server auto-normalizes `postgres://` and adds `sslmode=require`).
 
 Run migrations against Supabase (one-time, from your machine):
 
@@ -188,7 +192,8 @@ cd server
 pip install psycopg2-binary
 
 $env:FLASK_ENV="production"
-$env:DATABASE_URL="postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres"
+# Windows-friendly (IPv4 pooler — replace ref, password, region if different):
+$env:DATABASE_URL="postgresql://postgres.PROJECT_REF:PASSWORD@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres"
 
 # Test connection first (fails fast with a clear error if URL/network is wrong)
 python scripts/check_db_connection.py
@@ -204,27 +209,49 @@ flask seed-report-types
 
 1. Wait 30–60s — the first lines are `Alembic: preparing database connection...`
 2. First run on empty Supabase can take **5–15 minutes** (many migrations); you should then see `Running upgrade ...` lines
-3. Run `python scripts/check_db_connection.py` — if this hangs, fix `DATABASE_URL` (password URL-encoding, `sslmode=require`, use port **5432** direct host for migrations)
+3. Run `python scripts/check_db_connection.py` — if all attempts timeout, your ISP blocks Postgres; migrate via **Railway** instead (see below)
 4. Ensure `pip install psycopg2-binary` completed in your venv
 
 > **Note:** Local dev uses MySQL; production uses PostgreSQL on Supabase. Migrations are SQLAlchemy-based and should work on both, but test `flask db upgrade` against Supabase before going live.
 
-### Step 2 — Render (backend API)
+**If local connection times out (Globe / home ISP blocks Postgres ports):**
+
+Your PC may not reach Supabase on ports `5432` or `6543` at all (`timeout expired` to `13.114.6.6`). This is a **network block**, not a wrong password.
+
+1. **Supabase → Database → Network Restrictions:** allow your public IP `216.247.83.140/32` or disable restrictions temporarily.
+2. **Try mobile hotspot** (different ISP) and run `python scripts/check_db_connection.py` again.
+3. **Skip local migrate — use Railway instead** (recommended if local times out):
+
+   Full guide: [`docs/DEPLOY-RAILWAY.md`](docs/DEPLOY-RAILWAY.md)
+
+   1. Copy **Transaction pooler** URI (port **6543**) from Supabase → set as `DATABASE_URL` on Railway.
+   2. Create Railway service with **Root Directory** `server` (reads [`server/railway.json`](server/railway.json)).
+   3. Deploy — `preDeployCommand: flask db upgrade` runs migrations on Railway’s network.
+   4. In Railway **Shell** (once): `flask seed-admin` && `flask seed-report-types`.
+   5. Deploy Vercel with `NEXT_PUBLIC_API_BASE_URL=https://<railway-host>/api`.
+
+Your Supabase **Transaction pooler** connection string is the correct format — keep using port **6543**.
+
+### Step 2 — Railway (backend API)
 
 1. Push this repo to GitHub.
-2. In [Render](https://render.com), create a **Blueprint** from `server/render.yaml`, or manually:
-   - **Root Directory:** `server`
+2. In [Railway](https://railway.app), **New Project** → **Deploy from GitHub repo**.
+3. Set **Root Directory** to `server`.
+4. Config is in [`server/railway.json`](server/railway.json):
    - **Build:** `pip install -r requirements.txt`
+   - **Pre-deploy:** `flask db upgrade`
    - **Start:** `gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT --timeout 120 wsgi:app`
-   - **Health check path:** `/api/health`
-3. Enable **WebSockets**.
-4. Set environment variables:
+   - **Health check:** `/api/health`
+5. **Settings → Networking → Generate Domain** for a public URL.
+6. Set environment variables:
 
 ```env
+FLASK_APP=app:create_app
 FLASK_ENV=production
-DATABASE_URL=<supabase-connection-string>
+DATABASE_URL=<supabase-transaction-pooler-uri>
 SECRET_KEY=<generated>
 JWT_SECRET_KEY=<generated>
+WTF_CSRF_SECRET_KEY=<generated>
 CORS_ORIGINS=https://your-app.vercel.app,http://localhost:3000
 MAIL_BACKEND=smtp
 MAIL_USERNAME=...
@@ -232,9 +259,11 @@ MAIL_PASSWORD=...
 OPENROUTESERVICE_API_KEY=...
 ```
 
-5. Note your Render URL: `https://yamada-api.onrender.com`.
+7. Note your Railway URL: e.g. `https://yamada-api-production.up.railway.app`.
 
 **Mobile and web** both call this same API URL.
+
+See [`docs/DEPLOY-RAILWAY.md`](docs/DEPLOY-RAILWAY.md) for the full walkthrough.
 
 ### Step 3 — Vercel (web frontend)
 
@@ -243,10 +272,10 @@ OPENROUTESERVICE_API_KEY=...
 3. Add environment variable:
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=https://yamada-api.onrender.com/api
+NEXT_PUBLIC_API_BASE_URL=https://yamada-api-production.up.railway.app/api
 ```
 
-4. Deploy. Update `CORS_ORIGINS` on Render with your Vercel domain.
+4. Deploy. Update `CORS_ORIGINS` on Railway with your Vercel domain.
 
 Local dev is unaffected — Vercel uses its own env vars; your machine keeps `client/.env.local`.
 
@@ -255,7 +284,7 @@ Local dev is unaffected — Vercel uses its own env vars; your machine keeps `cl
 ```powershell
 cd mobile_ecomm
 # Edit .env:
-# API_BASE_URL=https://yamada-api.onrender.com/api
+# API_BASE_URL=https://your-api.up.railway.app/api
 # APP_SHARE_BASE_URL=https://your-app.vercel.app
 flutter build apk
 # or: flutter build ios
@@ -278,8 +307,8 @@ The `.env` file is gitignored and bundled into the app at build time.
 
 | Topic | Detail |
 |-------|--------|
-| **Render free tier** | Service spins down after inactivity; first request may be slow (cold start). |
-| **File uploads** | Files in `server/app/static/` are ephemeral on Render — lost on redeploy. Use Supabase Storage or S3 for production persistence. |
+| **Railway free tier** | Limited usage; upgrade if you hit limits. Cold starts possible on idle services. |
+| **File uploads** | Files in `server/app/static/` are ephemeral on Railway — lost on redeploy. Use Supabase Storage or S3 for production persistence. |
 | **Dual database** | Local = MySQL, production = Supabase PostgreSQL. Test migrations on Supabase before deploy. |
 | **TypeScript** | `client/next.config.mjs` has `ignoreBuildErrors: true` — fix TS errors when time allows. |
 | **Socket.IO** | Single worker (`-w 1`) required for in-memory threading mode. Scale with Redis adapter for multiple instances. |
@@ -296,7 +325,8 @@ yamada_e-comerce_part2/
 │   ├── migrations/   # Alembic migrations
 │   ├── run.py        # Local dev server
 │   ├── wsgi.py       # Production entry (gunicorn)
-│   └── render.yaml   # Render Blueprint
+│   ├── railway.json  # Railway deploy config
+│   └── Procfile      # Start command fallback
 └── mobile_ecomm/     # Flutter mobile app
 ```
 

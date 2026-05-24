@@ -1,4 +1,4 @@
-"""WSGI entry point for production (gunicorn + eventlet on Render)."""
+"""WSGI entry point for production (gunicorn + eventlet on Railway)."""
 
 from app import create_app
 from app.notifications.realtime import socketio

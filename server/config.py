@@ -3,7 +3,7 @@ from datetime import timedelta
 
 
 def _normalize_database_url(url: str) -> str:
-    """Normalize DATABASE_URL for SQLAlchemy (Supabase/Render use postgres://)."""
+    """Normalize DATABASE_URL for SQLAlchemy (Supabase/Railway use postgres://)."""
     if url.startswith("postgres://"):
         return url.replace("postgres://", "postgresql+psycopg2://", 1)
     if url.startswith("postgresql://") and "+psycopg2" not in url:
@@ -67,15 +67,32 @@ class Config:
     OPENROUTESERVICE_API_KEY = os.environ.get("OPENROUTESERVICE_API_KEY", "")
 
 
+def _engine_options_for_uri(uri: str | None) -> dict:
+    """Postgres (Supabase) needs SSL + timeout on every environment."""
+    if uri and "postgresql" in uri:
+        return {
+            **Config.SQLALCHEMY_ENGINE_OPTIONS,
+            "connect_args": {
+                "connect_timeout": 15,
+                "sslmode": "require",
+            },
+        }
+    return dict(Config.SQLALCHEMY_ENGINE_OPTIONS)
+
+
+_dev_uri = _database_url(
+    os.environ.get(
+        "DEV_DATABASE_URL",
+        "mysql+pymysql://root:changeme@localhost:3306/yamada_db",
+    )
+)
+
+
 class DevelopmentConfig(Config):
     DEBUG = True
     DB_SERVER = os.environ.get("DB_SERVER", "127.0.0.1")
-    SQLALCHEMY_DATABASE_URI = _database_url(
-        os.environ.get(
-            "DEV_DATABASE_URL",
-            "mysql+pymysql://root:changeme@localhost:3306/yamada_db",
-        )
-    )
+    SQLALCHEMY_DATABASE_URI = _dev_uri
+    SQLALCHEMY_ENGINE_OPTIONS = _engine_options_for_uri(_dev_uri)
 
 
 class ProductionConfig(Config):
@@ -84,26 +101,25 @@ class ProductionConfig(Config):
     JWT_COOKIE_SAMESITE = "None"
     JWT_COOKIE_CSRF_PROTECT = False
     MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "smtp")
-    SQLALCHEMY_DATABASE_URI = _database_url()
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        **Config.SQLALCHEMY_ENGINE_OPTIONS,
-        "connect_args": {
-            "connect_timeout": 15,
-            "sslmode": "require",
-        },
-    }
+    _prod_uri = _database_url()
+    SQLALCHEMY_DATABASE_URI = _prod_uri
+    SQLALCHEMY_ENGINE_OPTIONS = _engine_options_for_uri(_prod_uri)
+
+
+_test_uri = _database_url(
+    os.environ.get(
+        "TEST_DATABASE_URL",
+        "mysql+pymysql://root:changeme@localhost:3306/yamada_db_test",
+    )
+)
 
 
 class TestingConfig(Config):
     TESTING = True
     DEBUG = False
     DB_SERVER = "127.0.0.1"
-    SQLALCHEMY_DATABASE_URI = _database_url(
-        os.environ.get(
-            "TEST_DATABASE_URL",
-            "mysql+pymysql://root:changeme@localhost:3306/yamada_db_test",
-        )
-    )
+    SQLALCHEMY_DATABASE_URI = _test_uri
+    SQLALCHEMY_ENGINE_OPTIONS = _engine_options_for_uri(_test_uri)
     MAIL_SERVER = "sandbox.smtp.mailtrap.io"
     MAIL_PORT = 587
     MAIL_USE_TLS = True
