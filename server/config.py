@@ -24,18 +24,19 @@ def _database_url(fallback: str | None = None) -> str | None:
 class Config:
     TESTING = False
 
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
-    WTF_CSRF_SECRET_KEY = os.environ.get("WTF_CSRF_SECRET_KEY", "dev-csrf-change-me")
-    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-jwt-change-me")
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    WTF_CSRF_SECRET_KEY = os.environ.get("WTF_CSRF_SECRET_KEY")
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
 
     WTF_CSRF_CHECK_DEFAULT = False
     WTF_CSRF_TIME_LIMIT = None
 
-    JWT_TOKEN_LOCATION = ["headers", "cookies", "json", "query_string"]
+    # NEVER include "query_string" — tokens leak through server logs & referrers
+    JWT_TOKEN_LOCATION = ["headers", "cookies"]
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     JWT_COOKIE_SECURE = False
-    JWT_COOKIE_SAMESITE = None
+    JWT_COOKIE_SAMESITE = "Lax"
     JWT_COOKIE_CSRF_PROTECT = False
     JWT_ACCESS_CSRF_COOKIE_NAME = "csrf_access_token"
     JWT_ACCESS_CSRF_HEADER_NAME = "X-CSRF-TOKEN"
@@ -58,7 +59,7 @@ class Config:
         "MAIL_DEFAULT_SENDER",
         "Yamada Support <noreply@example.com>",
     )
-    MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "console")
+    MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "smtp")
 
     TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
     TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
@@ -100,6 +101,7 @@ class ProductionConfig(Config):
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_SAMESITE = "None"
     JWT_COOKIE_CSRF_PROTECT = False
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=2)
     MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "smtp")
     _prod_uri = _database_url()
     SQLALCHEMY_DATABASE_URI = _prod_uri

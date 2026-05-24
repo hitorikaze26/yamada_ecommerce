@@ -11,7 +11,11 @@ from socketio.exceptions import ConnectionRefusedError
 
 from app.models import db
 
-socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
+import os
+socketio = SocketIO(
+    cors_allowed_origins=os.environ.get("SOCKETIO_CORS", "*"),
+    async_mode="threading",
+)
 
 
 def user_room(user_id: int) -> str:
@@ -26,7 +30,7 @@ def init_socketio(app) -> SocketIO:
     """Attach SocketIO to the Flask app and register connection handlers."""
     socketio.init_app(
         app,
-        cors_allowed_origins="*",
+        cors_allowed_origins=os.environ.get("SOCKETIO_CORS", "*"),
         async_mode="threading",
         logger=False,
         engineio_logger=False,

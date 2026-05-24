@@ -1468,7 +1468,7 @@ class CartItem(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id', ondelete='CASCADE'))
     variation_id: Mapped[int] = mapped_column(ForeignKey('product_variations.id', ondelete='CASCADE'))
     quantity: Mapped[int] = mapped_column(Integer, default=1)
-    price_at_add: Mapped[int] = mapped_column(Integer, nullable=True)  # Price when added to cart
+    price_at_add: Mapped[float] = mapped_column(Float, nullable=True)  # Price when added to cart
     created_at: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(nullable=True, onupdate=lambda: datetime.datetime.now())
 

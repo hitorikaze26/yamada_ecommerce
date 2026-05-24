@@ -696,10 +696,12 @@ def checkout():
             product_id = int(item["productId"])
             quantity = int(item.get("quantity", 1))
 
+            # Use FOR UPDATE to prevent concurrent overselling
             product = db.session.execute(
                 select(Product)
                 .options(selectinload(Product.variations))
                 .where(Product.id == product_id)
+                .with_for_update()
             ).scalar_one_or_none()
             if product is None:
                 raise ValueError("Product not found")

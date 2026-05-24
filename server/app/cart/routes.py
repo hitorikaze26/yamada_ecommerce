@@ -1,6 +1,5 @@
 import datetime
 import traceback
-import os
 from . import (
     cart as cart_bp,
     db
@@ -24,28 +23,11 @@ from app.models import (
 
 from app.utils.static_urls import public_static_url as _public_image_url
 
-def ensure_cart_tables_exist():
-    """Ensure cart tables exist, create if missing"""
-    try:
-        # Try to query the cart table to see if it exists
-        db.session.execute(select(Cart)).first()
-    except Exception as e:
-        print(f"Cart tables don't exist, creating them...")
-        try:
-            db.create_all()
-            print("Cart tables created successfully")
-        except Exception as create_error:
-            print(f"Error creating tables: {create_error}")
-            traceback.print_exc()
-
 @cart_bp.get('/get-cart')
 @jwt_required()
 def getCart():
     """Get the current user's cart"""
     try:
-        ensure_cart_tables_exist()
-        
-        # Use SQLAlchemy 2.0 syntax
         cart = db.session.execute(
             select(Cart).where(Cart.user_id == current_user.id)
         ).scalars().first()
@@ -61,7 +43,7 @@ def getCart():
             'cart': cart.to_json()
         }), 200
     except Exception as e:
-        print(f"Error in getCart: {str(e)}")
+        current_app.logger.error("Error in getCart: %s", str(e))
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -74,8 +56,6 @@ def getCart():
 def addToCart():
     """Add an item to the cart"""
     try:
-        ensure_cart_tables_exist()
-        
         data = request.get_json()
         
         if not data:
@@ -164,7 +144,7 @@ def addToCart():
         }), 200
     except Exception as e:
         db.session.rollback()
-        print(f"Error in addToCart: {str(e)}")
+        current_app.logger.error("Error in addToCart: %s", str(e))
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -177,8 +157,6 @@ def addToCart():
 def updateCartItem(item_id):
     """Update quantity of a cart item"""
     try:
-        ensure_cart_tables_exist()
-        
         data = request.get_json()
         quantity = data.get('quantity')
         
@@ -224,7 +202,7 @@ def updateCartItem(item_id):
         }), 200
     except Exception as e:
         db.session.rollback()
-        print(f"Error in updateCartItem: {str(e)}")
+        current_app.logger.error("Error in updateCartItem: %s", str(e))
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -237,8 +215,6 @@ def updateCartItem(item_id):
 def removeFromCart(item_id):
     """Remove an item from the cart"""
     try:
-        ensure_cart_tables_exist()
-        
         cart_item = db.session.execute(
             select(CartItem).where(CartItem.id == item_id)
         ).scalars().first()
@@ -249,7 +225,6 @@ def removeFromCart(item_id):
                 'error': 'Cart item not found'
             }), 404
         
-        # Verify cart belongs to current user
         if cart_item.cart.user_id != current_user.id:
             return jsonify({
                 'success': False,
@@ -268,7 +243,7 @@ def removeFromCart(item_id):
         }), 200
     except Exception as e:
         db.session.rollback()
-        print(f"Error in removeFromCart: {str(e)}")
+        current_app.logger.error("Error in removeFromCart: %s", str(e))
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -281,8 +256,6 @@ def removeFromCart(item_id):
 def clearCart():
     """Clear all items from the cart"""
     try:
-        ensure_cart_tables_exist()
-        
         cart = db.session.execute(
             select(Cart).where(Cart.user_id == current_user.id)
         ).scalars().first()
@@ -309,7 +282,7 @@ def clearCart():
         }), 200
     except Exception as e:
         db.session.rollback()
-        print(f"Error in clearCart: {str(e)}")
+        current_app.logger.error("Error in clearCart: %s", str(e))
         traceback.print_exc()
         return jsonify({
             'success': False,

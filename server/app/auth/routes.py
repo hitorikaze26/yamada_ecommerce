@@ -35,7 +35,7 @@ from app.models import (
     StoreRequestStatus,
     PasswordResetCode,
 )
-from app.extensions import mail, bcrypt
+from app.extensions import mail, bcrypt, limiter
 from app.services import sms_service
 from app.services.email_service import send_password_reset_email
 from app.coupon_helpers import serialize_coupon, validate_coupon
@@ -154,6 +154,7 @@ def _session_snapshot(user: User) -> dict:
 
 
 @auth_bp.post('/login')
+@limiter.limit("10 per minute")
 def login():
     if not request.is_json:
         current_app.logger.error("Login failed: Request is not JSON")

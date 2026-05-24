@@ -12,12 +12,25 @@ from .extensions import (
     csrf, 
     mail, 
     jwt,
-    bcrypt
+    bcrypt,
+    limiter,
 )
 from config import config
 
-# Match production + preview Vercel deployments (credentials require a specific origin).
+# Match production + preview Vercel deployments + custom domain
 _VERCEL_ORIGIN_PATTERN = r"^https://[\w-]+\.vercel\.app$"
+
+
+def _expand_origins(raw: str) -> list[str]:
+    """Split comma/semicolon-separated origins, strip whitespace/quotes."""
+    out: list[str] = []
+    seen: set[str] = set()
+    for part in raw.replace(";", ",").split(","):
+        origin = part.strip().strip('"').strip("'")
+        if origin and origin not in seen:
+            seen.add(origin)
+            out.append(origin)
+    return out
 
 
 def _cors_allowed_origins() -> list[str]:
@@ -26,17 +39,11 @@ def _cors_allowed_origins() -> list[str]:
         "CORS_ORIGINS",
         "http://127.0.0.1:3000,http://localhost:3000",
     )
-    origins: list[str] = []
-    seen: set[str] = set()
-    for part in raw.replace(";", ",").split(","):
-        origin = part.strip().strip('"').strip("'")
-        if origin and origin not in seen:
-            seen.add(origin)
-            origins.append(origin)
+    origins = _expand_origins(raw)
 
+    # In production, always allow the Vercel origin wildcard
     if os.environ.get("FLASK_ENV", "development") == "production":
-        if _VERCEL_ORIGIN_PATTERN not in seen:
-            origins.append(_VERCEL_ORIGIN_PATTERN)
+        origins.append(_VERCEL_ORIGIN_PATTERN)
 
     return origins
 
@@ -56,10 +63,18 @@ def create_app(test_config=None):
         env = os.environ.get("FLASK_ENV", "development")
         config_class = config.get(env, config["development"])
         app.config.from_object(config_class)
-        if env == "production" and not app.config.get("SQLALCHEMY_DATABASE_URI"):
-            raise RuntimeError(
-                "DATABASE_URL must be set when FLASK_ENV=production"
-            )
+        if env == "production":
+            missing = []
+            if not app.config.get("SQLALCHEMY_DATABASE_URI"):
+                missing.append("DATABASE_URL")
+            if not app.config.get("SECRET_KEY"):
+                missing.append("SECRET_KEY")
+            if not app.config.get("JWT_SECRET_KEY"):
+                missing.append("JWT_SECRET_KEY")
+            if missing:
+                raise RuntimeError(
+                    f"Missing required env vars in production: {', '.join(missing)}"
+                )
     else:
         app.config.from_object(config["testing"])
 
@@ -80,6 +95,7 @@ def create_app(test_config=None):
     mail.init_app(app)
     jwt.init_app(app)
     bcrypt.init_app(app)
+    limiter.init_app(app)
 
     CORS(
         app,
