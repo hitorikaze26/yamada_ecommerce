@@ -184,12 +184,28 @@ Run migrations against Supabase (one-time, from your machine):
 
 ```powershell
 cd server
+.\.venv\Scripts\activate
+pip install psycopg2-binary
+
 $env:FLASK_ENV="production"
 $env:DATABASE_URL="postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres"
+
+# Test connection first (fails fast with a clear error if URL/network is wrong)
+python scripts/check_db_connection.py
+
 flask db upgrade
 flask seed-admin
 flask seed-report-types
 ```
+
+> **Note:** `server/.env` defaults to local MySQL (`FLASK_ENV=development`). You must set `FLASK_ENV=production` and `DATABASE_URL` in the **same PowerShell session** before migrating Supabase.
+
+**If `flask db upgrade` shows no output for a long time:**
+
+1. Wait 30–60s — the first lines are `Alembic: preparing database connection...`
+2. First run on empty Supabase can take **5–15 minutes** (many migrations); you should then see `Running upgrade ...` lines
+3. Run `python scripts/check_db_connection.py` — if this hangs, fix `DATABASE_URL` (password URL-encoding, `sslmode=require`, use port **5432** direct host for migrations)
+4. Ensure `pip install psycopg2-binary` completed in your venv
 
 > **Note:** Local dev uses MySQL; production uses PostgreSQL on Supabase. Migrations are SQLAlchemy-based and should work on both, but test `flask db upgrade` against Supabase before going live.
 

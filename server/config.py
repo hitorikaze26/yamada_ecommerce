@@ -7,7 +7,10 @@ def _normalize_database_url(url: str) -> str:
     if url.startswith("postgres://"):
         return url.replace("postgres://", "postgresql+psycopg2://", 1)
     if url.startswith("postgresql://") and "+psycopg2" not in url:
-        return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+        url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    if "supabase.co" in url and "sslmode=" not in url:
+        sep = "&" if "?" in url else "?"
+        url = f"{url}{sep}sslmode=require"
     return url
 
 
@@ -82,6 +85,13 @@ class ProductionConfig(Config):
     JWT_COOKIE_CSRF_PROTECT = False
     MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "smtp")
     SQLALCHEMY_DATABASE_URI = _database_url()
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        **Config.SQLALCHEMY_ENGINE_OPTIONS,
+        "connect_args": {
+            "connect_timeout": 15,
+            "sslmode": "require",
+        },
+    }
 
 
 class TestingConfig(Config):
