@@ -14,11 +14,13 @@ fields but only persist what the model supports.
 
 from typing import Any, List, Optional
 
+from flask import current_app, has_app_context
 from sqlalchemy import event
 
-from app.models import db, Notification
+from app.models import db, Notification, User
 
 _PENDING_EMITS_KEY = "pending_notification_emits"
+_PENDING_EMAILS_KEY = "pending_notification_emails"
 
 
 def serialize_notification(n: Notification) -> dict[str, Any]:
@@ -39,18 +41,54 @@ def _queue_realtime_emit(n: Notification) -> None:
     pending.append(serialize_notification(n))
 
 
+def _queue_notification_email(n: Notification) -> None:
+    pending = db.session.info.setdefault(_PENDING_EMAILS_KEY, [])
+    pending.append(
+        {
+            "user_id": n.user_id,
+            "title": n.title,
+            "message": n.body,
+            "page": n.page,
+            "role": n.role,
+        }
+    )
+
+
 @event.listens_for(db.session, "after_commit")
 def _emit_pending_notifications(session) -> None:
     pending = session.info.pop(_PENDING_EMITS_KEY, None)
-    if not pending:
+    if pending:
+        from .realtime import emit_to_user
+
+        for payload in pending:
+            user_id = payload.get("userId")
+            if user_id is not None:
+                emit_to_user(int(user_id), "notification", payload)
+
+    pending_emails = session.info.pop(_PENDING_EMAILS_KEY, None)
+    if not pending_emails:
         return
 
-    from .realtime import emit_to_user
+    from app.services.email_service import send_notification_email
 
-    for payload in pending:
-        user_id = payload.get("userId")
-        if user_id is not None:
-            emit_to_user(int(user_id), "notification", payload)
+    for item in pending_emails:
+        user = db.session.get(User, item["user_id"])
+        if user is None or not user.active or not user.email:
+            continue
+        try:
+            send_notification_email(
+                to_email=user.email,
+                title=item["title"],
+                message=item["message"],
+                page=item.get("page"),
+                role=item.get("role"),
+            )
+        except Exception:
+            if has_app_context():
+                current_app.logger.exception(
+                    "Failed to send notification email to user %s",
+                    item["user_id"],
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +125,7 @@ def create_notification(
     db.session.add(n)
     db.session.flush()
     _queue_realtime_emit(n)
+    _queue_notification_email(n)
     return n
 
 

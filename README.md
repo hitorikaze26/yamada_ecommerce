@@ -118,7 +118,8 @@ flutter run
 | `SECRET_KEY` | Production | Flask secret |
 | `JWT_SECRET_KEY` | Production | JWT signing key |
 | `CORS_ORIGINS` | Production | Comma-separated web origins (Vercel URL) |
-| `MAIL_*` | Optional | SMTP for email verification / password reset |
+| `MAIL_BACKEND` | Dev: `console` | `console` logs emails to terminal; `smtp` sends real mail |
+| `MAIL_*` | With `smtp` | SMTP for notifications, chat alerts, password reset |
 | `OPENROUTESERVICE_API_KEY` | Optional | Shipping distance routing |
 | `TWILIO_*` | Optional | SMS notifications |
 
@@ -142,6 +143,31 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 | `API_BASE_URL` | Flask API base URL |
 | `APP_SHARE_BASE_URL` | Optional public web URL for sharing links |
 | `PH_SGG_BASE_URL` | Philippine geographic data API |
+
+---
+
+## Email notifications
+
+Every in-app notification (orders, refunds, account approvals, etc.) and new chat message (except system/auto-replies) also sends a copy to the user's registered email.
+
+| `MAIL_BACKEND` | Behavior |
+|----------------|----------|
+| `console` | Emails printed in the Flask server terminal (default for local dev) |
+| `smtp` | Real delivery via Gmail or other SMTP (`MAIL_USERNAME`, `MAIL_PASSWORD`) |
+
+---
+
+## Forgot password (web)
+
+1. Open `http://localhost:3000/auth/forgot-password`
+2. Enter your account email and submit
+3. With `MAIL_BACKEND=console`, check the **Flask terminal** for the 6-digit PIN (not your inbox)
+4. Click **Enter reset code** or go to `/auth/reset-pin?email=you@example.com`
+5. Enter PIN → set new password → sign in
+
+For real inbox delivery, set `MAIL_BACKEND=smtp` and valid `MAIL_*` credentials in `server/.env`.
+
+Ensure migrations are applied: `flask db upgrade` (creates `password_reset_code` table).
 
 ---
 

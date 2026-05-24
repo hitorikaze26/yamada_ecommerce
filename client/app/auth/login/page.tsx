@@ -48,6 +48,7 @@ function LoginContent() {
   const [error, setError] = useState("")
   const { login, getLoginErrorMessage } = useAuth()
   const redirectTo = searchParams.get("redirect") ?? undefined
+  const passwordResetSuccess = searchParams.get("reset") === "true"
 
   const config = roleConfig[roleParam]
 
@@ -104,6 +105,13 @@ function LoginContent() {
             </div>
 
             {/* Role selector removed: role is controlled externally via link destination. */}
+
+            {passwordResetSuccess && (
+              <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 text-sm flex items-center gap-2">
+                <Icon name="check-circle" />
+                Password reset successful. Sign in with your new password.
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (

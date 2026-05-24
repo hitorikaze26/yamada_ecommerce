@@ -302,6 +302,61 @@ def _product_display_image(product) -> Optional[str]:
     return image_url
 
 
+def _conversation_label(conv: Conversation) -> str:
+    kind = conv.kind
+    if kind == ConversationKind.BUYER_SELLER:
+        if conv.store:
+            return f"chat with {conv.store.store_name}"
+        return "buyer–seller chat"
+    if kind == ConversationKind.SELLER_ADMIN:
+        return "seller support chat"
+    if kind == ConversationKind.ADMIN_BUYER:
+        return "Yamada support chat"
+    if kind == ConversationKind.RIDER_SELLER:
+        return "rider–seller chat"
+    return "Yamada chat"
+
+
+def _email_chat_recipients(
+    conv: Conversation,
+    sender: User,
+    msg: ChatMessage,
+) -> None:
+    """Send email alerts to conversation participants (except sender)."""
+    if msg.message_type == ChatMessageType.SYSTEM:
+        return
+    meta = msg.metadata_json or {}
+    if meta.get("autoReply"):
+        return
+
+    from app.services.email_service import send_chat_message_email
+
+    sender_name = _user_display_name(sender)
+    preview = conv.last_message_preview or _preview_for_message(msg)
+    label = _conversation_label(conv)
+
+    recipient_ids = [
+        p.user_id
+        for p in conv.participants
+        if p.user_id != sender.id
+    ]
+    for uid in recipient_ids:
+        user = db.session.get(User, uid)
+        if user is None or not user.active or not user.email:
+            continue
+        try:
+            send_chat_message_email(
+                to_email=user.email,
+                sender_name=sender_name,
+                preview=preview,
+                conversation_label=label,
+            )
+        except Exception:
+            current_app.logger.exception(
+                "Failed to send chat email to user %s", uid
+            )
+
+
 def _preview_for_message(msg: ChatMessage) -> str:
     mt = msg.message_type
     meta = msg.metadata_json or {}
@@ -406,6 +461,7 @@ def create_message(
     participant_ids = [p.user_id for p in conv.participants]
     payload = serialize_message(msg, sender.id)
     emit_chat_message(participant_ids, payload)
+    _email_chat_recipients(conv, sender, msg)
 
     if conv.kind == ConversationKind.BUYER_SELLER and user_has_role(sender, "buyer"):
         maybe_send_auto_reply(conv, sender.id)

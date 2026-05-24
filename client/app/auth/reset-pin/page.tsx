@@ -23,15 +23,19 @@ function ResetPinContent() {
 
   const [step, setStep] = useState<"pin" | "password">("pin")
   const [pin, setPin] = useState("")
+  const [pinResetKey, setPinResetKey] = useState(0)
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isResending, setIsResending] = useState(false)
   const [error, setError] = useState("")
+  const [resendMessage, setResendMessage] = useState("")
   const [showPassword, setShowPassword] = useState(false)
 
   const handlePinComplete = async (completedPin: string) => {
     setPin(completedPin)
     setError("")
+    setResendMessage("")
     setIsLoading(true)
 
     try {
@@ -42,8 +46,28 @@ function ResetPinContent() {
         (err as { response?: { data?: { msg?: string } } })?.response?.data?.msg ??
         "Invalid PIN. Please try again."
       setError(msg)
+      setPinResetKey((k) => k + 1)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleResend = async () => {
+    if (!email.trim()) return
+    setError("")
+    setResendMessage("")
+    setIsResending(true)
+    try {
+      await authApi.forgotPassword({ channel: "email", email: email.trim() })
+      setResendMessage("A new code was sent to your email.")
+      setPinResetKey((k) => k + 1)
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { msg?: string } } })?.response?.data?.msg ??
+        "Failed to resend code. Please try again."
+      setError(msg)
+    } finally {
+      setIsResending(false)
     }
   }
 
@@ -74,6 +98,29 @@ function ResetPinContent() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (!email.trim()) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <div className="flex justify-between items-center p-6">
+          <YamadaLogo size={40} href="/" />
+          <DarkModeToggle />
+        </div>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-md text-center space-y-6">
+            <Icon name="exclamation-circle" size="xl" className="mx-auto text-destructive" />
+            <h2 className="text-2xl font-bold">Email required</h2>
+            <p className="text-muted-foreground">
+              Start from the forgot password page so we can send you a reset code.
+            </p>
+            <Button asChild className="w-full">
+              <Link href="/auth/forgot-password">Go to forgot password</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -108,8 +155,20 @@ function ResetPinContent() {
                 </div>
               )}
 
+              {resendMessage && (
+                <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 text-sm flex items-center gap-2">
+                  <Icon name="check-circle" />
+                  {resendMessage}
+                </div>
+              )}
+
               <div className="flex justify-center">
-                <PinInput length={6} onComplete={handlePinComplete} disabled={isLoading} />
+                <PinInput
+                  length={6}
+                  onComplete={handlePinComplete}
+                  disabled={isLoading}
+                  resetKey={pinResetKey}
+                />
               </div>
 
               {isLoading && (
@@ -120,7 +179,14 @@ function ResetPinContent() {
 
               <p className="text-center text-sm text-muted-foreground">
                 Didn&apos;t receive the PIN?{" "}
-                <button className="text-primary hover:underline font-medium">Resend</button>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={isResending || isLoading}
+                  className="text-primary hover:underline font-medium disabled:opacity-50"
+                >
+                  {isResending ? "Sending..." : "Resend"}
+                </button>
               </p>
             </>
           ) : (

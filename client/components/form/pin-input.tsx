@@ -8,11 +8,18 @@ interface PinInputProps {
   length?: number
   onComplete: (pin: string) => void
   disabled?: boolean
+  /** Increment to clear all digits (e.g. after a failed verify). */
+  resetKey?: number
 }
 
-export function PinInput({ length = 6, onComplete, disabled = false }: PinInputProps) {
+export function PinInput({ length = 6, onComplete, disabled = false, resetKey = 0 }: PinInputProps) {
   const [values, setValues] = useState<string[]>(Array(length).fill(""))
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  useEffect(() => {
+    setValues(Array(length).fill(""))
+    inputRefs.current[0]?.focus()
+  }, [resetKey, length])
 
   useEffect(() => {
     // Focus first input on mount
