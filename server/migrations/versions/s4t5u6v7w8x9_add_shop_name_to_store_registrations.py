@@ -1,4 +1,4 @@
-"""Add shop_name column to store_registrations (idempotent)."""
+"""Sync store_registrations columns with the SQLAlchemy model (idempotent)."""
 
 import sys
 from pathlib import Path
@@ -15,18 +15,44 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
-    if table_exists("store_registrations") and not has_column("store_registrations", "shop_name"):
+def _add_string(table: str, column: str) -> None:
+    if table_exists(table) and not has_column(table, column):
         op.add_column(
-            "store_registrations",
+            table,
             sa.Column(
-                "shop_name",
+                column,
                 sa.String().with_variant(sa.VARCHAR(length=255), "mysql"),
                 nullable=True,
             ),
         )
 
 
+def _add_text(table: str, column: str) -> None:
+    if table_exists(table) and not has_column(table, column):
+        op.add_column(table, sa.Column(column, sa.Text(), nullable=True))
+
+
+def upgrade():
+    if not table_exists("store_registrations"):
+        return
+
+    # Original table only had store_purpose (TEXT NOT NULL) — keep nullable add for drift.
+    if not has_column("store_registrations", "store_purpose"):
+        op.add_column("store_registrations", sa.Column("store_purpose", sa.Text(), nullable=True))
+
+    for column in (
+        "shop_name",
+        "tagline",
+        "categories_json",
+        "dti_path",
+        "bir_tin_path",
+        "business_permit_path",
+    ):
+        if column == "categories_json":
+            _add_text("store_registrations", column)
+        else:
+            _add_string("store_registrations", column)
+
+
 def downgrade():
-    if table_exists("store_registrations") and has_column("store_registrations", "shop_name"):
-        op.drop_column("store_registrations", "shop_name")
+    pass
