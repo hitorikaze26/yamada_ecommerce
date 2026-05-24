@@ -5,7 +5,10 @@ import Link from "next/link"
 import Image from "next/image"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
+import Swal from "sweetalert2"
+import { toast } from "sonner"
 import { ordersApi, resolveImageUrl } from "@/lib/api"
+import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import { StoreNameLink } from "@/components/store/store-name-link"
 
 interface RefundOrderItem {
@@ -109,10 +112,10 @@ export default function BuyerRefundsPage() {
       setError(null)
       try {
         const res = await ordersApi.getRefundRequests()
-        setRefunds((res.data.refunds as BuyerRefundDto[]) ?? [])
+        setRefunds(unwrapBuyerList<BuyerRefundDto>(res.data, ["refunds"]))
       } catch (err) {
         console.error("Failed to load refunds", err)
-        setError("Failed to load refund history. Please try again.")
+        setError(getBuyerFetchError(err, "Failed to load refund history. Please try again."))
       } finally {
         setIsLoading(false)
       }
@@ -138,7 +141,7 @@ export default function BuyerRefundsPage() {
       await ordersApi.disputeRefund(refund.id, { note: result.value || undefined })
       toast.success("Dispute submitted")
       const res = await ordersApi.getRefundRequests()
-      setRefunds((res.data.refunds as BuyerRefundDto[]) ?? [])
+      setRefunds(unwrapBuyerList<BuyerRefundDto>(res.data, ["refunds"]))
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err

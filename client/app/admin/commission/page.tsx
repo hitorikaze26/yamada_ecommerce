@@ -128,8 +128,11 @@ export default function AdminCommissionPage() {
       setNewShippingRegion("")
       setNewShippingFee(0)
       toast.success("Shipping setting added successfully")
-    } catch {
-      toast.error("Failed to add shipping setting")
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { msg?: string } } })?.response?.data?.msg ||
+        "Failed to add shipping setting"
+      toast.error(msg)
     } finally {
       setIsSaving(false)
     }
@@ -268,6 +271,10 @@ export default function AdminCommissionPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground rounded-lg border bg-muted/40 px-3 py-2">
+              Shipping fees are stored per shop. Sellers manage location rates in the seller portal;
+              this list shows all active rates across stores (read-only here).
+            </p>
             <div>
               <Label htmlFor="region">Region</Label>
               <Input
@@ -292,9 +299,14 @@ export default function AdminCommissionPage() {
               />
             </div>
 
-            <Button onClick={() => void addShippingSetting()} disabled={isSaving} className="w-full">
-              <Icon name={isSaving ? "spinner" : "plus"} className="mr-2" />
-              {isSaving ? "Adding..." : "Add Shipping Setting"}
+            <Button
+              onClick={() => void addShippingSetting()}
+              disabled
+              title="Requires a storeId — configure shipping in the seller portal per shop"
+              className="w-full"
+            >
+              <Icon name="plus" className="mr-2" />
+              Add via seller portal (per shop)
             </Button>
 
             <div className="space-y-2 max-h-40 overflow-y-auto">

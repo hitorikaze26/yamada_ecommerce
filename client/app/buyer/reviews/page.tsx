@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { buyerApi, resolveImageUrl } from "@/lib/api"
+import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import { Icon } from "@/components/ui/icon"
 import { ReviewDisplayCard } from "@/components/reviews/review-display-card"
 import type { SerializedReview } from "@/lib/review-types"
@@ -55,12 +56,12 @@ export default function BuyerReviewsPage() {
     const load = async () => {
       try {
         const res = await buyerApi.getReviews({ page: 1, perPage: 50 })
-        const rows = ((res.data.reviews as Record<string, unknown>[]) ?? []).map(mapReviewRow)
+        const rows = unwrapBuyerList<Record<string, unknown>>(res.data, ["reviews"]).map(mapReviewRow)
         setReviews(rows)
         setTotal(Number(res.data.total ?? rows.length))
       } catch (err) {
         console.error(err)
-        setError("Failed to load reviews.")
+        setError(getBuyerFetchError(err, "Failed to load reviews."))
       } finally {
         setLoading(false)
       }

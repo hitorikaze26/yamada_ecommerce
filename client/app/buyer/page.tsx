@@ -12,6 +12,8 @@ import {
   countOrdersByBuyerFilter,
   type BuyerOrderFilterKey,
 } from "@/lib/buyer/order-filters"
+import { formatOrderStatusLabel, getEffectiveOrderStatus } from "@/lib/buyer/order-status"
+import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
@@ -40,12 +42,12 @@ export default function BuyerDashboard() {
           reportsApi.getMyReports().catch(() => ({ data: { reports: [] } })),
         ])
 
-        setOrders((ordersRes.data.orders as Order[]) ?? [])
-        setProducts((productsRes.data.products as Product[]) ?? [])
-        setReports((reportsRes.data.reports as unknown as ProblemReportDto[]) ?? [])
+        setOrders(unwrapBuyerList<Order>(ordersRes.data, ["orders"]))
+        setProducts(unwrapBuyerList<Product>(productsRes.data, ["products"]))
+        setReports(unwrapBuyerList<ProblemReportDto>(reportsRes.data, ["reports"]))
       } catch (err) {
         console.error("Failed to load buyer dashboard data", err)
-        setError("Failed to load your dashboard data. Please try again.")
+        setError(getBuyerFetchError(err, "Failed to load your dashboard data. Please try again."))
       } finally {
         setIsLoading(false)
       }
@@ -54,9 +56,10 @@ export default function BuyerDashboard() {
     void fetchData()
   }, [])
 
+  const orderCounts = countOrdersByBuyerFilter(orders)
   const totalOrders = orders.length
-  const pendingOrders = orders.filter((o) => o.status === "pending").length
-  const deliveredOrders = orders.filter((o) => o.status === "delivered").length
+  const pendingOrders = orderCounts.to_pay
+  const deliveredOrders = orderCounts.delivered
 
   const openReports = reports.filter((r) =>
     ["pending", "under_review", "investigating"].includes(r.status),
@@ -172,12 +175,29 @@ export default function BuyerDashboard() {
                     })}
                   </td>
                   <td className="py-4 px-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusColors[order.status]}`}>
-                      {order.status}
-                    </span>
+                    {(() => {
+                      const rd = (order as Order & { riderDelivery?: { status?: string } }).riderDelivery
+                      const effective = getEffectiveOrderStatus(
+                        order.status ?? "",
+                        rd?.status,
+                      )
+                      return (
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
+                            statusColors[effective] || "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {formatOrderStatusLabel(effective)}
+                        </span>
+                      )
+                    })()}
                   </td>
-                  <td className="py-4 px-4 text-muted-foreground">{order.items.length} items</td>
-                  <td className="py-4 px-4 text-right font-medium">{formatPrice(order.total)}</td>
+                  <td className="py-4 px-4 text-muted-foreground">
+                    {order.items?.length ?? 0} items
+                  </td>
+                  <td className="py-4 px-4 text-right font-medium">
+                    {formatPrice(order.total ?? order.grandTotal ?? 0)}
+                  </td>
                   <td className="py-4 px-4 text-right">
                     <Link href={`/orders/${order.id}`} className="text-primary hover:underline text-sm">
                       View

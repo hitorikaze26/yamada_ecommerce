@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { buyerApi, resolveImageUrl } from "@/lib/api"
+import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import type { Product } from "@/lib/types"
 
 export default function RecentlyViewedPage() {
@@ -15,11 +16,11 @@ export default function RecentlyViewedPage() {
     const load = async () => {
       try {
         const res = await buyerApi.getRecentlyViewed()
-        const list = (res.data.products as Product[]) ?? []
+        const list = unwrapBuyerList<Product>(res.data, ["products"])
         setProducts(list)
       } catch (err) {
         console.error(err)
-        setError("Failed to load recently viewed.")
+        setError(getBuyerFetchError(err, "Failed to load recently viewed."))
       } finally {
         setLoading(false)
       }

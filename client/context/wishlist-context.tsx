@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react"
 import { buyerApi } from "@/lib/api"
+import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import type { Product } from "@/lib/types"
 import { useAuth } from "@/context/auth-context"
 
@@ -62,11 +63,11 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     setError(null)
     try {
       const res = await buyerApi.getWishlist()
-      const products = (res.data.products as Product[] | undefined) ?? []
+      const products = unwrapBuyerList<Product>(res.data, ["products"])
       setItems(products)
     } catch (e) {
       console.error(e)
-      setError("Failed to load wishlist")
+      setError(getBuyerFetchError(e, "Failed to load wishlist"))
     } finally {
       setIsLoading(false)
     }

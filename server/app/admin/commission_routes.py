@@ -131,6 +131,11 @@ def create_shipping_setting():
     
     if not region_name:
         return jsonify(msg="Region name is required"), 400
+
+    if not store_id:
+        return jsonify(
+            msg="storeId is required. Shipping rates are configured per store (seller settings).",
+        ), 400
     
     try:
         # Check if setting already exists

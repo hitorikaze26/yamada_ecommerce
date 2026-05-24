@@ -1004,7 +1004,7 @@ def rejectStoreRegistrationRequest(registration_id):
         if user is not None:
             notify_seller_store_registration_rejected(user_id=user.id)
 
-        return jsonify(msg='Store registration accepted!'), 200
+        return jsonify(msg='Store registration rejected!'), 200
     except:
         db.session.rollback()
         return jsonify(msg='Error occurred!'), 500

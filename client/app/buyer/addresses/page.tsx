@@ -13,6 +13,7 @@ import {
   type SavedAddressDto,
   isAddressComplete,
 } from "@/lib/api"
+import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 
 export default function AddressesPage() {
   const [addresses, setAddresses] = useState<SavedAddressDto[]>([])
@@ -38,7 +39,7 @@ export default function AddressesPage() {
     setError(null)
     try {
       const res = await addressesApi.list()
-      let list = (res.data.addresses ?? []) as SavedAddressDto[]
+      let list = unwrapBuyerList<SavedAddressDto>(res.data, ["addresses"])
       if (list.length === 0) {
         const profileRes = await buyerApi.getProfile()
         const profile = profileRes.data?.profile ?? profileRes.data
@@ -66,7 +67,7 @@ export default function AddressesPage() {
       setAddresses(list)
     } catch (err) {
       console.error("Failed to load addresses", err)
-      setError("Failed to load addresses. Please try again.")
+      setError(getBuyerFetchError(err, "Failed to load addresses. Please try again."))
     } finally {
       setIsLoading(false)
     }

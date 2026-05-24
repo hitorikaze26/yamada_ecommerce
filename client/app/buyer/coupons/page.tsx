@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { buyerApi } from "@/lib/api"
+import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import { Icon } from "@/components/ui/icon"
 
 interface Coupon {
@@ -25,10 +26,10 @@ export default function BuyerCouponsPage() {
     const load = async () => {
       try {
         const res = await buyerApi.getCoupons()
-        setCoupons((res.data.coupons as Coupon[]) ?? [])
+        setCoupons(unwrapBuyerList<Coupon>(res.data, ["coupons"]))
       } catch (err) {
         console.error(err)
-        setError("Failed to load coupons.")
+        setError(getBuyerFetchError(err, "Failed to load coupons."))
       } finally {
         setLoading(false)
       }

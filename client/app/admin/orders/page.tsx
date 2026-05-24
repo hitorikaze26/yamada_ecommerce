@@ -136,14 +136,17 @@ export default function AdminOrdersPage() {
       try {
         const res = await adminApi.getOrders()
         setOrders((res.data.orders as AdminOrderDto[]) ?? [])
-      } catch (err: any) {
-        const status = err?.response?.status
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } })?.response?.status
         if (status === 404) {
           setOrders([])
           setError(null)
         } else {
           console.error("Failed to load orders", err)
-          setError("Failed to load orders. Please try again.")
+          const msg =
+            (err as { response?: { data?: { msg?: string } } })?.response?.data?.msg ||
+            "Failed to load orders. Please try again."
+          setError(msg)
         }
       } finally {
         setIsLoading(false)
@@ -368,7 +371,7 @@ export default function AdminOrdersPage() {
                     <div className="p-3 rounded-xl bg-muted/40 border text-right md:text-left">
                       <p className="text-xs text-muted-foreground mb-1">Total</p>
                       <p className="text-lg font-semibold">
-                        {formatPrice(orderDetail.total ?? 0)}
+                        {formatPrice(orderDetail.total ?? orderDetail.grandTotal ?? 0)}
                       </p>
                     </div>
                     <div className="p-3 rounded-xl bg-muted/40 border">

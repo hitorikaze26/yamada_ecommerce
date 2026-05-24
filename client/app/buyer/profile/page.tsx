@@ -8,6 +8,7 @@ import { Icon } from "@/components/ui/icon"
 import { GlassAlert } from "@/components/ui/glass-alert"
 import { useAuth } from "@/context/auth-context"
 import { buyerApi } from "@/lib/api"
+import { getBuyerFetchError } from "@/lib/buyer-fetch"
 
 interface BuyerProfileDto {
   givenName: string
@@ -68,7 +69,7 @@ export default function ProfilePage() {
         setAvatarUrl(profile.avatarUrl ?? null)
       } catch (err) {
         console.error("Failed to load profile", err)
-        setError("Failed to load profile. Please try again.")
+        setError(getBuyerFetchError(err, "Failed to load profile. Please try again."))
       } finally {
         setIsLoading(false)
       }

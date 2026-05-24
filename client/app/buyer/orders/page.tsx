@@ -30,6 +30,7 @@ import {
   orderStatusBadgeClass,
   shouldPollOrderStatus,
 } from "@/lib/buyer/order-status"
+import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 
 type OrderWithRider = Order & {
   riderDelivery?: { status?: string; proofPhotoUrl?: string | null; rider?: { id?: number; name?: string } }
@@ -72,7 +73,7 @@ function BuyerOrdersContent() {
     }
     try {
       const res = await ordersApi.getAll()
-      const fetchedOrders = (res.data.orders as Order[]) ?? []
+      const fetchedOrders = unwrapBuyerList<Order>(res.data, ["orders"])
       const sortedOrders = fetchedOrders.sort((a, b) => {
         const dateA = new Date(a.createdAt || 0).getTime()
         const dateB = new Date(b.createdAt || 0).getTime()
@@ -88,7 +89,7 @@ function BuyerOrdersContent() {
         setError(null)
       } else if (!opts?.silent) {
         console.error("Failed to load orders", err)
-        setError("Failed to load orders. Please try again.")
+        setError(getBuyerFetchError(err, "Failed to load orders. Please try again."))
       }
     } finally {
       if (!opts?.silent) setIsLoading(false)

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { buyerApi, resolveImageUrl } from "@/lib/api"
+import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import { Icon } from "@/components/ui/icon"
 
 interface FollowedStore {
@@ -37,7 +38,7 @@ export default function FollowingStoresPage() {
     const load = async () => {
       try {
         const res = await buyerApi.getFollowingStores()
-        const raw = (res.data.stores as Record<string, unknown>[]) ?? []
+        const raw = unwrapBuyerList<Record<string, unknown>>(res.data, ["stores"])
         setStores(
           raw.map((s) => ({
             storeId: Number(s.storeId ?? s.id ?? 0),
@@ -56,7 +57,7 @@ export default function FollowingStoresPage() {
         )
       } catch (err) {
         console.error(err)
-        setError("Failed to load following stores.")
+        setError(getBuyerFetchError(err, "Failed to load following stores."))
       } finally {
         setLoading(false)
       }

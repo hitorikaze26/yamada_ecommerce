@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Icon } from "@/components/ui/icon"
 import { chatApi } from "@/lib/api"
+import { getBuyerFetchError } from "@/lib/buyer-fetch"
 import { useRouter } from "next/navigation"
 
 const SUPPORT_EMAIL = "yamadaecommerce929@gmail.com"
@@ -17,8 +18,8 @@ export default function HelpCenterPage() {
       if (conv?.id) {
         router.push(`/home?openChat=${conv.id}`)
       }
-    } catch {
-      alert("Could not open support chat. Use the chat icon in the header.")
+    } catch (err) {
+      alert(getBuyerFetchError(err, "Could not open support chat. Use the chat icon in the header."))
     }
   }
 

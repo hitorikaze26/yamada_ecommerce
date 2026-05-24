@@ -3,6 +3,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Icon } from "@/components/ui/icon"
 import { adminApi } from "@/lib/api"
+import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 import StatCard from "@/components/dashboard/StatCard"
 
 interface AdminStats {
@@ -35,10 +36,10 @@ export default function AdminDashboard() {
           adminApi.getRefundRequests({ queue: "disputes" }),
         ])
 
-        const users = usersRes.data.users ?? []
-        const storeRegistrations = approvalsRes.data.StoreRegistrations ?? []
-        const underReview = reviewRes.data.products ?? []
-        const disputes = disputesRes.data.refunds ?? []
+        const users = unwrapAdminList(usersRes.data, ["users"])
+        const storeRegistrations = unwrapAdminList(approvalsRes.data, ["StoreRegistrations"])
+        const underReview = unwrapAdminList(reviewRes.data, ["products"])
+        const disputes = unwrapAdminList(disputesRes.data, ["refunds"])
 
         setStats({
           totalUsers: users.length,
@@ -50,7 +51,7 @@ export default function AdminDashboard() {
         setPendingRegistrations(storeRegistrations)
       } catch (err) {
         console.error("Failed to load admin dashboard data", err)
-        setError("Failed to load dashboard data. Please try again.")
+        setError(getAdminFetchError(err, "Failed to load dashboard data. Please try again."))
       } finally {
         setIsLoading(false)
       }
@@ -135,9 +136,9 @@ export default function AdminDashboard() {
               <p className="text-sm text-muted-foreground">No pending store registrations.</p>
             ) : (
               <div className="space-y-3">
-                {pendingRegistrations.map((reg, index) => (
+                {pendingRegistrations.map((reg) => (
                   <div
-                    key={index}
+                    key={(reg as { id?: number }).id ?? (reg as { "Store name"?: string })["Store name"]}
                     className="flex items-start justify-between gap-4 rounded-xl border bg-muted/40 px-4 py-3"
                   >
                     <div className="flex items-start gap-3">

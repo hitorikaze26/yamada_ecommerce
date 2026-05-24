@@ -263,6 +263,8 @@ function AdminUsersContent() {
         setDetailData((data as { products?: unknown[] })?.products ?? [])
       } else if (view === "deliveries") {
         setDetailData((data as { deliveries?: unknown[] })?.deliveries ?? [])
+      } else if (view === "orders") {
+        setDetailData((data as { orders?: unknown[] })?.orders ?? [])
       } else {
         setDetailData(data)
       }

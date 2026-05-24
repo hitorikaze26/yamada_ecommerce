@@ -37,12 +37,17 @@ def serialize_order_for_admin(order_dict: dict) -> dict:
     """Wrap order serializer output with an explicit allowlist for support use."""
     allowed = {
         "id",
+        "orderNumber",
         "buyerId",
         "storeId",
         "status",
+        "subtotal",
+        "shipping",
+        "total",
         "totalAmount",
         "shippingFee",
         "grandTotal",
+        "adminCommission",
         "paymentMethod",
         "createdAt",
         "updatedAt",
@@ -50,7 +55,10 @@ def serialize_order_for_admin(order_dict: dict) -> dict:
         "buyer",
         "store",
         "shippingAddress",
+        "shippingAddressParts",
+        "riderDelivery",
         "deliveries",
+        "financialBreakdown",
         "paymentTransaction",
         "notes",
     }

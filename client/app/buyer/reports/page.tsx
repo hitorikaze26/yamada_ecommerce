@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Icon } from "@/components/ui/icon"
 import { reportsApi, resolveImageUrl } from "@/lib/api"
+import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import type { ProblemReportDto, ReportStatusType } from "@/lib/types"
 import { StoreNameLink } from "@/components/store/store-name-link"
 
@@ -52,10 +53,10 @@ export default function BuyerReportsPage() {
       setError(null)
       try {
         const res = await reportsApi.getMyReports()
-        setReports((res.data.reports as unknown as ProblemReportDto[]) ?? [])
+        setReports(unwrapBuyerList<ProblemReportDto>(res.data, ["reports"]))
       } catch (err) {
         console.error("Failed to load reports", err)
-        setError("Failed to load your reports. Please try again.")
+        setError(getBuyerFetchError(err, "Failed to load your reports. Please try again."))
       } finally {
         setIsLoading(false)
       }

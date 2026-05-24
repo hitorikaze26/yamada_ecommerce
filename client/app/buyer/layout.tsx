@@ -10,6 +10,16 @@ import { Icon } from "@/components/ui/icon"
 import { useAuth } from "@/context/auth-context"
 import { buyerApi } from "@/lib/api"
 
+function readBuyerProfile(data: unknown): { givenName?: string; surname?: string } | null {
+  if (!data || typeof data !== "object") return null
+  const record = data as Record<string, unknown>
+  const profile = (record.profile ?? record) as Record<string, unknown>
+  return {
+    givenName: profile.givenName as string | undefined,
+    surname: profile.surname as string | undefined,
+  }
+}
+
 const sidebarLinks = [
   { href: "/buyer", label: "Dashboard", icon: "home" },
   { href: "/buyer/orders", label: "My Orders", icon: "shopping-bag" },
@@ -35,8 +45,8 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
     const fetchProfileName = async () => {
       try {
         const res = await buyerApi.getProfile()
-        const profile = res.data.profile as { givenName?: string; surname?: string }
-        const fullName = `${profile.givenName ?? ""} ${profile.surname ?? ""}`.trim()
+        const profile = readBuyerProfile(res.data)
+        const fullName = `${profile?.givenName ?? ""} ${profile?.surname ?? ""}`.trim()
         if (fullName) {
           setDisplayName(fullName)
         }
