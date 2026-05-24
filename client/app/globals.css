@@ -1,0 +1,232 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Yamada E-commerce Theme - Feminine Modern Palette */
+:root {
+  /* Primary Feminine Colors */
+  --color-blush: #f4c9d6;
+  --color-rosewood: #c97a8c;
+
+  /* Neutrals */
+  --color-off-white: #faf7f9;
+  --color-warm-gray: #e5e1e6;
+  --color-warm-beige: #f3e7dd;
+
+  /* Contrasts */
+  --color-navy: #1e2a3a;
+  --color-charcoal: #2e2e2e;
+
+  /* Optional Accents */
+  --color-lilac: #d7c8f2;
+  --color-peach: #f9d9c4;
+
+  /* Semantic tokens */
+  --background: #faf7f9;
+  --foreground: #2e2e2e;
+  --card: #ffffff;
+  --card-foreground: #2e2e2e;
+  --popover: #ffffff;
+  --popover-foreground: #2e2e2e;
+  --primary: #c97a8c;
+  --primary-foreground: #ffffff;
+  --secondary: #f4c9d6;
+  --secondary-foreground: #2e2e2e;
+  --muted: #f3e7dd;
+  --muted-foreground: #6b6b6b;
+  --accent: #d7c8f2;
+  --accent-foreground: #2e2e2e;
+  --destructive: #e53e3e;
+  --destructive-foreground: #ffffff;
+  --border: #e5e1e6;
+  --input: #e5e1e6;
+  --ring: #c97a8c;
+
+  /* Chart colors */
+  --chart-1: #c97a8c;
+  --chart-2: #f4c9d6;
+  --chart-3: #d7c8f2;
+  --chart-4: #f9d9c4;
+  --chart-5: #1e2a3a;
+
+  --radius: 1rem;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #2e2e2e;
+  --sidebar-primary: #c97a8c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4c9d6;
+  --sidebar-accent-foreground: #2e2e2e;
+  --sidebar-border: #e5e1e6;
+  --sidebar-ring: #c97a8c;
+}
+
+.dark {
+  /* Inverted palette for dark mode */
+  --color-blush: #c97a8c;
+  --color-rosewood: #f4c9d6;
+
+  --background: #1e2a3a;
+  --foreground: #faf7f9;
+  --card: #2e2e2e;
+  --card-foreground: #faf7f9;
+  --popover: #2e2e2e;
+  --popover-foreground: #faf7f9;
+  --primary: #f4c9d6;
+  --primary-foreground: #1e2a3a;
+  --secondary: #c97a8c;
+  --secondary-foreground: #faf7f9;
+  --muted: #374151;
+  --muted-foreground: #9ca3af;
+  --accent: #d7c8f2;
+  --accent-foreground: #1e2a3a;
+  --destructive: #f87171;
+  --destructive-foreground: #1e2a3a;
+  --border: #374151;
+  --input: #374151;
+  --ring: #f4c9d6;
+
+  /* Chart colors for dark mode */
+  --chart-1: #f4c9d6;
+  --chart-2: #c97a8c;
+  --chart-3: #d7c8f2;
+  --chart-4: #f9d9c4;
+  --chart-5: #faf7f9;
+
+  /* Sidebar dark */
+  --sidebar: #2e2e2e;
+  --sidebar-foreground: #faf7f9;
+  --sidebar-primary: #f4c9d6;
+  --sidebar-primary-foreground: #1e2a3a;
+  --sidebar-accent: #374151;
+  --sidebar-accent-foreground: #faf7f9;
+  --sidebar-border: #374151;
+  --sidebar-ring: #f4c9d6;
+}
+
+@theme inline {
+  --font-sans: "Poppins", "Poppins Fallback", sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
+
+  /* Yamada custom colors */
+  --color-blush: var(--color-blush);
+  --color-rosewood: var(--color-rosewood);
+  --color-off-white: var(--color-off-white);
+  --color-warm-gray: var(--color-warm-gray);
+  --color-warm-beige: var(--color-warm-beige);
+  --color-navy: var(--color-navy);
+  --color-charcoal: var(--color-charcoal);
+  --color-lilac: var(--color-lilac);
+  --color-peach: var(--color-peach);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    cursor: pointer;
+  }
+}
+
+/* Smooth theme transition */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
+
+/* Landing hero header focus-in animation */
+.focus-in-contract {
+  -webkit-animation: focus-in-contract 0.8s ease-out 0.1s both;
+  animation: focus-in-contract 0.8s ease-out 0.1s both;
+  will-change: filter, letter-spacing;
+}
+
+@-webkit-keyframes focus-in-contract {
+  0% {
+    letter-spacing: 0.4em;
+    -webkit-filter: blur(6px);
+    filter: blur(6px);
+  }
+  100% {
+    -webkit-filter: blur(0px);
+    filter: blur(0px);
+  }
+}
+
+@keyframes focus-in-contract {
+  0% {
+    letter-spacing: 0.4em;
+    -webkit-filter: blur(6px);
+    filter: blur(6px);
+  }
+  100% {
+    -webkit-filter: blur(0px);
+    filter: blur(0px);
+  }
+}
