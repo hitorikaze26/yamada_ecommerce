@@ -154,13 +154,19 @@ def getUsers():
                 .where(func.lower(Role.name) == role_filter)
                 .distinct()
             )
-        users = db.session.execute(stmt).scalars().all()
+        users = db.session.execute(stmt).scalars().unique().all()
         usersJSON = serialize_users_for_admin(users)
         return jsonify(users=usersJSON), 200
     except Exception as exc:
         current_app.logger.exception("[admin/get-users] failed: %s", exc)
         db.session.rollback()
-        return jsonify(msg='Error loading users. Check server logs and database migrations.'), 500
+        return (
+            jsonify(
+                msg="Error loading users. Run flask db upgrade on Railway, then redeploy.",
+                detail=str(exc)[:300],
+            ),
+            500,
+        )
 
 
 @admin_bp.get('/users/<int:user_id>/orders')
@@ -850,14 +856,15 @@ def getStoreRegistrations():
     from flask import current_app
 
     try:
+        pending = StoreRequestStatus.PENDING
         storeRegistrations = db.session.execute(
             select(StoreRegistration)
-            .where(StoreRegistration.request_status == StoreRequestStatus.PENDING)
+            .where(StoreRegistration.request_status == pending)
             .options(
                 selectinload(StoreRegistration.user),
                 selectinload(StoreRegistration.seller),
             )
-            .order_by(StoreRegistration.created_at.desc())
+            .order_by(StoreRegistration.id.desc())
         ).scalars().all()
         storeRegistrationsJSON = []
         for registration in storeRegistrations:
@@ -869,7 +876,13 @@ def getStoreRegistrations():
     except Exception as exc:
         current_app.logger.exception("[admin/get-store-registrations] failed: %s", exc)
         db.session.rollback()
-        return jsonify(msg='Error loading store registrations.'), 500
+        return (
+            jsonify(
+                msg="Error loading store registrations. Run flask db upgrade on Railway.",
+                detail=str(exc)[:300],
+            ),
+            500,
+        )
     
 @admin_bp.post('/accept-store-registration/<int:registration_id>')
 @jwt_required()
@@ -1085,9 +1098,16 @@ def list_products():
             )
 
         return jsonify(products=result), 200
-    except Exception:
+    except Exception as exc:
+        current_app.logger.exception("[admin/products] failed: %s", exc)
         db.session.rollback()
-        return jsonify(msg='Error occurred!'), 500
+        return (
+            jsonify(
+                msg="Error loading products. Run flask db upgrade on Railway.",
+                detail=str(exc)[:300],
+            ),
+            500,
+        )
 
 
 @admin_bp.get('/products/moderation-queue')

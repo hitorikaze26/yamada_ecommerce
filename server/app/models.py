@@ -39,9 +39,11 @@ class RoleTypes(enum.Enum):
     RIDER=4
 
 class StoreRequestStatus(enum.Enum):
-    ACCEPTED=1
-    REJECTED=2
-    PENDING=3
+    """Stored as name strings in PostgreSQL (VARCHAR) after migration db4976136a6f."""
+
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    PENDING = "PENDING"
 
 class OrderStatus(enum.Enum):
     PENDING = "pending"
@@ -405,7 +407,10 @@ class StoreRegistration(Base):
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id', ondelete='CASCADE'))
     seller_id: Mapped[int] = mapped_column(ForeignKey('seller_profiles.id', ondelete='CASCADE'), nullable=True)
-    request_status: Mapped[StoreRequestStatus] = mapped_column(Enum(StoreRequestStatus), default=StoreRequestStatus.PENDING)
+    request_status: Mapped[StoreRequestStatus] = mapped_column(
+        Enum(StoreRequestStatus, values_callable=_enum_values),
+        default=StoreRequestStatus.PENDING,
+    )
     store_purpose: Mapped[str] = mapped_column(nullable=True)
     shop_name: Mapped[str] = mapped_column(nullable=True)
     tagline: Mapped[str] = mapped_column(nullable=True)
