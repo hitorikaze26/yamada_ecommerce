@@ -211,7 +211,7 @@ def downgrade():
         op.add_column('problem_reports',
                       sa.Column('rider_id', sa.BIGINT(), nullable=True))
         op.create_foreign_key(
-            'problem_reports_ibfk_4', 'problem_reports', 'user',
+            None, 'problem_reports', 'user',
             ['rider_id'], ['id'], ondelete='SET NULL',
         )
 
