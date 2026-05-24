@@ -38,6 +38,10 @@ def column_names(table: str) -> set[str]:
     return {col["name"] for col in inspect(get_bind()).get_columns(table)}
 
 
+def has_column(table: str, column: str) -> bool:
+    return column in column_names(table)
+
+
 def fk_name_for_column(table: str, column: str) -> str | None:
     for fk in inspect(get_bind()).get_foreign_keys(table):
         if column in fk.get("constrained_columns", []):
