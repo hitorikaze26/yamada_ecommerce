@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from dialect_helpers import is_postgresql, table_exists
+from dialect_helpers import enum_for_create_table, is_postgresql, table_exists
 
 from alembic import op
 import sqlalchemy as sa
@@ -22,8 +22,6 @@ depends_on = None
 
 
 def upgrade():
-    bind = op.get_bind()
-
     if not table_exists('seller_wallets'):
         op.create_table(
             'seller_wallets',
@@ -37,10 +35,9 @@ def upgrade():
         )
 
     if not table_exists('payment_transactions'):
-        payment_status = sa.Enum(
+        payment_status = enum_for_create_table(
             'held', 'settled', 'refunded', 'failed', name='paymentstatus'
         )
-        payment_status.create(bind, checkfirst=True)
         status_default = (
             sa.text("'held'::paymentstatus")
             if is_postgresql()

@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from dialect_helpers import bool_false_default, is_postgresql, table_exists
+from dialect_helpers import enum_for_create_table, is_postgresql, table_exists
 
 from alembic import op
 import sqlalchemy as sa
@@ -33,9 +33,7 @@ def upgrade():
     if table_exists('refund_requests'):
         return
 
-    bind = op.get_bind()
-    refund_status = sa.Enum(*_REFUND_STATUS_VALUES, name='refundstatus')
-    refund_status.create(bind, checkfirst=True)
+    refund_status = enum_for_create_table(*_REFUND_STATUS_VALUES, name='refundstatus')
 
     status_default = (
         sa.text("'requested'::refundstatus")

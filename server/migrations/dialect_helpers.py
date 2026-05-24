@@ -68,3 +68,16 @@ def pg_rename_column(table: str, old_name: str, new_name: str) -> None:
 def quote_user_table() -> str:
     """Quote reserved table name ``user`` for PostgreSQL."""
     return '"user"' if is_postgresql() else "user"
+
+
+def enum_for_create_table(*values: str, name: str) -> sa.Enum:
+    """Create PostgreSQL enum type once; return Enum with create_type=False for DDL.
+
+    Without create_type=False, op.create_table / op.add_column tries to CREATE TYPE
+    again and fails with DuplicateObject if the type was already created.
+    """
+    enum_type = sa.Enum(*values, name=name)
+    if is_postgresql():
+        enum_type.create(get_bind(), checkfirst=True)
+        return sa.Enum(*values, name=name, create_type=False)
+    return enum_type

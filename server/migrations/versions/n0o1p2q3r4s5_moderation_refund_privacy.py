@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from dialect_helpers import (
     bool_false_default,
     column_names,
+    enum_for_create_table,
     is_mysql,
     is_postgresql,
     pg_add_enum_value,
@@ -32,30 +33,24 @@ _REFUND_STATUS_NEW_VALUES = ("disputed", "evidence_requested", "admin_review")
 
 
 def _add_moderation_status_column() -> None:
+    if not table_exists("products"):
+        return
     if "moderation_status" in column_names("products"):
         return
 
-    if is_postgresql():
-        mod_enum = sa.Enum(*_MODERATION_VALUES, name="productmoderationstatus")
-        mod_enum.create(op.get_bind(), checkfirst=True)
-        op.add_column(
-            "products",
-            sa.Column(
-                "moderation_status",
-                mod_enum,
-                nullable=False,
-                server_default=sa.text("'active'::productmoderationstatus"),
-            ),
-        )
-        return
-
+    mod_enum = enum_for_create_table(*_MODERATION_VALUES, name="productmoderationstatus")
+    status_default = (
+        sa.text("'active'::productmoderationstatus")
+        if is_postgresql()
+        else "active"
+    )
     op.add_column(
         "products",
         sa.Column(
             "moderation_status",
-            sa.Enum(*_MODERATION_VALUES, name="productmoderationstatus"),
+            mod_enum,
             nullable=False,
-            server_default="active",
+            server_default=status_default,
         ),
     )
 
