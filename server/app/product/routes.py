@@ -463,20 +463,14 @@ def createProduct():
 
         # Handle optional uploaded images and videos when using multipart/form-data
         if not request.is_json:
-            upload_root = current_app.static_folder or os.path.join(current_app.root_path, 'static')
-
-            # Images
-            images_dir = os.path.join(upload_root, 'product_images')
-            os.makedirs(images_dir, exist_ok=True)
+            from app.utils.upload import save_upload
 
             def save_image(file_obj, suffix: str) -> str | None:
                 if not file_obj or not file_obj.mimetype.startswith('image/'):
                     return None
                 safe_name = secure_filename(file_obj.filename or 'image')
                 filename = f"product_{product.id or 'new'}_{suffix}_{safe_name}"
-                filepath = os.path.join(images_dir, filename)
-                file_obj.save(filepath)
-                return os.path.join('product_images', filename)
+                return save_upload(file_obj, "product_images", filename=filename)
 
             main_image = request.files.get('main_image')
             additional_images = request.files.getlist('additional_images')
@@ -507,9 +501,6 @@ def createProduct():
             # Videos
             videos = request.files.getlist('videos')
             if videos:
-                videos_dir = os.path.join(upload_root, 'product_videos')
-                os.makedirs(videos_dir, exist_ok=True)
-
                 timestamp = int(datetime.datetime.now().timestamp())
                 for index, file in enumerate(videos):
                     if not file:
@@ -520,11 +511,9 @@ def createProduct():
 
                     safe_name = secure_filename(file.filename or 'video')
                     filename = f"product_{product.id or 'new'}_{timestamp}_{index}_{safe_name}"
-                    filepath = os.path.join(videos_dir, filename)
-                    file.save(filepath)
-
-                    # Store relative path in ProductMedia so frontend can later fetch/display
-                    relative_path = os.path.join('product_videos', filename)
+                    relative_path = save_upload(
+                        file, "product_videos", filename=filename
+                    )
                     media = ProductMedia(
                         product=product,
                         media_type='video',
@@ -535,8 +524,9 @@ def createProduct():
         db.session.commit()
 
         return jsonify(msg="Succesfully created product!"), 201
-    except:
+    except Exception:
         db.session.rollback()
+        current_app.logger.exception("createProduct failed")
         return jsonify(msg="Error occurred!"), 500
     
 @products_bp.post('/deactivate/<int:product_id>')

@@ -34,7 +34,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     e.preventDefault()
     e.stopPropagation()
     if (!isAuthenticated || getRole() !== "buyer") {
-      router.push("/login?role=buyer")
+      router.push("/auth/login?role=buyer")
       return
     }
     if (wishlistBusy) return

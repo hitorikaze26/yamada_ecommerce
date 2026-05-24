@@ -32,7 +32,7 @@ export function StoreProfileActions({
 
   const requireBuyer = (): boolean => {
     if (!isAuthenticated || getRole() !== "buyer") {
-      router.push(`/login?role=buyer&redirect=${encodeURIComponent(`/store/${storeId}`)}`)
+      router.push(`/auth/login?role=buyer&redirect=${encodeURIComponent(`/store/${storeId}`)}`)
       return false
     }
     return true

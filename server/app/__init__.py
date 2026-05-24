@@ -75,6 +75,13 @@ def create_app(test_config=None):
                 raise RuntimeError(
                     f"Missing required env vars in production: {', '.join(missing)}"
                 )
+            if not os.environ.get("SUPABASE_URL") or not os.environ.get(
+                "SUPABASE_SERVICE_KEY"
+            ):
+                app.logger.warning(
+                    "SUPABASE_URL / SUPABASE_SERVICE_KEY not set — uploads use "
+                    "ephemeral local disk on Railway."
+                )
     else:
         app.config.from_object(config["testing"])
 
@@ -105,7 +112,19 @@ def create_app(test_config=None):
 
     @app.route("/api/health")
     def health_check():
-        return {"status": "ok"}, 200
+        checks = {"api": "ok", "database": "unknown", "storage": "local"}
+        try:
+            from sqlalchemy import text
+
+            db.session.execute(text("SELECT 1"))
+            checks["database"] = "ok"
+        except Exception as exc:
+            checks["database"] = "error"
+            checks["database_error"] = str(exc)[:200]
+        if os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY"):
+            checks["storage"] = "supabase"
+        status_code = 200 if checks["database"] == "ok" else 503
+        return {"status": "ok" if status_code == 200 else "degraded", "checks": checks}, status_code
 
     from .notifications.realtime import init_socketio
     init_socketio(app)

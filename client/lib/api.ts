@@ -1,13 +1,33 @@
 import axios, { type AxiosInstance, type AxiosError, type CancelTokenSource } from "axios"
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:5000/api"
+const DEFAULT_DEV_API = "http://127.0.0.1:5000/api"
+
+function resolveApiBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_API_BASE_URL?.trim()
+  if (configured) {
+    return configured.endsWith("/api")
+      ? configured.replace(/\/$/, "")
+      : `${configured.replace(/\/$/, "")}/api`
+  }
+  if (process.env.NODE_ENV === "production") {
+    console.error(
+      "[Yamada] NEXT_PUBLIC_API_BASE_URL is not set. Set it in Vercel to your Railway URL ending in /api.",
+    )
+  }
+  return DEFAULT_DEV_API
+}
+
+export const API_BASE_URL = resolveApiBaseUrl()
 export const API_BASE_ORIGIN = API_BASE_URL.replace(/\/api(?:\/)?$/, "")
+
+export const isApiConfiguredForProduction =
+  Boolean(process.env.NEXT_PUBLIC_API_BASE_URL?.trim()) ||
+  process.env.NODE_ENV !== "production"
 
 // Create axios instance with default config
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -95,7 +115,11 @@ apiClient.interceptors.response.use(
 
       // Let AuthProvider handle 401s from /accounts/protected (session check)
       // and let the login page handle 401s from /accounts/login (wrong credentials)
-      if (requestUrl.includes("/accounts/protected") || requestUrl.includes("/accounts/login")) {
+      if (
+        requestUrl.includes("/accounts/protected") ||
+        requestUrl.includes("/accounts/login") ||
+        requestUrl.includes("/accounts/refresh")
+      ) {
         return Promise.reject(error)
       }
 
@@ -128,6 +152,8 @@ export const authApi = {
     apiClient.post("/accounts/login", { username: email, password, role }),
 
   logout: () => apiClient.post("/accounts/logout"),
+
+  refresh: () => apiClient.post("/accounts/refresh"),
 
   checkSession: () => apiClient.get("/accounts/protected"),
 
@@ -1006,6 +1032,7 @@ export interface CheckoutData {
   paymentMethod: string
   items: CartItem[]
   shippingFee?: number
+  idempotencyKey?: string
 }
 
 export interface CartItem {

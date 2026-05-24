@@ -884,6 +884,7 @@ class Order(Base):
     delivery_notes: Mapped[str] = mapped_column(TEXT, nullable=True)
     coupon_id: Mapped[int] = mapped_column(ForeignKey('coupons.id', ondelete='SET NULL'), nullable=True)
     coupon_discount: Mapped[float] = mapped_column(Float, default=0.0)
+    idempotency_key: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     created_at: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(nullable=True, onupdate=lambda: datetime.datetime.now())
 

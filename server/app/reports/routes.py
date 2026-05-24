@@ -316,8 +316,7 @@ def submit_report():
         db.session.add(report)
         db.session.flush()
 
-        upload_folder = os.path.join(current_app.root_path, 'static', 'report_evidence')
-        os.makedirs(upload_folder, exist_ok=True)
+        from app.utils.upload import save_upload
 
         files = request.files.getlist('evidence')
         file_count = 0
@@ -328,12 +327,13 @@ def submit_report():
                 filename = secure_filename(f.filename)
                 ts = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
                 unique_name = f'report_{report.id}_{ts}_{filename}'
-                filepath = os.path.join(upload_folder, unique_name)
-                f.save(filepath)
+                stored_path = save_upload(
+                    f, "report_evidence", filename=unique_name
+                )
 
                 evidence = ReportEvidence(
                     report_id=report.id,
-                    file_path=f'report_evidence/{unique_name}',
+                    file_path=stored_path,
                     file_type='image',
                     original_filename=filename,
                 )

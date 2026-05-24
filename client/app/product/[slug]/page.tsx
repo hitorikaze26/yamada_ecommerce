@@ -522,7 +522,7 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
                   onClick={() => {
                     if (!product) return
                     if (!isAuthenticated || getRole() !== "buyer") {
-                      router.push("/login?role=buyer")
+                      router.push("/auth/login?role=buyer")
                       return
                     }
                     setWishlistBusy(true)

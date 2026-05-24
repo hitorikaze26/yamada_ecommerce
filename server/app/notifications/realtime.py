@@ -12,8 +12,24 @@ from socketio.exceptions import ConnectionRefusedError
 from app.models import db
 
 import os
+
+
+def _socketio_cors_origins():
+    explicit = os.environ.get("SOCKETIO_CORS", "").strip()
+    if explicit:
+        if explicit == "*":
+            return "*"
+        return [o.strip() for o in explicit.replace(";", ",").split(",") if o.strip()]
+    if os.environ.get("FLASK_ENV", "development") == "production":
+        raw = os.environ.get("CORS_ORIGINS", "")
+        origins = [o.strip() for o in raw.replace(";", ",").split(",") if o.strip()]
+        if origins:
+            return origins
+    return "*"
+
+
 socketio = SocketIO(
-    cors_allowed_origins=os.environ.get("SOCKETIO_CORS", "*"),
+    cors_allowed_origins=_socketio_cors_origins(),
     async_mode="threading",
 )
 
@@ -30,7 +46,7 @@ def init_socketio(app) -> SocketIO:
     """Attach SocketIO to the Flask app and register connection handlers."""
     socketio.init_app(
         app,
-        cors_allowed_origins=os.environ.get("SOCKETIO_CORS", "*"),
+        cors_allowed_origins=_socketio_cors_origins(),
         async_mode="threading",
         logger=False,
         engineio_logger=False,

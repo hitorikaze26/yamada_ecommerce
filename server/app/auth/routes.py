@@ -140,6 +140,25 @@ def _user_is_verified(user: User, role_ids: list) -> bool:
     return is_verified
 
 
+def _build_jwt_claims(user: User) -> dict:
+    user_roles = _user_role_ids(user.id)
+    claims = {
+        "is_buyer": True,
+        "is_seller": False,
+        "is_rider": False,
+        "is_admin": False,
+    }
+    if RoleTypes.SELLER.value in user_roles:
+        claims["is_seller"] = True
+    if RoleTypes.RIDER.value in user_roles:
+        claims["is_rider"] = True
+    if RoleTypes.ADMIN.value in user_roles:
+        claims["is_rider"] = False
+        claims["is_seller"] = False
+        claims["is_admin"] = True
+    return claims
+
+
 def _session_snapshot(user: User) -> dict:
     role_ids = _user_role_ids(user.id)
     return {
@@ -224,21 +243,7 @@ def login():
                 403,
             )
 
-    claims={
-        'is_buyer': True,
-        'is_seller': False,
-        'is_rider': False,
-        'is_admin': False,
-    }
-
-    if RoleTypes.SELLER.value in user_roles:
-        claims['is_seller']=True
-    if RoleTypes.RIDER.value in user_roles:
-        claims['is_rider']=True
-    if RoleTypes.ADMIN.value in user_roles:
-        claims['is_rider']=False
-        claims['is_seller']=False
-        claims['is_admin']=True
+    claims = _build_jwt_claims(user)
 
     is_verified = _user_is_verified(user, user_roles)
 
@@ -262,6 +267,23 @@ def logout():
     unset_jwt_cookies(response)
 
     return response
+
+
+@auth_bp.post('/refresh')
+@jwt_required()
+def refresh_access():
+    """Issue a new access token for the current session (cookie + JSON)."""
+    user = db.session.execute(
+        select(User).where(User.id == current_user.id)
+    ).scalar_one_or_none()
+    if user is None:
+        return jsonify(msg="User not found"), 404
+
+    claims = _build_jwt_claims(user)
+    access_token = create_access_token(identity=user.id, additional_claims=claims)
+    response = jsonify(access_token=access_token)
+    set_access_cookies(response, access_token)
+    return response, 200
 
 
 @auth_bp.put('/change-password')
@@ -385,6 +407,7 @@ def delete_account():
 
 
 @auth_bp.post('/register')
+@limiter.limit("5 per minute")
 def register():
     """Legacy simple register endpoint (kept for compatibility)."""
     if not request.is_json:
@@ -413,6 +436,7 @@ def register():
 
 
 @auth_bp.post('/register-rider')
+@limiter.limit("5 per minute")
 def register_rider():
 	"""Full rider registration: create User + RiderProfile.
 
@@ -481,10 +505,7 @@ def register_rider():
 			user=user,
 		)
 
-		# Handle license and OR/CR uploads
-		upload_root = current_app.static_folder or os.path.join(current_app.root_path, 'static')
-		rider_docs_dir = os.path.join(upload_root, 'rider_docs')
-		os.makedirs(rider_docs_dir, exist_ok=True)
+		from app.utils.upload import save_upload
 
 		def save_doc(field_name: str, prefix: str) -> str | None:
 			file = request.files.get(field_name)
@@ -496,9 +517,7 @@ def register_rider():
 
 			safe_name = secure_filename(file.filename or field_name)
 			filename = f"{prefix}_{email}_{int(datetime.now(timezone.utc).timestamp())}_{safe_name}"
-			filepath = os.path.join(rider_docs_dir, filename)
-			file.save(filepath)
-			return f"rider_docs/{filename}"
+			return save_upload(file, "rider_docs", filename=filename)
 
 		try:
 			license_path = save_doc('license', 'license')
@@ -537,6 +556,7 @@ def register_rider():
 
 
 @auth_bp.post('/register-seller')
+@limiter.limit("5 per minute")
 def register_seller():
     """Full seller registration: create User + Seller + StoreRegistration.
 
@@ -639,18 +659,7 @@ def register_seller():
             user=user,
         )
 
-        # Prepare upload directories
-        upload_root = current_app.static_folder or os.path.join(current_app.root_path, 'static')
-        seller_ids_dir = os.path.join(upload_root, 'seller_ids')
-        dti_dir = os.path.join(upload_root, 'seller_dti')
-        bir_dir = os.path.join(upload_root, 'seller_bir')
-        permit_dir = os.path.join(upload_root, 'seller_permits')
-        avatars_dir = os.path.join(upload_root, 'seller_avatars')
-        os.makedirs(seller_ids_dir, exist_ok=True)
-        os.makedirs(dti_dir, exist_ok=True)
-        os.makedirs(bir_dir, exist_ok=True)
-        os.makedirs(permit_dir, exist_ok=True)
-        os.makedirs(avatars_dir, exist_ok=True)
+        from app.utils.upload import save_upload
 
         def save_logo() -> str | None:
             file = request.files.get('logo')
@@ -663,11 +672,9 @@ def register_seller():
                 )
             safe_name = secure_filename(file.filename or 'logo')
             filename = f"logo_{email}_{int(datetime.now(timezone.utc).timestamp())}_{safe_name}"
-            filepath = os.path.join(avatars_dir, filename)
-            file.save(filepath)
-            return f"seller_avatars/{filename}"
+            return save_upload(file, "seller_avatars", filename=filename)
 
-        def save_doc(field_name: str, target_dir: str, prefix: str) -> str | None:
+        def save_doc(field_name: str, folder: str, prefix: str) -> str | None:
             file = request.files.get(field_name)
             if not file or not file.filename:
                 current_app.logger.info(f"[register_seller] {field_name}: no file provided")
@@ -685,21 +692,18 @@ def register_seller():
 
             safe_name = secure_filename(file.filename or field_name)
             filename = f"{prefix}_{email}_{int(datetime.now(timezone.utc).timestamp())}_{safe_name}"
-            filepath = os.path.join(target_dir, filename)
-            file.save(filepath)
-            # Return relative path from static/
-            return f"{os.path.basename(target_dir)}/{filename}"
+            return save_upload(file, folder, filename=filename)
 
         try:
             # Save documents
             current_app.logger.info("[register_seller] Starting document save...")
-            dti_path = save_doc('dti', dti_dir, 'dti')
+            dti_path = save_doc('dti', 'seller_dti', 'dti')
             current_app.logger.info(f"[register_seller] dti_path={dti_path}")
-            bir_tin_path = save_doc('birTin', bir_dir, 'birtin')
+            bir_tin_path = save_doc('birTin', 'seller_bir', 'birtin')
             current_app.logger.info(f"[register_seller] bir_tin_path={bir_tin_path}")
-            business_permit_path = save_doc('businessPermit', permit_dir, 'permit')
+            business_permit_path = save_doc('businessPermit', 'seller_permits', 'permit')
             current_app.logger.info(f"[register_seller] business_permit_path={business_permit_path}")
-            valid_id_path = save_doc('validId', seller_ids_dir, 'seller_id')
+            valid_id_path = save_doc('validId', 'seller_ids', 'seller_id')
             current_app.logger.info(f"[register_seller] valid_id_path={valid_id_path}")
             logo_path = save_logo()
             if logo_path:
@@ -765,6 +769,7 @@ def register_seller():
 
 
 @auth_bp.post('/register-buyer')
+@limiter.limit("5 per minute")
 def register_buyer():
     """Full buyer registration: create User + BuyerProfile with pending verification.
 
@@ -841,17 +846,15 @@ def register_buyer():
             if file.mimetype not in {"image/jpeg", "image/png", "image/jpg", "image/webp", "application/pdf"}:
                 return jsonify(msg="Invalid file type for valid ID"), 400
 
-            upload_root = current_app.static_folder or os.path.join(current_app.root_path, 'static')
-            ids_dir = os.path.join(upload_root, 'buyer_ids')
-            os.makedirs(ids_dir, exist_ok=True)
+            from app.utils.upload import save_upload
 
             safe_name = secure_filename(file.filename or 'valid_id')
             filename = f"buyer_{email}_{int(datetime.now(timezone.utc).timestamp())}_{safe_name}"
-            filepath = os.path.join(ids_dir, filename)
 
             try:
-                file.save(filepath)
-                buyer_profile.valid_id_path = f"buyer_ids/{filename}"
+                buyer_profile.valid_id_path = save_upload(
+                    file, "buyer_ids", filename=filename
+                )
                 current_app.logger.info(
                     "[register_buyer] saved valid ID for email=%s to path=%s",
                     email,
@@ -1182,9 +1185,7 @@ def upload_rider_documents():
     if rider_profile is None:
         return jsonify(msg="Rider profile not found"), 404
 
-    upload_root = current_app.static_folder or os.path.join(current_app.root_path, 'static')
-    rider_docs_dir = os.path.join(upload_root, 'rider_docs')
-    os.makedirs(rider_docs_dir, exist_ok=True)
+    from app.utils.upload import save_upload
 
     def save_doc(field_name: str, prefix: str) -> str | None:
         file = request.files.get(field_name)
@@ -1194,9 +1195,7 @@ def upload_rider_documents():
             raise ValueError(f"Invalid file type for {field_name}")
         safe_name = secure_filename(file.filename or field_name)
         filename = f"{prefix}_{user.id}_{int(datetime.now(timezone.utc).timestamp())}_{safe_name}"
-        filepath = os.path.join(rider_docs_dir, filename)
-        file.save(filepath)
-        return f"rider_docs/{filename}"
+        return save_upload(file, "rider_docs", filename=filename)
 
     try:
         license_path = save_doc('license', 'license')
@@ -1403,23 +1402,19 @@ def upload_buyer_avatar():
     if file.mimetype not in {"image/jpeg", "image/png", "image/jpg", "image/webp"}:
         return jsonify(msg="Invalid file type"), 400
 
-    upload_root = current_app.static_folder or os.path.join(current_app.root_path, 'static')
-    avatars_dir = os.path.join(upload_root, 'avatars')
-    os.makedirs(avatars_dir, exist_ok=True)
+    from app.utils.upload import public_url_for_stored_path, save_upload
 
     safe_name = secure_filename(file.filename or 'avatar')
     filename = f"buyer_{user.id}_{int(datetime.now(timezone.utc).timestamp())}_{safe_name}"
-    filepath = os.path.join(avatars_dir, filename)
 
     try:
-        file.save(filepath)
-        buyer_profile.avatar_path = f"avatars/{filename}"
+        buyer_profile.avatar_path = save_upload(file, "avatars", filename=filename)
         db.session.commit()
     except Exception:
         db.session.rollback()
         return jsonify(msg="Failed to save avatar"), 500
 
-    avatar_url = url_for('static', filename=buyer_profile.avatar_path, _external=True)
+    avatar_url = public_url_for_stored_path(buyer_profile.avatar_path)
     return jsonify(avatarUrl=avatar_url), 200
 
 
@@ -1443,23 +1438,19 @@ def upload_rider_avatar():
     if file.mimetype not in {"image/jpeg", "image/png", "image/jpg", "image/webp"}:
         return jsonify(msg="Invalid file type"), 400
 
-    upload_root = current_app.static_folder or os.path.join(current_app.root_path, 'static')
-    avatars_dir = os.path.join(upload_root, 'rider_avatars')
-    os.makedirs(avatars_dir, exist_ok=True)
+    from app.utils.upload import public_url_for_stored_path, save_upload
 
     safe_name = secure_filename(file.filename or 'avatar')
     filename = f"rider_{user.id}_{int(datetime.now(timezone.utc).timestamp())}_{safe_name}"
-    filepath = os.path.join(avatars_dir, filename)
 
     try:
-        file.save(filepath)
-        rider_profile.avatar_path = f"rider_avatars/{filename}"
+        rider_profile.avatar_path = save_upload(file, "rider_avatars", filename=filename)
         db.session.commit()
     except Exception:
         db.session.rollback()
         return jsonify(msg="Failed to save avatar"), 500
 
-    avatar_url = url_for('static', filename=rider_profile.avatar_path, _external=True)
+    avatar_url = public_url_for_stored_path(rider_profile.avatar_path)
     return jsonify(avatarUrl=avatar_url), 200
 
 
@@ -1483,23 +1474,19 @@ def upload_seller_avatar():
     if file.mimetype not in {"image/jpeg", "image/png", "image/jpg", "image/webp"}:
         return jsonify(msg="Invalid file type"), 400
 
-    upload_root = current_app.static_folder or os.path.join(current_app.root_path, 'static')
-    avatars_dir = os.path.join(upload_root, 'seller_avatars')
-    os.makedirs(avatars_dir, exist_ok=True)
+    from app.utils.upload import public_url_for_stored_path, save_upload
 
     safe_name = secure_filename(file.filename or 'avatar')
     filename = f"seller_{user.id}_{int(datetime.now(timezone.utc).timestamp())}_{safe_name}"
-    filepath = os.path.join(avatars_dir, filename)
 
     try:
-        file.save(filepath)
-        seller.avatar_path = f"seller_avatars/{filename}"
+        seller.avatar_path = save_upload(file, "seller_avatars", filename=filename)
         db.session.commit()
     except Exception:
         db.session.rollback()
         return jsonify(msg="Failed to save avatar"), 500
 
-    avatar_url = url_for('static', filename=seller.avatar_path, _external=True)
+    avatar_url = public_url_for_stored_path(seller.avatar_path)
     return jsonify(avatarUrl=avatar_url), 200
 
 
@@ -1527,24 +1514,19 @@ def upload_seller_banner():
     if file.mimetype not in {"image/jpeg", "image/png", "image/jpg", "image/webp"}:
         return jsonify(msg="Invalid file type"), 400
 
-    upload_root = current_app.static_folder or os.path.join(current_app.root_path, 'static')
-    banners_dir = os.path.join(upload_root, 'seller_banners')
-    os.makedirs(banners_dir, exist_ok=True)
+    from app.utils.upload import public_url_for_stored_path, save_upload
 
     safe_name = secure_filename(file.filename or 'banner')
     filename = f"seller_banner_{user.id}_{int(datetime.now(timezone.utc).timestamp())}_{safe_name}"
-    filepath = os.path.join(banners_dir, filename)
 
     try:
-        file.save(filepath)
-        seller.banner_path = f"seller_banners/{filename}"
+        seller.banner_path = save_upload(file, "seller_banners", filename=filename)
         db.session.commit()
     except Exception:
         db.session.rollback()
         return jsonify(msg="Failed to save banner"), 500
 
-    banner_path = seller.banner_path
-    banner_url = url_for('static', filename=banner_path, _external=True)
+    banner_url = public_url_for_stored_path(seller.banner_path)
     return jsonify(bannerUrl=banner_url), 200
 
 
@@ -2206,6 +2188,7 @@ def _get_active_reset_code(user_id: int):
 
 
 @auth_bp.post("/forgot-password/contact-lookup")
+@limiter.limit("10 per minute")
 def forgot_password_contact_lookup():
     """Return saved contact number for an account email (for SMS prefill)."""
     if not request.is_json:
@@ -2224,6 +2207,7 @@ def forgot_password_contact_lookup():
 
 
 @auth_bp.post("/forgot-password")
+@limiter.limit("5 per minute")
 def forgot_password():
     """Request a 6-digit reset PIN via email or SMS."""
     if not request.is_json:
@@ -2328,6 +2312,7 @@ def forgot_password():
 
 
 @auth_bp.post("/verify-pin")
+@limiter.limit("10 per minute")
 def verify_pin():
     """Validate reset PIN before setting a new password."""
     if not request.is_json:
@@ -2371,6 +2356,7 @@ def verify_pin():
 
 
 @auth_bp.post("/reset-password")
+@limiter.limit("5 per minute")
 def reset_password():
     """Set a new password using a verified PIN."""
     if not request.is_json:

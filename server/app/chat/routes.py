@@ -377,16 +377,13 @@ def upload_attachment():
     if ext not in ALLOWED_UPLOAD:
         return jsonify(msg="File type not allowed"), 400
 
-    upload_root = current_app.static_folder or os.path.join(
-        current_app.root_path, "static"
-    )
-    chat_dir = os.path.join(upload_root, "chat_uploads")
-    os.makedirs(chat_dir, exist_ok=True)
-    stored = f"{uuid.uuid4().hex}_{secure_filename(f.filename)}"
-    path = os.path.join(chat_dir, stored)
-    f.save(path)
+    from app.utils.upload import public_url_for_stored_path, save_upload
 
-    url = f"/static/chat_uploads/{stored}"
+    stored_name = f"{uuid.uuid4().hex}_{secure_filename(f.filename)}"
+    stored_path = save_upload(f, "chat_uploads", filename=stored_name)
+    url = public_url_for_stored_path(stored_path)
+    if not url.startswith("http") and not url.startswith("/"):
+        url = f"/static/{stored_path.lstrip('/')}"
     is_image = ext in {"png", "jpg", "jpeg", "gif", "webp"}
     return jsonify(
         url=url,

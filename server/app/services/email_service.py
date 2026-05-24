@@ -80,6 +80,14 @@ def _send_email(
             _log_email(to=to_email, subject=subject, body=body)
             return
         if critical:
+            if has_app_context():
+                current_app.logger.error(
+                    "Critical email failed for %s (%s): %s — check MAIL_BACKEND, "
+                    "MAIL_USERNAME, and Gmail App Password on Railway",
+                    to_email,
+                    subject,
+                    exc,
+                )
             raise
         if has_app_context():
             current_app.logger.warning(

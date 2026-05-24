@@ -32,6 +32,9 @@ BUCKET_MAP = {
     "rider_docs": "docs",
     "report_evidence": "docs",
     "chat_uploads": "chat",
+    "seller_banners": "avatars",
+    "product_videos": "product-images",
+    "rider_avatars": "avatars",
 }
 
 ALLOWED_MIME_PREFIXES = ("image/", "application/pdf")

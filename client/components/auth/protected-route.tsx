@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/auth-context"
 import type { UserRole } from "@/lib/types"
+import { dashboardRoutes } from "@/lib/auth/session"
 import { Icon } from "@/components/ui/icon"
 
 interface ProtectedRouteProps {
@@ -24,12 +25,6 @@ export function ProtectedRoute({ children, allowedRoles, redirectTo = "/auth/log
     if (!isLoading && isAuthenticated && allowedRoles && user) {
       if (!allowedRoles.includes(user.role)) {
         // Redirect to appropriate dashboard based on role
-        const dashboardRoutes: Record<UserRole, string> = {
-          buyer: "/",
-          seller: "/seller/dashboard",
-          rider: "/rider/dashboard",
-          admin: "/admin",
-        }
         router.push(dashboardRoutes[user.role])
       }
     }

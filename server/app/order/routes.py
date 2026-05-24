@@ -606,6 +606,19 @@ def checkout():
     if not items_data:
         return jsonify(msg="No items to checkout"), 400
 
+    idempotency_key = (data.get("idempotencyKey") or data.get("idempotency_key") or "").strip()
+    if idempotency_key:
+        if len(idempotency_key) > 64:
+            return jsonify(msg="Invalid idempotency key"), 400
+        existing_order = db.session.execute(
+            select(Order).where(
+                Order.buyer_id == current_user.id,
+                Order.idempotency_key == idempotency_key,
+            )
+        ).scalar_one_or_none()
+        if existing_order is not None:
+            return jsonify(order=_serialize_order(existing_order)), 200
+
     # Mirror login is_verified: buyers need email_verified; sellers need store ACCEPTED
     from flask_jwt_extended import get_jwt
 
@@ -686,6 +699,7 @@ def checkout():
             payment_method=payment_method,
             shipping_address=shipping_address_str,
             delivery_notes=delivery_notes,
+            idempotency_key=idempotency_key or None,
         )
 
         total = 0.0
@@ -717,38 +731,55 @@ def checkout():
             # Handle stock deduction for variations if present
             variant_data = item.get("variant")
             variation_stock_depleted = False
-            
+            matched_variation = None
+
             if variant_data:
-                # Find the matching variation
                 variant_size = variant_data.get("size")
                 variant_color = variant_data.get("color")
-                
-                for variation in getattr(product, 'variations', []):
-                    if (variation.size == variant_size and 
-                        variation.color == variant_color):
-                        # Decrement variation inventory
+
+                for variation in getattr(product, "variations", []):
+                    if (
+                        variation.size == variant_size
+                        and variation.color == variant_color
+                    ):
+                        matched_variation = variation
                         try:
-                            previous_var_qty = int(getattr(variation, "inventory", 0) or 0)
+                            previous_var_qty = int(
+                                getattr(variation, "inventory", 0) or 0
+                            )
                         except (TypeError, ValueError):
                             previous_var_qty = 0
-                        
-                        new_var_qty = max(previous_var_qty - quantity, 0)
+
+                        if previous_var_qty < quantity:
+                            raise ValueError(
+                                f"Insufficient stock for {product.name} "
+                                f"({variant_size}/{variant_color})"
+                            )
+
+                        new_var_qty = previous_var_qty - quantity
                         variation.inventory = new_var_qty
-                        
-                        # Check if variation stock is depleted
                         if previous_var_qty > 0 and new_var_qty == 0:
                             variation_stock_depleted = True
                         break
-            
-            # Decrement overall product quantity and trigger low-stock / out-of-stock
-            # notifications when crossing the configured threshold.
+
+                if matched_variation is None and variant_size:
+                    raise ValueError(
+                        f"Selected variant not found for {product.name}"
+                    )
+
+            # Decrement product-level quantity only when no variant line was used
             try:
                 previous_qty = int(getattr(product, "quantity", 0) or 0)
             except (TypeError, ValueError):
                 previous_qty = 0
 
-            new_qty = max(previous_qty - quantity, 0)
-            product.quantity = new_qty
+            if matched_variation is None:
+                if previous_qty < quantity:
+                    raise ValueError(f"Insufficient stock for {product.name}")
+                new_qty = previous_qty - quantity
+                product.quantity = new_qty
+            else:
+                new_qty = previous_qty
 
             threshold = getattr(product, "low_stock_threshold", None)
             # Only notify when we cross from above threshold to at/below threshold.
@@ -767,7 +798,7 @@ def checkout():
 
             # Separate notification when stock is fully depleted.
             if (
-                (previous_qty > 0 and new_qty == 0) or variation_stock_depleted
+                ((previous_qty > 0 and new_qty == 0) or variation_stock_depleted)
                 and store is not None
                 and store.user_id is not None
             ):
@@ -901,6 +932,15 @@ def checkout():
         return jsonify(order=_serialize_order(order)), 201
     except IntegrityError as e:
         db.session.rollback()
+        if idempotency_key:
+            existing_order = db.session.execute(
+                select(Order).where(
+                    Order.buyer_id == current_user.id,
+                    Order.idempotency_key == idempotency_key,
+                )
+            ).scalar_one_or_none()
+            if existing_order is not None:
+                return jsonify(order=_serialize_order(existing_order)), 200
         current_app.logger.error(f"Order creation IntegrityError: {e}")
         return jsonify(msg="Database error creating order. Please try again."), 500
     except ValueError as e:
@@ -996,25 +1036,26 @@ def _restore_order_inventory(order: Order) -> None:
             continue
 
         qty = int(item.quantity or 1)
-        try:
-            product.quantity = int(getattr(product, "quantity", 0) or 0) + qty
-        except (TypeError, ValueError):
-            product.quantity = qty
-
         variant_data = _parse_order_item_variant(item.variation)
-        if not variant_data:
-            continue
 
-        variant_size = variant_data.get("size")
-        variant_color = variant_data.get("color")
-        for variation in getattr(product, "variations", []):
-            if variation.size == variant_size and variation.color == variant_color:
-                try:
-                    previous_var_qty = int(getattr(variation, "inventory", 0) or 0)
-                except (TypeError, ValueError):
-                    previous_var_qty = 0
-                variation.inventory = previous_var_qty + qty
-                break
+        if variant_data:
+            variant_size = variant_data.get("size")
+            variant_color = variant_data.get("color")
+            for variation in getattr(product, "variations", []):
+                if variation.size == variant_size and variation.color == variant_color:
+                    try:
+                        previous_var_qty = int(
+                            getattr(variation, "inventory", 0) or 0
+                        )
+                    except (TypeError, ValueError):
+                        previous_var_qty = 0
+                    variation.inventory = previous_var_qty + qty
+                    break
+        else:
+            try:
+                product.quantity = int(getattr(product, "quantity", 0) or 0) + qty
+            except (TypeError, ValueError):
+                product.quantity = qty
 
 
 @orders_bp.put("/orders/<int:order_id>/cancel")

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useRef, useState, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -90,6 +90,7 @@ function CheckoutContent() {
   const [contactNumber, setContactNumber] = useState(user?.contactNumber || "")
   const [notes, setNotes] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const placingRef = useRef(false)
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const [alertVariant, setAlertVariant] = useState<"success" | "error" | "info" | "warning">("info")
@@ -208,7 +209,14 @@ function CheckoutContent() {
       return
     }
 
+    if (placingRef.current) return
+    placingRef.current = true
     setIsLoading(true)
+
+    const checkoutIdempotencyKey =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `checkout-${Date.now()}`
 
     const itemsBySeller = itemsForCheckout.reduce(
       (acc, item) => {
@@ -231,6 +239,7 @@ function CheckoutContent() {
           shippingAddress,
           paymentMethod,
           shippingFee,
+          idempotencyKey: `${checkoutIdempotencyKey}-${sellerId}`,
           items: sellerItems.map((item) => ({
             productId: String(item.product.id),
             quantity: item.quantity,
@@ -284,6 +293,7 @@ function CheckoutContent() {
         "Failed to place order. Please try again later."
       showAlert(String(msg), "error")
     } finally {
+      placingRef.current = false
       setIsLoading(false)
     }
   }
