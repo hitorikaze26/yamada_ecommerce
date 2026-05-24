@@ -397,7 +397,7 @@ def register():
         user.set_password(data['password'])
 
         role = db.session.execute(select(Role).where(Role.id == RoleTypes.BUYER.value)).scalar_one_or_none()
-        user_role = UserRole(user, role)
+        user_role = UserRole(user=user, role=role)
 
         db.session.add(user)
         db.session.add(user_role)
@@ -463,7 +463,7 @@ def register_rider():
 			db.session.add(role)
 			db.session.flush()
 
-		user_role = UserRole(user, role)
+		user_role = UserRole(user=user, role=role)
 
 		rider_profile = RiderProfile(
 			region_code=address.get('regionCode', ''),
@@ -596,7 +596,7 @@ def register_seller():
             db.session.add(role)
             db.session.flush()
 
-        user_role = UserRole(user, role)
+        user_role = UserRole(user=user, role=role)
 
         # Create seller profile with detailed address
         full_name = f"{given_name} {surname}".strip()
@@ -817,7 +817,7 @@ def register_buyer():
             db.session.add(role)
             db.session.flush()
 
-        user_role = UserRole(user, role)
+        user_role = UserRole(user=user, role=role)
 
         # Create buyer profile
         buyer_profile = BuyerProfile(

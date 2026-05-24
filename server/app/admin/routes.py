@@ -1403,7 +1403,7 @@ def get_admin_analytics():
         total_revenue = db.session.execute(
             select(func.sum(Order.total_amount)).where(
                 Order.created_at >= since,
-                Order.status.in_(['completed', 'delivered'])
+                Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
             )
         ).scalar() or 0
 
@@ -1431,7 +1431,7 @@ def get_admin_analytics():
             select(func.sum(Order.total_amount)).where(
                 Order.created_at >= prev_since,
                 Order.created_at < since,
-                Order.status.in_(['completed', 'delivered'])
+                Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
             )
         ).scalar() or 0
 
@@ -1461,7 +1461,7 @@ def get_admin_analytics():
                 select(func.sum(Order.total_amount)).where(
                     Order.created_at >= day_start,
                     Order.created_at < day_end,
-                    Order.status.in_(['completed', 'delivered'])
+                    Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
                 )
             ).scalar() or 0
             
@@ -1578,7 +1578,7 @@ def download_analytics_report():
         total_revenue = db.session.execute(
             select(func.sum(Order.total_amount)).where(
                 Order.created_at >= since,
-                Order.status.in_(['completed', 'delivered'])
+                Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
             )
         ).scalar() or 0
 
@@ -1670,7 +1670,7 @@ def download_analytics_report():
                 select(func.sum(Order.total_amount)).where(
                     Order.created_at >= day_start,
                     Order.created_at < day_end,
-                    Order.status.in_(['completed', 'delivered'])
+                    Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
                 )
             ).scalar() or 0
             

@@ -6,6 +6,7 @@ from sqlalchemy import select, func
 from app.models import (
     db,
     CommissionSettings,
+    OrderStatus,
     ShippingSettings,
     Store,
     Order,
@@ -203,10 +204,19 @@ def get_commission_analytics():
         }
 
         order_stats: dict[str, int] = {}
-        for status in ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'completed', 'cancelled']:
-            order_stats[status] = int(
+        status_enum_map = {
+            'pending': OrderStatus.PENDING,
+            'confirmed': OrderStatus.CONFIRMED,
+            'processing': OrderStatus.PROCESSING,
+            'shipped': OrderStatus.SHIPPED,
+            'delivered': OrderStatus.DELIVERED,
+            'completed': OrderStatus.COMPLETED,
+            'cancelled': OrderStatus.CANCELLED,
+        }
+        for label, enum_val in status_enum_map.items():
+            order_stats[label] = int(
                 db.session.scalar(
-                    select(func.count()).select_from(Order).where(Order.status == status)
+                    select(func.count()).select_from(Order).where(Order.status == enum_val)
                 )
                 or 0
             )

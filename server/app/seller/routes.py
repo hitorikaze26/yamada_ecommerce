@@ -87,7 +87,7 @@ def createSellerProfile():
 
         user=db.session.execute(select(User).where(User.id==current_user.id)).scalar_one_or_none()
         role=db.session.execute(select(Role).where(Role.id==RoleTypes.SELLER.value)).scalar_one_or_none()
-        user.roles.append(UserRole(user, role))
+        user.roles.append(UserRole(user=user, role=role))
 
         db.session.add(seller)
         db.session.add(user)
