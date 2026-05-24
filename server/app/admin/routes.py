@@ -72,7 +72,7 @@ from flask_jwt_extended import (
     jwt_required,
 )
 from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import noload, selectinload
 from datetime import datetime, timedelta
 
 
@@ -132,6 +132,38 @@ def _serialize_admin_refund(r: RefundRequest) -> dict:
     return serialize_refund_for_admin(payload)
 
 
+def _serialize_store_registration_for_admin(registration: StoreRegistration) -> dict:
+    """Serialize pending store registration without loading seller_profiles columns."""
+    user = registration.user
+    status = registration.request_status.name if registration.request_status else "PENDING"
+    seller_name = ""
+    if user is not None:
+        seller_name = f"{user.given_name or ''} {user.surname or ''}".strip()
+    return {
+        "id": registration.id,
+        "user_id": registration.user_id,
+        "seller_id": registration.seller_id,
+        "Store name": registration.shop_name or "",
+        "Store purpose": registration.store_purpose or "",
+        "Store tagline": registration.tagline or "",
+        "Categories json": registration.categories_json or "",
+        "DTI path": registration.dti_path,
+        "BIR TIN path": registration.bir_tin_path,
+        "Business permit path": registration.business_permit_path,
+        "Request status": status,
+        "Request date created": (
+            registration.created_at.isoformat() if registration.created_at else None
+        ),
+        "Seller full name": seller_name,
+        "Seller email": user.email if user else "",
+        "Seller street address": "",
+        "Seller barangay": "",
+        "Seller municipality": "",
+        "Seller province": "",
+        "Seller region": "",
+    }
+
+
 @admin_bp.get('/get-users')
 @admin_bp.get('/users')
 @jwt_required()
@@ -144,7 +176,7 @@ def getUsers():
         stmt = select(User).options(
             selectinload(User.roles).selectinload(UserRole.role),
             selectinload(User.buyer_profile),
-            selectinload(User.seller),
+            noload(User.seller),
             selectinload(User.rider_profile),
         ).order_by(User.id.desc())
         if role_filter:
@@ -862,14 +894,16 @@ def getStoreRegistrations():
             .where(StoreRegistration.request_status == pending)
             .options(
                 selectinload(StoreRegistration.user),
-                selectinload(StoreRegistration.seller),
+                noload(StoreRegistration.seller),
             )
             .order_by(StoreRegistration.id.desc())
         ).scalars().all()
         storeRegistrationsJSON = []
         for registration in storeRegistrations:
             try:
-                storeRegistrationsJSON.append(registration.to_json())
+                storeRegistrationsJSON.append(
+                    _serialize_store_registration_for_admin(registration)
+                )
             except Exception:
                 continue
         return jsonify(StoreRegistrations=storeRegistrationsJSON), 200

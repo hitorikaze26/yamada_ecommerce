@@ -21,6 +21,38 @@ down_revision = "p1q2r3s4t5u6"
 branch_labels = None
 depends_on = None
 
+_STRING_COLS = (
+    "region_code",
+    "region_name",
+    "province_code",
+    "province_name",
+    "municipality_code",
+    "municipality_name",
+    "barangay_code",
+    "barangay_name",
+    "street_address",
+    "postal_code",
+)
+
+
+def _add_string_column(table: str, column: str) -> None:
+    if not has_column(table, column):
+        op.add_column(
+            table,
+            sa.Column(
+                column,
+                sa.String().with_variant(sa.VARCHAR(length=255), "mysql"),
+                nullable=True,
+            ),
+        )
+
+
+def _ensure_ph_address_columns(table: str) -> None:
+    if not table_exists(table):
+        return
+    for column in _STRING_COLS:
+        _add_string_column(table, column)
+
 
 def upgrade():
     if table_exists("user"):
@@ -81,6 +113,33 @@ def upgrade():
             )
         if "edit_request_note" not in cols:
             op.add_column("products", sa.Column("edit_request_note", sa.Text(), nullable=True))
+
+    if table_exists("seller_profiles"):
+        _ensure_ph_address_columns("seller_profiles")
+        for column in ("avatar_path", "banner_path", "valid_id_path"):
+            _add_string_column("seller_profiles", column)
+
+    if table_exists("buyer_profiles"):
+        _ensure_ph_address_columns("buyer_profiles")
+        for column in ("avatar_path", "valid_id_path"):
+            _add_string_column("buyer_profiles", column)
+
+    if table_exists("rider_profiles"):
+        _ensure_ph_address_columns("rider_profiles")
+        for column in (
+            "vehicle_type",
+            "license_number",
+            "license_path",
+            "orcr_path",
+            "avatar_path",
+        ):
+            _add_string_column("rider_profiles", column)
+
+    if table_exists("store_registrations"):
+        for column in ("tagline", "categories_json"):
+            _add_string_column("store_registrations", column)
+        for column in ("dti_path", "bir_tin_path", "business_permit_path"):
+            _add_string_column("store_registrations", column)
 
     if table_exists("store_registrations") and is_postgresql():
         op.execute(
