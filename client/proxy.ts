@@ -9,6 +9,24 @@ function requiresCookieGate(pathname: string): boolean {
   )
 }
 
+function roleForPath(pathname: string): "buyer" | "seller" | "rider" | null {
+  if (pathname === "/seller" || pathname.startsWith("/seller/")) {
+    return "seller"
+  }
+  if (pathname === "/rider" || pathname.startsWith("/rider/")) {
+    return "rider"
+  }
+  if (
+    pathname === "/buyer" ||
+    pathname.startsWith("/buyer/") ||
+    pathname === "/checkout" ||
+    pathname.startsWith("/checkout/")
+  ) {
+    return "buyer"
+  }
+  return null
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -31,6 +49,10 @@ export function proxy(request: NextRequest) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = "/auth/login"
     loginUrl.searchParams.set("redirect", pathname)
+    const role = roleForPath(pathname)
+    if (role) {
+      loginUrl.searchParams.set("role", role)
+    }
     return NextResponse.redirect(loginUrl)
   }
 

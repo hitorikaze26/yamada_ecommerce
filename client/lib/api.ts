@@ -36,6 +36,26 @@ export const apiClient: AxiosInstance = axios.create({
 
 // Resolve image URLs that may come from the backend as "/static/..." paths
 // so that Next.js requests them from the Flask origin instead of the Next host.
+const STATIC_UPLOAD_PREFIXES = [
+  "product_images/",
+  "rider_docs/",
+  "report_evidence/",
+  "avatars/",
+  "seller_avatars/",
+  "seller_banners/",
+  "rider_avatars/",
+  "buyer_ids/",
+  "seller_ids/",
+  "seller_dti/",
+  "seller_bir/",
+  "seller_permits/",
+  "chat_uploads/",
+  "orders/product_images/",
+]
+
+const isStaticUploadPath = (path: string): boolean =>
+  STATIC_UPLOAD_PREFIXES.some((prefix) => path.startsWith(prefix) || path.includes(`/${prefix}`))
+
 export const resolveImageUrl = (url?: string | null): string | null => {
   if (!url) return null
   // Windows DB paths may use backslashes — URLs must use forward slashes
@@ -55,12 +75,7 @@ export const resolveImageUrl = (url?: string | null): string | null => {
   if (trimmed.startsWith("static/")) {
     return `${origin}/${trimmed}`
   }
-  if (
-    trimmed.includes("product_images/") ||
-    trimmed.includes("rider_docs/") ||
-    trimmed.includes("report_evidence/") ||
-    trimmed.startsWith("report_evidence/")
-  ) {
+  if (isStaticUploadPath(trimmed)) {
     return `${origin}/static/${trimmed}`
   }
 

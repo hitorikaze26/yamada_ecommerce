@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,7 @@ import { YamadaLogo } from "@/components/brand/yamada-logo"
 import { authApi } from "@/lib/api"
 
 export default function ForgotPasswordPage() {
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [accountEmail, setAccountEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -47,6 +49,8 @@ export default function ForgotPasswordPage() {
   }
 
   const resetEmail = accountEmail || email.trim()
+  const role = (searchParams.get("role") || "buyer").toLowerCase()
+  const loginHref = `/auth/login?role=${encodeURIComponent(role)}`
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -106,7 +110,7 @@ export default function ForgotPasswordPage() {
 
               <p className="text-center text-sm text-muted-foreground">
                 Remember your password?{" "}
-                <Link href="/auth/login" className="text-primary hover:underline font-medium">
+                <Link href={loginHref} className="text-primary hover:underline font-medium">
                   Sign in
                 </Link>
               </p>
@@ -125,7 +129,7 @@ export default function ForgotPasswordPage() {
                   Enter reset code
                 </Link>
               </Button>
-              <Link href="/auth/login" className="text-sm text-primary hover:underline">
+              <Link href={loginHref} className="text-sm text-primary hover:underline">
                 Back to sign in
               </Link>
             </div>

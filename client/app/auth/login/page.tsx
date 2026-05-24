@@ -38,16 +38,39 @@ const roleConfig: Record<UserRole, { title: string; description: string; color: 
   },
 }
 
+const KNOWN_ROLES: UserRole[] = ["buyer", "seller", "rider", "admin"]
+
+function isUserRole(value: string | null): value is UserRole {
+  return !!value && KNOWN_ROLES.includes(value as UserRole)
+}
+
+function inferRoleFromRedirectPath(pathname: string | null): UserRole {
+  if (pathname === "/seller" || pathname?.startsWith("/seller/")) return "seller"
+  if (pathname === "/rider" || pathname?.startsWith("/rider/")) return "rider"
+  if (
+    pathname === "/buyer" ||
+    pathname?.startsWith("/buyer/") ||
+    pathname === "/checkout" ||
+    pathname?.startsWith("/checkout/")
+  ) {
+    return "buyer"
+  }
+  return "buyer"
+}
+
 function LoginContent() {
   const searchParams = useSearchParams()
-  const roleParam = (searchParams.get("role") as UserRole) || "buyer"
+  const redirectTo = searchParams.get("redirect") ?? undefined
+  const requestedRole = searchParams.get("role")
+  const roleParam = isUserRole(requestedRole)
+    ? requestedRole
+    : inferRoleFromRedirectPath(redirectTo ?? null)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const { login, getLoginErrorMessage } = useAuth()
-  const redirectTo = searchParams.get("redirect") ?? undefined
   const passwordResetSuccess = searchParams.get("reset") === "true"
 
   const config = roleConfig[roleParam]
