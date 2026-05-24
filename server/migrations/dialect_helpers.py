@@ -42,6 +42,32 @@ def has_column(table: str, column: str) -> bool:
     return column in column_names(table)
 
 
+def _string_col(name: str, *, nullable: bool = True) -> sa.Column:
+    return sa.Column(
+        name,
+        sa.String().with_variant(sa.VARCHAR(length=255), "mysql"),
+        nullable=nullable,
+    )
+
+
+def ensure_product_variations_table() -> None:
+    """Create product_variations if missing (4269324a07c9 upgrade was a no-op)."""
+    if table_exists("product_variations"):
+        return
+    op.create_table(
+        "product_variations",
+        sa.Column("id", sa.BIGINT(), nullable=False),
+        sa.Column("product_id", sa.BIGINT(), nullable=False),
+        _string_col("size"),
+        _string_col("color"),
+        _string_col("sku"),
+        sa.Column("price", sa.Float(), nullable=True),
+        sa.Column("inventory", sa.Integer(), nullable=True),
+        sa.ForeignKeyConstraint(["product_id"], ["products.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+
+
 def fk_name_for_column(table: str, column: str) -> str | None:
     for fk in inspect(get_bind()).get_foreign_keys(table):
         if column in fk.get("constrained_columns", []):
