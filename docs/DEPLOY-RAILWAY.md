@@ -40,7 +40,7 @@ In Railway → your service → **Variables**:
 | `SECRET_KEY` | random string (`python -c "import secrets; print(secrets.token_urlsafe(32))"`) |
 | `JWT_SECRET_KEY` | random string |
 | `WTF_CSRF_SECRET_KEY` | random string |
-| `CORS_ORIGINS` | `https://yamada.vercel.app,http://localhost:3000` |
+| `CORS_ORIGINS` | `https://yamada-ecommerce.vercel.app,http://localhost:3000` |
 | `MAIL_BACKEND` | `smtp` |
 | `MAIL_SERVER` | `smtp.gmail.com` |
 | `MAIL_PORT` | `587` |

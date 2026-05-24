@@ -151,15 +151,36 @@ export const dashboardRoutes: Record<UserRole, string> = {
 }
 
 export function getLoginErrorMessage(error: unknown): string {
-  if (error instanceof Error && !(error as { response?: unknown }).response) {
-    const text = error.message.trim()
-    if (text && !text.startsWith("Request failed")) return text
-  }
-
   const axiosErr = error as {
     response?: { data?: { msg?: string }; status?: number }
     code?: string
     message?: string
+  }
+
+  const isNetwork =
+    !axiosErr.response &&
+    (axiosErr.code === "ERR_NETWORK" ||
+      axiosErr.code === "ECONNABORTED" ||
+      axiosErr.message?.toLowerCase().includes("network"))
+
+  if (isNetwork) {
+    const onLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1")
+    if (onLocalhost) {
+      return `Cannot reach the API at ${API_BASE_URL}. Start the Flask server (python run.py) and check NEXT_PUBLIC_API_BASE_URL in client/.env.local.`
+    }
+    return (
+      `Cannot reach the API at ${API_BASE_URL}. ` +
+      "On Railway, set CORS_ORIGINS to your exact Vercel URL (e.g. https://yamada-ecommerce.vercel.app) and redeploy. " +
+      "On Vercel, set NEXT_PUBLIC_API_BASE_URL to your Railway URL ending in /api and redeploy."
+    )
+  }
+
+  if (error instanceof Error && !(error as { response?: unknown }).response) {
+    const text = error.message.trim()
+    if (text && !text.startsWith("Request failed")) return text
   }
 
   const msg = axiosErr.response?.data?.msg
@@ -171,16 +192,6 @@ export function getLoginErrorMessage(error: unknown): string {
   }
   if (status === 401) {
     return "Invalid email or password. Please try again."
-  }
-
-  const isNetwork =
-    !axiosErr.response &&
-    (axiosErr.code === "ERR_NETWORK" ||
-      axiosErr.code === "ECONNABORTED" ||
-      axiosErr.message?.toLowerCase().includes("network"))
-
-  if (isNetwork) {
-    return `Cannot reach the API at ${API_BASE_URL}. Start the Flask server (python run.py) and check NEXT_PUBLIC_API_BASE_URL in client/.env.local.`
   }
 
   return "Sign-in failed. Please try again."
