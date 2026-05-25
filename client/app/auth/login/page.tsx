@@ -73,7 +73,7 @@ function LoginContent() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
   const { login, getLoginErrorMessage, isAuthenticated, isLoading, user } = useAuth()
   const passwordResetSuccess = searchParams.get("reset") === "true"
@@ -97,7 +97,7 @@ function LoginContent() {
       return
     }
     setError("")
-    setIsLoading(true)
+    setIsSubmitting(true)
 
     try {
       await login(email.trim(), password, roleParam, redirectTo)
@@ -106,7 +106,7 @@ function LoginContent() {
       setError(msg)
       console.error("[login]", msg, err)
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
@@ -224,8 +224,8 @@ function LoginContent() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={isLoading || !roleParam}>
-                {isLoading ? (
+              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || !roleParam}>
+                {isSubmitting ? (
                   <>
                     <Icon name="spinner" className="mr-2 animate-spin" />
                     Signing in...
