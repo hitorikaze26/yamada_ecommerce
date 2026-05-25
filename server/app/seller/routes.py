@@ -162,24 +162,21 @@ def get_seller_products(seller_id: int):
                 "subcategory": getattr(p, "subcategory", None),
                 "price": p.price,
                 "quantity": getattr(p, "quantity", None),
-                 "description": p.description,
-                 "image_url": _public_image_url(getattr(p, "image_url", None)),
-                 "visibility": getattr(p, "is_live", True),
-                 "sold": sold_count,
-                 **ProductModerationService.serialize_moderation_brief(p),
-                 "variations": [
-                     {
-                         "id": v.id,
-                         "size": v.size,
-                         "color": v.color,
-                         "colorHex": getattr(v, 'color', None),
-                         "sku": v.sku,
-                         "inventory": getattr(v, "inventory", 0),
-                         "price": getattr(v, "price", None),
-                     }
-                     for v in getattr(p, "variations", [])
-                 ],
-             }
+                "description": p.description,
+                "image_url": _public_image_url(getattr(p, "image_url", None)),
+                "visibility": getattr(p, "is_live", True),
+                "sold": sold_count,
+                **ProductModerationService.serialize_moderation_brief(p),
+                "variations": [
+                    {
+                        "id": v.id,
+                        "size": v.size,
+                        "color": v.color,
+                        "colorHex": getattr(v, 'color', None),
+                        "sku": v.sku,
+                        "inventory": getattr(v, "inventory", 0),
+                        "price": getattr(v, "price", None),
+                    }
                     for v in getattr(p, "variations", [])
                 ],
             }
@@ -240,23 +237,20 @@ def get_my_products():
                 "subcategory": getattr(p, "subcategory", None),
                 "price": p.price,
                 "quantity": getattr(p, "quantity", None),
-                 "description": p.description,
-                 "image_url": _public_image_url(getattr(p, "image_url", None)),
-                 "visibility": getattr(p, "is_live", True),
-                 **ProductModerationService.serialize_moderation_brief(p),
-                 "variations": [
-                     {
-                         "id": v.id,
-                         "size": v.size,
-                         "color": v.color,
-                         "colorHex": getattr(v, 'color', None),
-                         "sku": v.sku,
-                         "inventory": getattr(v, "inventory", 0),
-                         "price": getattr(v, "price", None),
-                     }
-                     for v in getattr(p, "variations", [])
-                 ],
-             }
+                "description": p.description,
+                "image_url": _public_image_url(getattr(p, "image_url", None)),
+                "visibility": getattr(p, "is_live", True),
+                **ProductModerationService.serialize_moderation_brief(p),
+                "variations": [
+                    {
+                        "id": v.id,
+                        "size": v.size,
+                        "color": v.color,
+                        "colorHex": getattr(v, 'color', None),
+                        "sku": v.sku,
+                        "inventory": getattr(v, "inventory", 0),
+                        "price": getattr(v, "price", None),
+                    }
                     for v in getattr(p, "variations", [])
                 ],
             }

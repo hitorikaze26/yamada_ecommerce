@@ -4,7 +4,7 @@ from flask.cli import with_appcontext
 from sqlalchemy import select
 
 from .extensions import bcrypt
-from .models import db, User, Role, RoleTypes, UserRole, ReportType
+from .models import db, User, Role, RoleTypes, UserRole, ReportType, Category
 
 
 # Keys are the role being REPORTED (target). (type_key, display_name, description, category)
@@ -147,3 +147,30 @@ def seed_admin_command():
     db.session.add(UserRole(user_id=admin_user.id, role_id=admin_role.id))
     db.session.commit()
     click.echo(f"Created admin user: {admin_email}")
+
+
+DEFAULT_CATEGORIES = [
+    ("dress-skirts", "Dresses and Skirts"),
+    ("bottoms", "Bottoms"),
+    ("tops-blouses", "tops and blouses"),
+    ("activewear", "activewear and yoga pants"),
+    ("lingerie-sleepwear", "lingerie and sleepwear"),
+    ("jackets-coats", "jackets and coats"),
+    ("accessories-shoes", "shoes and accessories"),
+]
+
+
+@click.command("seed-categories")
+@with_appcontext
+def seed_categories_command():
+    """Seed the categories table with the default marketplace categories."""
+    count = 0
+    for slug, name in DEFAULT_CATEGORIES:
+        existing = db.session.execute(
+            select(Category).where(Category.name == name)
+        ).scalar_one_or_none()
+        if existing is None:
+            db.session.add(Category(name=name))
+            count += 1
+    db.session.commit()
+    click.echo(f"Seeded {count} categories.")
