@@ -27,18 +27,24 @@ from werkzeug.utils import secure_filename
 from app.utils.supabase_storage import storage, path_is_private
 
 
-# Re-export for convenience
+# ── Supabase detection ───────────────────────────────────────────────────
+
+
 def use_supabase_storage() -> bool:
     """Use Supabase when configured (production with keys, or explicit force)."""
-    if os.environ.get("FORCE_SUPABASE_UPLOADS", "").lower() in ("1", "true", "yes"):
-        return bool(
-            os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY")
-        )
-    if os.environ.get("FLASK_ENV", "development") != "production":
-        return False
-    return bool(
+    force = os.environ.get("FORCE_SUPABASE_UPLOADS", "").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    has_keys = bool(
         os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY")
     )
+    if force:
+        return has_keys
+    if os.environ.get("FLASK_ENV", "development") != "production":
+        return False
+    return has_keys
 
 
 # ── Save ──────────────────────────────────────────────────────────────────
@@ -113,11 +119,9 @@ def public_url_for_stored_path(
 
     value = str(stored).replace("\\", "/")
 
-    # Already resolved
     if value.startswith("http://") or value.startswith("https://"):
         return value
 
-    # Supabase Storage
     if use_supabase_storage():
         is_private = path_is_private(value)
 
@@ -133,7 +137,6 @@ def public_url_for_stored_path(
                 )
                 return ""
 
-        # Public bucket
         try:
             return storage.get_public_url(value)
         except Exception:
@@ -142,7 +145,6 @@ def public_url_for_stored_path(
             )
             pass
 
-    # Local filesystem (development)
-    from app.utils.static_urls import public_static_url
+    from app.utils.static_urls import public_static_url as _fallback_url
 
-    return public_static_url(value) or ""
+    return _fallback_url(value) or ""

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { GlassAlert } from "@/components/ui/glass-alert"
-import { adminApi, resolveImageUrl } from "@/lib/api"
+import { adminApi, resolveImageUrl, resolvePrivateDocUrl } from "@/lib/api"
 import { CATEGORIES } from "@/lib/types"
 import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 
@@ -104,6 +104,48 @@ function AdminShopsContent() {
   const isImagePath = (path: string | undefined): boolean => {
     if (!path) return false
     return /\.(png|jpe?g|webp|gif)$/i.test(path)
+  }
+
+  function DocViewer({ label, rawPath, hasDoc, isImage }: { label: string; rawPath?: string; hasDoc: boolean; isImage: boolean }) {
+    const [src, setSrc] = useState<string>("")
+    const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+      if (!rawPath) return
+      setLoading(true)
+      const initialUrl = resolveImageUrl(rawPath) || ""
+      if (initialUrl.startsWith("http")) {
+        const isLikelyPrivate = /^(seller_dti|seller_bir|seller_permits|seller_ids|buyer_ids|rider_docs|report_evidence)\//.test(rawPath.replace(/\\/g, "/"))
+        if (isLikelyPrivate) {
+          resolvePrivateDocUrl(rawPath).then((signedUrl) => {
+            if (signedUrl) setSrc(signedUrl)
+            else setSrc(initialUrl)
+          }).catch(() => setSrc(initialUrl))
+          .finally(() => setLoading(false))
+        } else {
+          setSrc(initialUrl)
+          setLoading(false)
+        }
+      } else {
+        setSrc(initialUrl)
+        setLoading(false)
+      }
+    }, [rawPath])
+
+    if (!hasDoc) return <div key={label} className="space-y-1"><p className="font-medium">{label}</p><p>-</p></div>
+
+    return (
+      <div key={label} className="space-y-1">
+        <p className="font-medium">{label}</p>
+        {loading && <p className="text-xs text-muted-foreground">Loading...</p>}
+        {!loading && isImage && (
+          <img src={src} alt={label} className="w-32 h-24 rounded-md border object-cover bg-muted" />
+        )}
+        {!loading && !isImage && (
+          <a href={src} target="_blank" rel="noopener noreferrer" className="underline">Open file</a>
+        )}
+      </div>
+    )
   }
 
   const resolveCategories = (reg: StoreRegistrationDto): string => {
@@ -232,29 +274,8 @@ function AdminShopsContent() {
                     const rawPath = (detailsRegistration as any)[keyMap[label]] as string | undefined
                     const hasDoc = !!rawPath
                     const isImage = isImagePath(rawPath)
-                    const src = rawPath ? resolveImageUrl(rawPath) || "" : ""
                     return (
-                      <div key={label} className="space-y-1">
-                        <p className="font-medium">{label}</p>
-                        {!hasDoc && <p>-</p>}
-                        {hasDoc && isImage && (
-                          <img
-                            src={src}
-                            alt={label}
-                            className="w-32 h-24 rounded-md border object-cover bg-muted"
-                          />
-                        )}
-                        {hasDoc && !isImage && (
-                          <a
-                            href={src}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline"
-                          >
-                            Open file
-                          </a>
-                        )}
-                      </div>
+                      <DocViewer key={label} label={label} rawPath={rawPath} hasDoc={hasDoc} isImage={isImage} />
                     )
                   })}
                 </div>

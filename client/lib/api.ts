@@ -41,19 +41,19 @@ export const apiClient: AxiosInstance = axios.create({
  * RESOLUTION ORDER
  * ---------------
  * 1. null/undefined/empty → null
- * 2. Full HTTPS URL      → pass through unchanged
- * 3. `/static/...` path  → prepend Flask origin (local dev or legacy)
- * 4. Relative path       → the backend SHOULD have already resolved
- *    this to an absolute URL via `public_url_for_stored_path()` in API
- *    responses. If one slips through (e.g. localStorage cache), try
- *    prepending the Flask origin as best-effort fallback.
+ * 2. Full HTTPS URL      → pass through unchanged (Supabase, signed URLs)
+ * 3. `/static/...` path  → prepend Flask origin (local dev)
+ * 4. Relative path       → prepend Flask origin as best-effort (local dev fallback)
  *
  * IMPORTANT
  * ---------
- * This function is a safety net, not the primary URL resolver. The backend
- * always returns absolute HTTPS URLs in profile/product list API responses
- * (via `public_url_for_stored_path()`). This function only handles edge
- * cases like /static/ paths from local dev or stale cache data.
+ * In production with Supabase, the backend resolves all public URLs to
+ * absolute HTTPS via ``public_url_for_stored_path()`` before returning
+ * them.  This function is the safety net for local development where
+ * Flask serves files from ``app/static/``.
+ *
+ * For private documents (verification docs, reports), use
+ * ``resolvePrivateDocUrl()`` which obtains a signed URL from the backend.
  */
 export const resolveImageUrl = (url?: string | null): string | null => {
   if (!url) return null
@@ -61,14 +61,12 @@ export const resolveImageUrl = (url?: string | null): string | null => {
   const value = String(url).replace(/\\/g, "/").trim()
   if (!value) return null
 
-  // Already a full URL — use as-is
   if (value.startsWith("http://") || value.startsWith("https://")) {
     return value
   }
 
   const origin = API_BASE_ORIGIN.replace(/\/static$/, "")
 
-  // Flask static file (local development)
   if (value.startsWith("/static/")) {
     return `${origin}${value}`
   }
@@ -78,7 +76,7 @@ export const resolveImageUrl = (url?: string | null): string | null => {
     return `${origin}/${trimmed}`
   }
 
-  // Best-effort: treat unknown relative path as Flask static
+  // Best-effort fallback for local dev (Flask static serving)
   return `${origin}/static/${trimmed}`
 }
 

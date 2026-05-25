@@ -8,14 +8,30 @@ This module exists to provide a single function (``public_static_url``)
 that is imported by every route blueprint. It delegates to the full
 ``public_url_for_stored_path()`` when Supabase is active, or falls back
 to Flask ``url_for("static", ...)`` for local development.
-
-NOTE: The function name ``public_static_url`` is historical but
-misleading — it now handles Supabase URLs too.
 """
 
 from __future__ import annotations
 
+import os
+
 from flask import current_app, url_for
+
+
+def _supabase_configured() -> bool:
+    """Check if Supabase Storage env vars are present (no imports needed)."""
+    force = os.environ.get("FORCE_SUPABASE_UPLOADS", "").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    has_keys = bool(
+        os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY")
+    )
+    if force:
+        return has_keys
+    if os.environ.get("FLASK_ENV", "development") != "production":
+        return False
+    return has_keys
 
 
 def public_static_url(rel_path: str | None) -> str | None:
@@ -23,29 +39,20 @@ def public_static_url(rel_path: str | None) -> str | None:
 
     Delegates to ``public_url_for_stored_path()`` when Supabase Storage
     is active.  Falls back to Flask ``/static/{path}`` for local dev.
-
-    This function is imported by all route blueprints (as
-    ``_public_image_url``) and is the single entry point for URL
-    resolution on the backend.
     """
     if not rel_path:
         return None
 
-    # Already a full URL — pass through
     raw = str(rel_path).replace("\\", "/")
     if raw.startswith("http://") or raw.startswith("https://"):
         return raw
 
-    # Supabase Storage (production)
-    from app.utils.upload import use_supabase_storage as _supabase_active
-
-    if _supabase_active():
+    if _supabase_configured():
         from app.utils.upload import public_url_for_stored_path
 
         return public_url_for_stored_path(raw) or None
 
-    # Local filesystem (development)
-    rel = normalize_static_relative_path(raw)
+    rel = _normalize_static_relative_path(raw)
     if not rel:
         return None
 
@@ -56,7 +63,7 @@ def public_static_url(rel_path: str | None) -> str | None:
         return f"{static_prefix}/{rel}"
 
 
-def normalize_static_relative_path(rel_path: str) -> str:
+def _normalize_static_relative_path(rel_path: str) -> str:
     """Normalize DB paths for URL use (forward slashes, no leading slash)."""
     rel = str(rel_path).replace("\\", "/")
     if rel.startswith("http://") or rel.startswith("https://"):
