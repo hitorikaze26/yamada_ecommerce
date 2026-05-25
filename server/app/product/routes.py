@@ -66,7 +66,13 @@ CATEGORY_ID_FALLBACK_NAMES = {
     "accessories-shoes": [
         "shoes and accessories",
         "Accessories & Shoes",
+        "Accessories and Shoes",
+        "Shoes and Accessories",
         "Shoes & Accessories",
+    ],
+    "bottoms": [
+        "Bottoms",
+        "bottoms",
     ],
 }
 
@@ -573,11 +579,10 @@ def createProduct():
 
             if not resolved_categories:
                 current_app.logger.warning(
-                    "[createProduct] failed to resolve category rows seller_id=%s category_ids=%s",
+                    "[createProduct] category rows not found; creating product without category link seller_id=%s category_ids=%s",
                     current_user.id if current_user else None,
                     category_ids,
                 )
-                raise ValueError("Selected category is invalid for this seller")
 
             for category in resolved_categories:
                 link = ProductCategory(
