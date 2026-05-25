@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/icon"
 import { formatPrice } from "@/lib/format"
 import { adminApi, resolveImageUrl } from "@/lib/api"
 import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
+import { orderStatusColors, riderDeliveryStatusColors } from "@/lib/order-status"
 
 const tabs = ["all", "pending", "processing", "shipped", "delivered", "cancelled"]
 
@@ -74,22 +75,6 @@ interface AdminOrderDetailDto {
     proofNote?: string | null
   } | null
   items: AdminOrderItemDto[]
-}
-
-const statusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  processing: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  shipped: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  delivered: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-}
-
-const riderStatusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  pickup: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  transit: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  delivered: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 }
 
 export default function AdminOrdersPage() {
@@ -246,7 +231,7 @@ export default function AdminOrdersPage() {
                         <td className="py-3 px-4">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
-                              statusColors[order.status] || "bg-muted text-muted-foreground"
+                              orderStatusColors[order.status] || "bg-muted text-muted-foreground"
                             }`}
                           >
                             {order.status}
@@ -350,7 +335,7 @@ export default function AdminOrdersPage() {
                       <p className="text-xs text-muted-foreground mb-1">Status</p>
                       <span
                         className={`inline-flex px-2 py-1 rounded-full text-xs font-medium capitalize ${
-                          statusColors[orderDetail.status] || "bg-muted text-muted-foreground"
+                          orderStatusColors[orderDetail.status] || "bg-muted text-muted-foreground"
                         }`}
                       >
                         {orderDetail.status}
@@ -418,7 +403,7 @@ export default function AdminOrdersPage() {
                             <span>Status:</span>
                             <span
                               className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${
-                                riderStatusColors[orderDetail.riderDelivery.status || "pending"] ||
+                                riderDeliveryStatusColors[orderDetail.riderDelivery.status || "pending"] ||
                                 "bg-muted text-muted-foreground"
                               }`}
                             >

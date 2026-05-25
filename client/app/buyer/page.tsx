@@ -14,15 +14,8 @@ import {
   type BuyerOrderFilterKey,
 } from "@/lib/buyer/order-filters"
 import { formatOrderStatusLabel, getEffectiveOrderStatus } from "@/lib/buyer/order-status"
+import { orderStatusColors } from "@/lib/order-status"
 import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
-
-const statusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  processing: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  shipped: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  delivered: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-}
 
 export default function BuyerDashboard() {
   const { user } = useAuth()
@@ -178,7 +171,7 @@ export default function BuyerDashboard() {
                       return (
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                            statusColors[effective] || "bg-muted text-muted-foreground"
+                            orderStatusColors[effective] || "bg-muted text-muted-foreground"
                           }`}
                         >
                           {formatOrderStatusLabel(effective)}

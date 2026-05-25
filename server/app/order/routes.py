@@ -188,6 +188,21 @@ def _current_order_status(order: Order) -> OrderStatus | None:
         return None
 
 
+def _compute_effective_order_status(order: Order) -> str:
+    """Return the effective order status, considering rider delivery progress, without DB side effects."""
+    current = _order_status_value(order.status)
+    if current in ("completed", "cancelled", "returned"):
+        return current
+    delivery = _latest_rider_delivery(order)
+    if delivery is not None:
+        delivery_status = _delivery_status_value(delivery.status)
+        has_proof = _has_proof_photo(getattr(delivery, "proof_photo_path", None))
+        if delivery_status == "delivered" or has_proof:
+            if current not in ("delivered", "completed", "cancelled", "returned"):
+                return "delivered"
+    return current
+
+
 def _sync_order_status_from_rider_delivery(order: Order) -> None:
     """Align orders.status when rider delivery is completed but order row is stale."""
     delivery = _latest_rider_delivery(order)
@@ -257,14 +272,6 @@ def _prepare_order_for_buyer_confirm(order: Order) -> None:
 
 
 def _serialize_order(order: Order) -> dict:
-    prev_status = _order_status_value(order.status)
-    _sync_order_status_from_rider_delivery(order)
-    if _order_status_value(order.status) != prev_status:
-        try:
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-
     raw_address = order.shipping_address
 
     pretty_address: str | None = None
@@ -371,6 +378,7 @@ def _serialize_order(order: Order) -> dict:
         "id": order.id,
         "orderNumber": str(order.id),  # String for web/mobile compatibility
         "status": _order_status_value(order.status),
+        "effectiveStatus": _compute_effective_order_status(order),
         "subtotal": subtotal,  # Product subtotal only
         "shipping": shipping,  # Shipping fee
         "shippingFee": shipping,  # Alias for internal use
@@ -1033,7 +1041,13 @@ def _restore_order_inventory(order: Order) -> None:
 
         product = item.product
         if product is None:
-            product = db.session.get(Product, item.product_id)
+            product = db.session.execute(
+                select(Product).where(Product.id == item.product_id).with_for_update()
+            ).scalar_one_or_none()
+        else:
+            db.session.execute(
+                select(Product).where(Product.id == product.id).with_for_update()
+            )
         if product is None:
             continue
 
@@ -1075,6 +1089,7 @@ def buyer_cancel_order(order_id: int):
                 selectinload(Order.deliveries),
             )
             .where(Order.id == order_id, Order.buyer_id == current_user.id)
+            .with_for_update()
         ).scalar_one_or_none()
 
         if order is None:
@@ -1231,6 +1246,7 @@ def confirm_order_received(order_id: int):
 
 @orders_bp.post("/orders/<int:order_id>/refund-request")
 @jwt_required()
+@buyer_required()
 def request_refund(order_id: int):
     """Allow the buyer to request a refund for an order.
 
@@ -1825,7 +1841,7 @@ def update_order_status(order_id: int):
 
     try:
         order = db.session.execute(
-            select(Order).where(Order.id == order_id)
+            select(Order).where(Order.id == order_id).with_for_update()
         ).scalar_one_or_none()
 
         if order is None:
@@ -1844,8 +1860,6 @@ def update_order_status(order_id: int):
         except KeyError:
             return jsonify(msg="Invalid status"), 400
 
-        # Enforce seller-facing transition rules so sellers cannot mark
-        # orders delivered (that is handled by riders / delivery flow).
         current_status = order.status if isinstance(order.status, OrderStatus) else OrderStatus(str(order.status))
 
         allowed_transitions: dict[OrderStatus, set[OrderStatus]] = {
@@ -1916,6 +1930,21 @@ def assign_rider(order_id: int):
         if store is None or store.user_id != current_user.id:
             return jsonify(msg="Unauthorized request!"), 403
 
+        # Only allow rider assignment for shipped or out-for-delivery orders
+        if order.status not in {OrderStatus.SHIPPED, OrderStatus.OUT_FOR_DELIVERY}:
+            return jsonify(msg="Order is not in a valid state for rider assignment"), 400
+
+        # Prevent duplicate active delivery for the same order
+        existing_active = db.session.execute(
+            select(RiderDelivery).where(
+                RiderDelivery.order_id == order.id,
+                RiderDelivery.status != DeliveryStatus.CANCELLED,
+            ).with_for_update()
+        ).scalar_one_or_none()
+
+        if existing_active is not None:
+            return jsonify(msg="Order already has an active rider delivery"), 400
+
         if rider_id is None:
             return jsonify(msg="Missing riderId"), 400
 
@@ -1976,7 +2005,9 @@ def rider_accept_order(order_id: int):
         if not rider_municipality:
             return jsonify(msg="Rider municipality not set"), 400
 
-        order = db.session.execute(select(Order).where(Order.id == order_id)).scalar_one_or_none()
+        order = db.session.execute(
+            select(Order).where(Order.id == order_id).with_for_update()
+        ).scalar_one_or_none()
 
         if order is None:
             return jsonify(msg="Order not found"), 404
@@ -1995,12 +2026,13 @@ def rider_accept_order(order_id: int):
         if buyer_profile is None or buyer_profile.municipality_name != rider_municipality:
             return jsonify(msg="Order is not in the rider's area"), 403
 
-        # Ensure this order is not already assigned to a rider
+        # Ensure this order is not already assigned to a rider (locked read)
         existing_delivery = db.session.execute(
-            select(RiderDelivery).where(RiderDelivery.order_id == order.id)
+            select(RiderDelivery).where(RiderDelivery.order_id == order.id).with_for_update()
         ).scalar_one_or_none()
 
         if existing_delivery is not None:
+            db.session.rollback()
             return jsonify(msg="Order is already assigned to a rider"), 400
 
         delivery = RiderDelivery(

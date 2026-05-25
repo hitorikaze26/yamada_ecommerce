@@ -5,6 +5,7 @@ import { Icon } from "@/components/ui/icon"
 import { useRouter } from "next/navigation"
 import { sellerApi, resolveImageUrl } from "@/lib/api"
 import { formatPrice } from "@/lib/format"
+import { orderStatusColors } from "@/lib/order-status"
 import { SellerOrderExpandedDetails } from "@/components/seller/seller-order-expanded-details"
 
 const tabs = ["all", "pending", "processing", "shipped", "delivered", "cancelled"]
@@ -54,16 +55,6 @@ type SellerOrder = {
       licenseNumber?: string | null
     } | null
   } | null
-}
-
-const statusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  processing: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  shipped: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
-  out_for_delivery: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  delivered: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  completed: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 }
 
 const sellerOrderMatchesTab = (orderStatus: string, tab: string): boolean => {
@@ -137,133 +128,141 @@ export default function SellerOrdersPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [successVariant, setSuccessVariant] = useState<"success" | "warning">("success")
 
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-        let sellerId = typeof window !== "undefined" ? localStorage.getItem("yamada-seller-id") : null
+  const loadOrders = async (silent = false) => {
+    try {
+      if (!silent) setIsLoading(true)
+      setError(null)
+      let sellerId = typeof window !== "undefined" ? localStorage.getItem("yamada-seller-id") : null
 
-        if (!sellerId) {
-          const profileRes = await sellerApi.getProfile()
-          const sellerProfile = (profileRes.data as any)?.seller_profile
+      if (!sellerId) {
+        const profileRes = await sellerApi.getProfile()
+        const sellerProfile = (profileRes.data as any)?.seller_profile
 
-          if (sellerProfile?.id) {
-            sellerId = String(sellerProfile.id)
-            if (typeof window !== "undefined") {
-              localStorage.setItem("yamada-seller-id", sellerId)
-            }
-          } else {
-            setError("Seller ID not found. Please re-login as seller.")
-            setIsLoading(false)
-            return
+        if (sellerProfile?.id) {
+          sellerId = String(sellerProfile.id)
+          if (typeof window !== "undefined") {
+            localStorage.setItem("yamada-seller-id", sellerId)
           }
+        } else {
+          setError("Seller ID not found. Please re-login as seller.")
+          if (!silent) setIsLoading(false)
+          return
         }
+      }
 
-        const res = await sellerApi.getOrders()
-        const apiOrders = (res.data as any)?.orders || []
+      const res = await sellerApi.getOrders()
+      const apiOrders = (res.data as any)?.orders || []
 
-        const mapped: SellerOrder[] = apiOrders.map((o: any) => {
-          const rawItems = Array.isArray(o.items) ? o.items : []
+      const mapped: SellerOrder[] = apiOrders.map((o: any) => {
+        const rawItems = Array.isArray(o.items) ? o.items : []
 
-          const items: SellerOrderItem[] = rawItems.map((item: any) => {
-            let variation: { color?: string; size?: string } = {}
-            try {
-              if (item.variation) {
-                const parsed = JSON.parse(item.variation)
-                if (parsed && typeof parsed === "object") {
-                  variation = {
-                    color: (parsed as any).color,
-                    size: (parsed as any).size,
-                  }
+        const items: SellerOrderItem[] = rawItems.map((item: any) => {
+          let variation: { color?: string; size?: string } = {}
+          try {
+            if (item.variation) {
+              const parsed = JSON.parse(item.variation)
+              if (parsed && typeof parsed === "object") {
+                variation = {
+                  color: (parsed as any).color,
+                  size: (parsed as any).size,
                 }
               }
-            } catch {
-              variation = {}
             }
+          } catch {
+            variation = {}
+          }
 
-            const product = item.product || {}
-
-            return {
-              product: {
-                name: product.name || "Unknown product",
-                images: product.imageUrl ? [product.imageUrl] : [],
-                price: Number(product.price ?? item.unitPrice ?? 0),
-                salePrice: undefined,
-              },
-              quantity: Number(item.quantity ?? 1),
-              variation,
-            }
-          })
-
-          const rawStatus = (o.status || "PENDING") as string
-          const normalizedStatus = rawStatus.toLowerCase()
-
-          const buyer = o.buyer || {}
-          const shippingFullName = getShippingFullName(o.shippingAddress)
-
-          const primaryBuyerName =
-            buyer.fullName ||
-            buyer.full_name ||
-            buyer.name ||
-            [buyer.firstName, buyer.lastName].filter(Boolean).join(" ") ||
-            [buyer.first_name, buyer.last_name].filter(Boolean).join(" ") ||
-            buyer.username ||
-            null
-
-          const buyerName = shippingFullName || primaryBuyerName || "Customer"
-
-          const buyerEmail = buyer.email || buyer.contactEmail || ""
+          const product = item.product || {}
 
           return {
-            id: `ORD-${String(o.id).padStart(6, "0")}`,
-            backendId: Number(o.id),
-            date: o.createdAt || new Date().toISOString(),
-            status: normalizedStatus,
-            buyerId: buyer.id != null ? Number(buyer.id) : null,
-            customer: {
-              name: buyerName,
-              email: buyerEmail,
-              address: o.shippingAddress || "",
-              notes: o.notes || o.orderNotes || null,
+            product: {
+              name: product.name || "Unknown product",
+              images: product.imageUrl ? [product.imageUrl] : [],
+              price: Number(product.price ?? item.unitPrice ?? 0),
+              salePrice: undefined,
             },
-            items,
-            total: Number(o.total ?? o.total_amount ?? 0),
-            paymentMethod: o.paymentMethod || "",
-            riderDelivery: o.riderDelivery
-              ? {
-                  id: Number(o.riderDelivery.id),
-                  status: (o.riderDelivery.status || "pending").toLowerCase(),
-                  fee: Number(o.riderDelivery.fee ?? 0),
-                  distanceKm: o.riderDelivery.distanceKm ?? null,
-                  hasProofPhoto: Boolean(o.riderDelivery.hasProofPhoto) || Boolean(o.riderDelivery.proofPhotoUrl),
-                  proofPhotoUrl: resolveImageUrl(o.riderDelivery.proofPhotoUrl) ?? null,
-                  proofNote: o.riderDelivery.proofNote ?? null,
-                  rider: o.riderDelivery.rider
-                    ? {
-                        id: Number(o.riderDelivery.rider.id),
-                        name: o.riderDelivery.rider.name || o.riderDelivery.rider.email || "Rider",
-                        email: o.riderDelivery.rider.email || "",
-                        contactNumber: o.riderDelivery.rider.contactNumber || "",
-                        vehicleType: o.riderDelivery.rider.vehicleType ?? null,
-                        licenseNumber: o.riderDelivery.rider.licenseNumber ?? null,
-                      }
-                    : null,
-                }
-              : null,
+            quantity: Number(item.quantity ?? 1),
+            variation,
           }
         })
 
-        setOrders(mapped)
-      } catch (err) {
-        console.error("Failed to load orders", err)
-        setError("Failed to load orders. Please try again later.")
-      } finally {
-        setIsLoading(false)
-      }
-    }
+        const rawStatus = (o.status || "PENDING") as string
+        const normalizedStatus = rawStatus.toLowerCase()
 
+        const buyer = o.buyer || {}
+        const shippingFullName = getShippingFullName(o.shippingAddress)
+
+        const primaryBuyerName =
+          buyer.fullName ||
+          buyer.full_name ||
+          buyer.name ||
+          [buyer.firstName, buyer.lastName].filter(Boolean).join(" ") ||
+          [buyer.first_name, buyer.last_name].filter(Boolean).join(" ") ||
+          buyer.username ||
+          null
+
+        const buyerName = shippingFullName || primaryBuyerName || "Customer"
+
+        const buyerEmail = buyer.email || buyer.contactEmail || ""
+
+        return {
+          id: `ORD-${String(o.id).padStart(6, "0")}`,
+          backendId: Number(o.id),
+          date: o.createdAt || new Date().toISOString(),
+          status: normalizedStatus,
+          buyerId: buyer.id != null ? Number(buyer.id) : null,
+          customer: {
+            name: buyerName,
+            email: buyerEmail,
+            address: o.shippingAddress || "",
+            notes: o.notes || o.orderNotes || null,
+          },
+          items,
+          total: Number(o.total ?? o.total_amount ?? 0),
+          paymentMethod: o.paymentMethod || "",
+          riderDelivery: o.riderDelivery
+            ? {
+                id: Number(o.riderDelivery.id),
+                status: (o.riderDelivery.status || "pending").toLowerCase(),
+                fee: Number(o.riderDelivery.fee ?? 0),
+                distanceKm: o.riderDelivery.distanceKm ?? null,
+                hasProofPhoto: Boolean(o.riderDelivery.hasProofPhoto) || Boolean(o.riderDelivery.proofPhotoUrl),
+                proofPhotoUrl: resolveImageUrl(o.riderDelivery.proofPhotoUrl) ?? null,
+                proofNote: o.riderDelivery.proofNote ?? null,
+                rider: o.riderDelivery.rider
+                  ? {
+                      id: Number(o.riderDelivery.rider.id),
+                      name: o.riderDelivery.rider.name || o.riderDelivery.rider.email || "Rider",
+                      email: o.riderDelivery.rider.email || "",
+                      contactNumber: o.riderDelivery.rider.contactNumber || "",
+                      vehicleType: o.riderDelivery.rider.vehicleType ?? null,
+                      licenseNumber: o.riderDelivery.rider.licenseNumber ?? null,
+                    }
+                  : null,
+              }
+            : null,
+        }
+      })
+
+      setOrders(mapped)
+    } catch (err) {
+      console.error("Failed to load orders", err)
+      if (!silent) setError("Failed to load orders. Please try again later.")
+    } finally {
+      if (!silent) setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
     void loadOrders()
+  }, [])
+
+  // Poll for order status updates every 30s (silent)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void loadOrders(true)
+    }, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -457,7 +456,7 @@ export default function SellerOrdersPage() {
                     </div>
 
                     <span
-                      className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusColors[order.status]}`}
+                      className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${orderStatusColors[order.status]}`}
                     >
                       {statusDisplayLabel(order.status)}
                     </span>
