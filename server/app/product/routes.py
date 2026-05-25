@@ -118,7 +118,7 @@ def getProduct(product_id):
                     "id": v.id,
                     "size": v.size,
                     "color": v.color,
-                    "colorHex": v.color_hex,
+                    "colorHex": getattr(v, 'color_hex', None),
                     "sku": v.sku,
                     "inventory": v.inventory,
                     "price": v.price,
@@ -453,13 +453,10 @@ def createProduct():
                     else:
                         color_value = str(colors)
 
-                    color_hex = v.get('colorHex') or v.get('color_hex') or None
-
                     variation = ProductVariation(
                         product=product,
                         size=size,
                         color=color_value,
-                        color_hex=color_hex,
                         sku=sku,
                         inventory=stock,
                         price=None,
@@ -687,13 +684,10 @@ def updateProduct(product_id):
                         else:
                             color_value = str(colors)
 
-                        color_hex = v.get('colorHex') or v.get('color_hex') or None
-
                         variation = ProductVariation(
                             product=product,
                             size=size,
                             color=color_value,
-                            color_hex=color_hex,
                             sku=sku,
                             inventory=stock,
                             price=None,
