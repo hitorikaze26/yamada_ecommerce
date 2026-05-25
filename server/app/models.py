@@ -914,7 +914,7 @@ class PaymentTransaction(Base):
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
     amount: Mapped[float] = mapped_column(Float, default=0.0)
     platform_fee: Mapped[float] = mapped_column(Float, default=0.0)
-    status: Mapped[PaymentStatus] = mapped_column(Enum(PaymentStatus), default=PaymentStatus.HELD)
+    status: Mapped[PaymentStatus] = mapped_column(Enum(PaymentStatus, values_callable=_enum_values), default=PaymentStatus.HELD)
     created_at: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(
         nullable=True,
