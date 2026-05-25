@@ -602,59 +602,60 @@ def checkout():
     }
     """
 
-    if not request.is_json:
-        abort(400)
-
-    from app.services.punishment_service import PunishmentService, ACTION_ORDERING
-
-    blocked = PunishmentService.enforce(current_user.id, ACTION_ORDERING)
-    if blocked:
-        return blocked
-
-    data = request.get_json()
-    items_data = data.get("items", [])
-    if not items_data:
-        return jsonify(msg="No items to checkout"), 400
-
-    idempotency_key = (data.get("idempotencyKey") or data.get("idempotency_key") or "").strip()
-    if idempotency_key:
-        if len(idempotency_key) > 64:
-            return jsonify(msg="Invalid idempotency key"), 400
-        existing_order = db.session.execute(
-            select(Order).where(
-                Order.buyer_id == current_user.id,
-                Order.idempotency_key == idempotency_key,
-            )
-        ).scalar_one_or_none()
-        if existing_order is not None:
-            return jsonify(order=_serialize_order(existing_order)), 200
-
-    # Mirror login is_verified: buyers need email_verified; sellers need store ACCEPTED
-    from flask_jwt_extended import get_jwt
-
-    is_verified = getattr(current_user, "email_verified", False)
-    user_roles = [
-        ur.role_id for ur in (getattr(current_user, "roles", None) or [])
-    ]
-    claims = get_jwt()
-    if RoleTypes.SELLER.value in user_roles or claims.get("is_seller"):
-        seller = db.session.execute(
-            select(Seller).where(Seller.user_id == current_user.id)
-        ).scalar_one_or_none()
-        if seller and seller.registration:
-            is_verified = (
-                seller.registration.request_status
-                == StoreRequestStatus.ACCEPTED
-            )
-    if not is_verified:
-        return (
-            jsonify(
-                msg="Your account is not yet verified. Please wait for admin approval before placing orders."
-            ),
-            403,
-        )
-
     try:
+        if not request.is_json:
+            abort(400)
+
+        from app.services.punishment_service import PunishmentService, ACTION_ORDERING
+
+        blocked = PunishmentService.enforce(current_user.id, ACTION_ORDERING)
+        if blocked:
+            return blocked
+
+        data = request.get_json()
+        items_data = data.get("items", [])
+        if not items_data:
+            return jsonify(msg="No items to checkout"), 400
+
+        idempotency_key = (data.get("idempotencyKey") or data.get("idempotency_key") or "").strip()
+        if idempotency_key:
+            if len(idempotency_key) > 64:
+                return jsonify(msg="Invalid idempotency key"), 400
+            existing_order = db.session.execute(
+                select(Order).where(
+                    Order.buyer_id == current_user.id,
+                    Order.idempotency_key == idempotency_key,
+                )
+            ).scalar_one_or_none()
+            if existing_order is not None:
+                return jsonify(order=_serialize_order(existing_order)), 200
+
+        # Mirror login is_verified: buyers need email_verified; sellers need store ACCEPTED
+        from flask_jwt_extended import get_jwt
+
+        is_verified = getattr(current_user, "email_verified", False)
+        user_roles = [
+            ur.role_id for ur in (getattr(current_user, "roles", None) or [])
+        ]
+        claims = get_jwt()
+        if RoleTypes.SELLER.value in user_roles or claims.get("is_seller"):
+            seller = db.session.execute(
+                select(Seller).where(Seller.user_id == current_user.id)
+            ).scalar_one_or_none()
+            if seller and seller.registration:
+                is_verified = (
+                    seller.registration.request_status
+                    == StoreRequestStatus.ACCEPTED
+                )
+        if not is_verified:
+            return (
+                jsonify(
+                    msg="Your account is not yet verified. Please wait for admin approval before placing orders."
+                ),
+                403,
+            )
+
+
         # For now we assume all products in the order belong to the same store
         first_product_id = int(items_data[0]["productId"])
         first_product = db.session.execute(

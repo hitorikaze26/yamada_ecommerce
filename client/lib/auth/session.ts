@@ -164,12 +164,8 @@ export function getLoginErrorMessage(error: unknown): string {
       axiosErr.message?.toLowerCase().includes("network"))
 
   if (isNetwork) {
-    const onLocalhost =
-      typeof window !== "undefined" &&
-      (window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1")
-    if (onLocalhost) {
-      return `Cannot reach the API at ${Env.API_BASE_URL}. Start the Flask server (python run.py) and check NEXT_PUBLIC_API_BASE_URL in client/.env.local.`
+    if (Env.isLocal) {
+      return `Cannot reach the API at ${Env.API_BASE_URL}. Make sure the Flask server is running (python run.py from the server/ directory).`
     }
     return (
       `Cannot reach the API at ${Env.API_BASE_URL}. ` +

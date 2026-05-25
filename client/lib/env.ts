@@ -15,12 +15,18 @@
  * - All consumers read from this module, never directly from process.env.
  */
 
+function isLocalUrl(url: string): boolean {
+  const host = url.replace(/^https?:\/\//, "").split(/[/:]/)[0].toLowerCase()
+  return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0"
+}
+
 function detectEnvironment(): "local" | "production" | "test" {
   if (typeof window === "undefined" && process.env.NODE_ENV === "test") {
     return "test"
   }
-  if (process.env.NEXT_PUBLIC_API_BASE_URL?.trim()) {
-    return "production"
+  const configured = process.env.NEXT_PUBLIC_API_BASE_URL?.trim()
+  if (configured) {
+    return isLocalUrl(configured) ? "local" : "production"
   }
   return "local"
 }
