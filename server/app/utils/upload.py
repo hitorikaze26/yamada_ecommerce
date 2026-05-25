@@ -31,7 +31,7 @@ from app.utils.supabase_storage import storage, path_is_private
 
 
 def use_supabase_storage() -> bool:
-    """Use Supabase when configured (production with keys, or explicit force)."""
+    """Use Supabase when configured (keys present, or explicit force)."""
     force = os.environ.get("FORCE_SUPABASE_UPLOADS", "").lower() in (
         "1",
         "true",
@@ -42,9 +42,9 @@ def use_supabase_storage() -> bool:
     )
     if force:
         return has_keys
-    if os.environ.get("FLASK_ENV", "development") != "production":
+    if not has_keys:
         return False
-    return has_keys
+    return True
 
 
 # ── Save ──────────────────────────────────────────────────────────────────

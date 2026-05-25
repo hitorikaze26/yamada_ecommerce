@@ -48,6 +48,16 @@ def _cors_allowed_origins() -> list[str]:
     return origins
 
 
+PLACEHOLDER_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" '
+    'viewBox="0 0 400 400">'
+    '<rect width="400" height="400" fill="#f3f4f6"/>'
+    '<text x="200" y="200" font-family="sans-serif" font-size="16" '
+    'fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">'
+    "No Image</text></svg>"
+)
+
+
 def create_app(test_config=None):
     load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
     # Explicitly configure static folder so uploaded documents under app/static
@@ -109,6 +119,19 @@ def create_app(test_config=None):
         resources={r"/api/*": {"origins": _cors_allowed_origins()}},
         supports_credentials=True,
     )
+
+    @app.route("/placeholder.svg")
+    def placeholder_svg():
+        from flask import Response
+        return Response(PLACEHOLDER_SVG, mimetype="image/svg+xml")
+
+    # Catch 404s under /static/ and return placeholder instead
+    @app.errorhandler(404)
+    def not_found(e):
+        from flask import request, Response
+        if request.path.startswith("/static/"):
+            return Response(PLACEHOLDER_SVG, mimetype="image/svg+xml")
+        return {"error": "Not found"}, 404
 
     @app.route("/api/health")
     def health_check():

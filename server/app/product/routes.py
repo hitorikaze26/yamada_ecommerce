@@ -242,7 +242,7 @@ def getProduct(product_id):
                     "id": v.id,
                     "size": v.size,
                     "color": v.color,
-                        "colorHex": getattr(v, 'color', None),
+                        "colorHex": getattr(v, 'color_hex', None),
                     "sku": v.sku,
                     "inventory": v.inventory,
                     "price": v.price,
@@ -664,6 +664,16 @@ def createProduct():
                 else:
                     color_value = str(colors).strip()
 
+                color_hex = v.get('colorHex') or v.get('color_hex')
+                if color_hex and isinstance(color_hex, str):
+                    color_hex = color_hex.strip()
+                    if not color_hex.startswith('#'):
+                        color_hex = None
+                    elif len(color_hex) > 7:
+                        color_hex = color_hex[:7]
+                else:
+                    color_hex = None
+
                 variant_price = _parse_float(
                     v.get('price'),
                     "Variant price",
@@ -674,6 +684,7 @@ def createProduct():
                     product=product,
                     size=size,
                     color=color_value,
+                    color_hex=color_hex,
                     sku=sku,
                     inventory=stock,
                     price=variant_price,
@@ -904,10 +915,21 @@ def updateProduct(product_id):
                         else:
                             color_value = str(colors)
 
+                        color_hex = v.get('colorHex') or v.get('color_hex')
+                        if color_hex and isinstance(color_hex, str):
+                            color_hex = color_hex.strip()
+                            if not color_hex.startswith('#'):
+                                color_hex = None
+                            elif len(color_hex) > 7:
+                                color_hex = color_hex[:7]
+                        else:
+                            color_hex = None
+
                         variation = ProductVariation(
                             product=product,
                             size=size,
                             color=color_value,
+                            color_hex=color_hex,
                             sku=sku,
                             inventory=stock,
                             price=None,

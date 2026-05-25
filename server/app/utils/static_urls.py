@@ -29,9 +29,9 @@ def _supabase_configured() -> bool:
     )
     if force:
         return has_keys
-    if os.environ.get("FLASK_ENV", "development") != "production":
+    if not has_keys:
         return False
-    return has_keys
+    return True
 
 
 def public_static_url(rel_path: str | None) -> str | None:

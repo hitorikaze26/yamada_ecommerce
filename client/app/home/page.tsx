@@ -107,6 +107,7 @@ export default function HomePage() {
                         id: String(v.id),
                         size: v.size ?? "",
                         color: v.color ?? "",
+                  colorHex: v.colorHex ?? undefined,
                         sku: v.sku ?? "",
                         inventory: typeof v.inventory === "number" ? v.inventory : 0,
                         price: typeof v.price === "number" ? v.price : undefined,

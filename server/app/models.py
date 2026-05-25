@@ -640,6 +640,7 @@ class ProductVariation(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id', ondelete='CASCADE'))
     size: Mapped[str] = mapped_column(nullable=True)
     color: Mapped[str] = mapped_column(nullable=True)
+    color_hex: Mapped[str] = mapped_column(String(7), nullable=True)
     sku: Mapped[str] = mapped_column(nullable=True)
     price: Mapped[float] = mapped_column(Float, nullable=True)
     inventory: Mapped[int] = mapped_column(Integer, nullable=True)
