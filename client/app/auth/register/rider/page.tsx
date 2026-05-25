@@ -203,9 +203,10 @@ export default function RiderRegistrationPage() {
         localStorage.removeItem(STORAGE_KEY)
       }
       router.push("/auth/login?role=rider&registered=true")
-    } catch (err) {
-      setError("Registration failed. Please try again.")
-      showAlert("Rider registration failed. Please try again.", "error")
+    } catch (err: any) {
+      const serverMsg = err?.response?.data?.msg || err?.response?.data?.message || "Registration failed. Please try again."
+      setError(serverMsg)
+      showAlert(serverMsg, "error")
     } finally {
       setIsLoading(false)
     }

@@ -236,6 +236,7 @@ function CheckoutContent() {
           paymentMethod,
           shippingFee,
           idempotencyKey: `${checkoutIdempotencyKey}-${sellerId}`,
+          notes: notes || undefined,
           items: sellerItems.map((item) => ({
             productId: String(item.product.id),
             quantity: item.quantity,

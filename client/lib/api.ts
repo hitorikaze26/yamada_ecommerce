@@ -1126,6 +1126,7 @@ export interface CheckoutData {
   items: CartItem[]
   shippingFee?: number
   idempotencyKey?: string
+  notes?: string
 }
 
 export interface CartItem {
