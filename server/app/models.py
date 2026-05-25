@@ -103,9 +103,10 @@ def product_can_seller_edit(product: "Product") -> bool:
     )
 
 
-def _enum_values(enum_cls: type[enum.Enum]) -> list[str]:
-    """Map Python enums to DB string values (MySQL ENUM stores .value, not .name)."""
-    return [member.value for member in enum_cls]
+# NOTE: Do NOT use values_callable here. Without it, SQLAlchemy serializes
+# using member.value (lowercase).  With values_callable, it switches to
+# member.name (uppercase), which breaks native PostgreSQL ENUMs created
+# with lowercase values (e.g. 'held' vs 'HELD').
 
 
 class DeliveryStatus(enum.Enum):
@@ -408,7 +409,7 @@ class StoreRegistration(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id', ondelete='CASCADE'))
     seller_id: Mapped[int] = mapped_column(ForeignKey('seller_profiles.id', ondelete='CASCADE'), nullable=True)
     request_status: Mapped[StoreRequestStatus] = mapped_column(
-        Enum(StoreRequestStatus, values_callable=_enum_values),
+        Enum(StoreRequestStatus),
         default=StoreRequestStatus.PENDING,
     )
     store_purpose: Mapped[str] = mapped_column(nullable=True)
@@ -500,7 +501,7 @@ class Product(Base):
     image_url: Mapped[str] = mapped_column(nullable=True)
     is_live: Mapped[bool] = mapped_column(Boolean, default=True)
     moderation_status: Mapped[ProductModerationStatus] = mapped_column(
-        Enum(ProductModerationStatus, values_callable=_enum_values),
+        Enum(ProductModerationStatus),
         default=ProductModerationStatus.ACTIVE,
     )
     moderation_reason: Mapped[str] = mapped_column(TEXT, nullable=True)
@@ -935,7 +936,7 @@ class PaymentTransaction(Base):
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
     amount: Mapped[float] = mapped_column(Float, default=0.0)
     platform_fee: Mapped[float] = mapped_column(Float, default=0.0)
-    status: Mapped[PaymentStatus] = mapped_column(Enum(PaymentStatus, values_callable=_enum_values), default=PaymentStatus.HELD)
+    status: Mapped[PaymentStatus] = mapped_column(Enum(PaymentStatus), default=PaymentStatus.HELD)
     created_at: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(
         nullable=True,
@@ -959,7 +960,7 @@ class RefundRequest(Base):
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
     reason: Mapped[str] = mapped_column(TEXT, nullable=True)
     status: Mapped[RefundStatus] = mapped_column(
-        Enum(RefundStatus, values_callable=_enum_values),
+        Enum(RefundStatus),
         default=RefundStatus.REQUESTED,
     )
     created_at: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
@@ -1300,7 +1301,7 @@ class Conversation(Base):
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
     kind: Mapped[ConversationKind] = mapped_column(
-        Enum(ConversationKind, values_callable=_enum_values),
+        Enum(ConversationKind),
         nullable=False,
     )
     store_id: Mapped[int] = mapped_column(
@@ -1365,7 +1366,7 @@ class ChatMessage(Base):
     )
     body: Mapped[str] = mapped_column(TEXT, default="")
     message_type: Mapped[ChatMessageType] = mapped_column(
-        Enum(ChatMessageType, values_callable=_enum_values),
+        Enum(ChatMessageType),
         default=ChatMessageType.TEXT,
     )
     metadata_json: Mapped[dict] = mapped_column(JSON, nullable=True)
