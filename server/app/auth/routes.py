@@ -53,6 +53,7 @@ from flask import (
 )
 from flask_jwt_extended import (
     create_access_token,
+    get_csrf_token,
     jwt_required,
     get_jwt,
     get_jwt_identity,
@@ -344,7 +345,7 @@ def login():
 
     # Use the stable primary key as the JWT identity
     access_token = create_access_token(identity=user.id, additional_claims=claims)
-    csrf_token = create_access_token(identity=user.id, additional_claims={"csrf": True})
+    csrf_token = get_csrf_token(access_token)
     response = jsonify(
         msg="Successfully logged in!",
         access_token=access_token,
@@ -377,7 +378,7 @@ def refresh_access():
 
     claims = _build_jwt_claims(user)
     access_token = create_access_token(identity=user.id, additional_claims=claims)
-    csrf_token = create_access_token(identity=user.id, additional_claims={"csrf": True})
+    csrf_token = get_csrf_token(access_token)
     response = jsonify(access_token=access_token, csrf_token=csrf_token)
     set_access_cookies(response, access_token)
     return response, 200
