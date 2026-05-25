@@ -412,6 +412,11 @@ function NewProductPageContent() {
 
     try {
       await sellerApi.addProduct(form)
+      toast({
+        title: "Success",
+        description: "Product created successfully!",
+        variant: "success",
+      })
       router.push("/seller/products?created=1")
     } catch (error) {
       console.error("Failed to create product", error)
