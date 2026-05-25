@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
-import { resolveImageUrl } from "@/lib/api"
+import { productCoverImage } from "@/lib/product-images"
 import { GlassAlert } from "@/components/ui/glass-alert"
 import { useCart } from "@/context/cart-context"
 import { useWishlist } from "@/context/wishlist-context"
@@ -120,7 +120,7 @@ export default function WishlistPage() {
                     </div>
                   ) : (
                     <Image
-                      src={resolveImageUrl(product.image_url || product.images?.[0]) || "/placeholder.svg"}
+                      src={productCoverImage(product)}
                       alt={product.name}
                       fill
                       className="object-cover"

@@ -18,7 +18,7 @@ import {
 import { formatShippingDisplay, FREE_SHIPPING_THRESHOLD } from "@/lib/shipping"
 import { ShippingEstimator } from "@/components/cart/shipping-estimator"
 import { formatPrice } from "@/lib/format"
-import { resolveImageUrl } from "@/lib/api"
+import { productCoverImage } from "@/lib/product-images"
 import { StoreNameLink } from "@/components/store/store-name-link"
 
 export default function CartPage() {
@@ -30,23 +30,6 @@ export default function CartPage() {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
 
   // Helper function to normalize image URLs
-  const normalizeImageUrl = (imageUrl?: string | null): string => {
-    if (!imageUrl) return "/placeholder.svg"
-    
-    const normalized = imageUrl.replace(/\\/g, "/")
-    const trimmed = normalized.replace(/^\/+/, "")
-
-    if (trimmed.startsWith("static/")) {
-      return resolveImageUrl(`/${trimmed}`) ?? "/placeholder.svg"
-    }
-    
-    if (!imageUrl.startsWith("http")) {
-      return resolveImageUrl(`/static/${trimmed}`) ?? "/placeholder.svg"
-    }
-    
-    return imageUrl
-  }
-
   // Select all items by default when cart loads
   useEffect(() => {
     const itemIds = cart.items.map((item) => item.id)
@@ -257,7 +240,7 @@ export default function CartPage() {
                               </div>
                             ) : (
                               <Image
-                                src={normalizeImageUrl(item.product?.images?.[0] || item.product?.imageUrl)}
+                                 src={productCoverImage(item.product)}
                                 alt={item.product?.name || "Product"}
                                 fill
                                 className="object-cover"

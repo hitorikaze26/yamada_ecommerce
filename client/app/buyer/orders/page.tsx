@@ -6,7 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { formatPrice } from "@/lib/format"
-import { ordersApi, resolveImageUrl } from "@/lib/api"
+import { ordersApi } from "@/lib/api"
+import { productCoverImage } from "@/lib/product-images"
 import type { Order } from "@/lib/types"
 import { useAuth } from "@/context/auth-context"
 import Swal from "sweetalert2"
@@ -238,7 +239,7 @@ function BuyerOrdersContent() {
 
                 <div className="p-4 space-y-4">
                   {order.items.map((item, index) => {
-                    const img = resolveImageUrl(item.product.imageUrl || item.product.image_url || item.product.images?.[0]) || "/placeholder.svg"
+                    const img = productCoverImage(item.product)
                     const variation = parseVariation(item.variation)
                     const orderStore = (order as OrderWithRider).store
                     const storeId =

@@ -258,8 +258,25 @@ def getProduct(product_id):
 @products_bp.get('/product/<string:product_name>')
 def getProductByName(product_name):
     try:
-        products=db.session.execute(select(Product).where(Product.name.ilike(f'%{product_name}%'))).scalars().all()
-        return jsonify(products=[p.to_json() for p in products])
+        products = db.session.execute(
+            select(Product)
+            .options(selectinload(Product.media))
+            .where(Product.name.ilike(f'%{product_name}%'))
+        ).scalars().all()
+
+        result = []
+        for p in products:
+            data = p.to_json()
+            data["images"] = [
+                _public_image_url(img) or img for img in data.get("images", [])
+            ]
+            if data.get("media"):
+                for m in data["media"]:
+                    if m.get("path"):
+                        m["path"] = _public_image_url(m["path"]) or m["path"]
+            result.append(data)
+
+        return jsonify(products=result)
     except:
         return jsonify(msg="Error occurred!"), 500
 
@@ -318,7 +335,7 @@ def listProducts():
       elif sort_param == 'popular':
           stmt = stmt.order_by(Product.rating.desc(), Product.review_count.desc())
 
-      stmt = stmt.limit(limit)
+      stmt = stmt.options(selectinload(Product.media)).limit(limit)
       products = db.session.execute(stmt).scalars().all()
 
       # Preload store names for all products so the frontend can show
@@ -345,22 +362,36 @@ def listProducts():
           for row in cat_rows:
               categories_by_product.setdefault(row.product_id, []).append(row.name)
 
-      data = [
-          {
+      data = []
+      for p in products:
+          # Build images array (same pattern as getProduct)
+          all_images = []
+          if p.image_url:
+              all_images.append(_public_image_url(p.image_url))
+          for m in (getattr(p, "media", None) or []):
+              if m.media_type == "image" and m.path:
+                  all_images.append(_public_image_url(m.path))
+          seen = set()
+          unique_images = []
+          for img in all_images:
+              if img and img not in seen:
+                  seen.add(img)
+                  unique_images.append(img)
+
+          data.append({
               "id": p.id,
               "name": p.name,
               "subcategory": getattr(p, "subcategory", None),
               "price": p.price,
               "image_url": _public_image_url(getattr(p, "image_url", None)),
+              "images": unique_images,
               "rating": getattr(p, "rating", 0),
               "review_count": getattr(p, "review_count", 0),
               "store_id": getattr(p, "store_id", None),
               # Alias for frontend field name
               "seller_name": stores_map.get(getattr(p, "store_id", None)),
               "categories": categories_by_product.get(p.id, []),
-          }
-          for p in products
-      ]
+          })
 
       return jsonify(products=data)
     except Exception:
@@ -778,9 +809,6 @@ def deleteProduct(product_id):
 @seller_required()
 @is_store_accepted
 def updateProduct(product_id):
-    if not request.is_json:
-        abort(400)
-    
     product=db.session.execute(select(Product).where(Product.id==product_id)).scalar_one_or_none()
     store=db.session.execute(select(Store).where(Store.user_id==current_user.id)).scalar_one_or_none()
 
@@ -790,18 +818,25 @@ def updateProduct(product_id):
 
         if not product_can_seller_edit(product):
             return jsonify(msg="This product cannot be edited while restricted or removed by admin."), 403
-        
-        data = request.get_json() or {}
+
+        # Parse input: JSON or multipart/form-data
+        if request.is_json:
+            data = request.get_json() or {}
+        else:
+            data = request.form
+
+        def _get(key):
+            return data.get(key)
 
         # Basic fields (backwards compatible)
-        name = data.get('name')
-        price = data.get('price')
-        quantity = data.get('quantity')
-        description = data.get('description')
-        low_stock_threshold = data.get('low_stock_threshold')
-        cost_price = data.get('cost_price')
-        size_chart_raw = data.get('size_chart')
-        subcategory = data.get('subcategory')
+        name = _get('name')
+        price = _get('price')
+        quantity = _get('quantity')
+        description = _get('description')
+        low_stock_threshold = _get('low_stock_threshold')
+        cost_price = _get('cost_price')
+        size_chart_raw = _get('size_chart')
+        subcategory = _get('subcategory')
 
         if name is not None and name != '':
             product.name = name
@@ -830,20 +865,17 @@ def updateProduct(product_id):
         if size_chart_raw is not None:
             try:
                 if isinstance(size_chart_raw, str):
-                    # Assume the frontend already sent a JSON string
                     product.size_chart_json = size_chart_raw
                 else:
                     product.size_chart_json = json.dumps(size_chart_raw)
             except Exception:
-                # Ignore invalid payload and leave existing size_chart_json as-is
                 pass
 
-        # Optional variations payload – same shape as in createProduct
-        variations_raw = data.get('variations')
+        # Optional variations payload
+        variations_raw = _get('variations')
         variations_data = []
         if variations_raw is not None:
             try:
-                # variations may come as already-parsed list or a JSON string
                 if isinstance(variations_raw, str):
                     variations_data = json.loads(variations_raw)
                 else:
@@ -851,7 +883,6 @@ def updateProduct(product_id):
             except Exception:
                 variations_data = []
 
-            # Replace existing variations with the new set
             for existing in list(product.variations):
                 db.session.delete(existing)
 
@@ -868,7 +899,6 @@ def updateProduct(product_id):
                         if not size:
                             continue
 
-                        # Flatten colors list to a single string (matches createProduct)
                         if isinstance(colors, list):
                             color_value = ', '.join(str(c).strip() for c in colors if c)
                         else:
@@ -885,15 +915,102 @@ def updateProduct(product_id):
                         db.session.add(variation)
                         total_stock += stock
                     except Exception:
-                        # Skip invalid variation entries but continue updating the product
                         continue
 
-            # If caller did not explicitly send quantity, sync it from total variation stock
             if quantity is None and variations_data:
                 product.quantity = total_stock
 
-        product.updated_at = datetime.datetime.now()
+        # ── Image/media handling (multipart only) ──
+        if not request.is_json:
+            from app.utils.upload import save_upload
 
+            # Remove specific media by ID (comma-separated or JSON array from form)
+            remove_ids_raw = _get('remove_media_ids')
+            if remove_ids_raw:
+                try:
+                    if isinstance(remove_ids_raw, str):
+                        remove_ids = json.loads(remove_ids_raw)
+                    else:
+                        remove_ids = remove_ids_raw
+                    if isinstance(remove_ids, list):
+                        for mid in remove_ids:
+                            try:
+                                mid_int = int(mid)
+                                media_row = db.session.execute(
+                                    select(ProductMedia).where(
+                                        ProductMedia.id == mid_int,
+                                        ProductMedia.product_id == product.id,
+                                    )
+                                ).scalar_one_or_none()
+                                if media_row:
+                                    from app.utils.supabase_storage import storage
+                                    try:
+                                        storage.delete(media_row.path)
+                                    except Exception:
+                                        pass
+                                    db.session.delete(media_row)
+                            except (ValueError, TypeError):
+                                pass
+                except Exception:
+                    pass
+
+            # Upload new main image (replaces cover)
+            main_image = request.files.get('main_image')
+            if main_image and main_image.mimetype and main_image.mimetype.startswith('image/'):
+                safe_name = secure_filename(main_image.filename or 'image')
+                filename = f"product_{product.id}_main_{safe_name}"
+                rel = save_upload(main_image, "product_images", filename=filename)
+                if rel:
+                    # Unmark existing cover media
+                    for m in (product.media or []):
+                        m.is_cover = False
+                    # Set new cover
+                    product.image_url = rel
+                    media = ProductMedia(
+                        product=product,
+                        media_type='image',
+                        path=rel,
+                        is_cover=True,
+                    )
+                    db.session.add(media)
+
+            # Upload additional gallery images
+            additional_images = request.files.getlist('additional_images')
+            for idx, img in enumerate(additional_images):
+                if not img or not img.mimetype or not img.mimetype.startswith('image/'):
+                    continue
+                safe_name = secure_filename(img.filename or 'image')
+                filename = f"product_{product.id}_extra{idx}_{safe_name}"
+                rel = save_upload(img, "product_images", filename=filename)
+                if not rel:
+                    continue
+                media = ProductMedia(
+                    product=product,
+                    media_type='image',
+                    path=rel,
+                    is_cover=False,
+                )
+                db.session.add(media)
+
+            # Upload videos
+            videos = request.files.getlist('videos')
+            if videos:
+                timestamp = int(datetime.datetime.now().timestamp())
+                for index, file in enumerate(videos):
+                    if not file or not file.mimetype or not file.mimetype.startswith('video/'):
+                        continue
+                    safe_name = secure_filename(file.filename or 'video')
+                    filename = f"product_{product.id}_{timestamp}_{index}_{safe_name}"
+                    relative_path = save_upload(file, "product_videos", filename=filename)
+                    media = ProductMedia(
+                        product=product,
+                        media_type='video',
+                        path=relative_path,
+                        is_cover=False,
+                    )
+                    db.session.add(media)
+
+        product.updated_at = datetime.datetime.now()
         db.session.commit()
 
         return jsonify(msg="Succesfully updated product!"), 201

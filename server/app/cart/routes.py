@@ -25,19 +25,26 @@ from app.utils.static_urls import public_static_url as _public_image_url
 
 
 def _resolve_cart_json(cart_dict: dict) -> dict:
-    """Resolve raw image paths to full URLs in cart response."""
+    """Resolve raw image paths to full URLs in cart response with dedup."""
     items = cart_dict.get("items", [])
     for item in items:
         product = item.get("product")
         if product:
             raw_url = product.get("imageUrl")
             if raw_url and not raw_url.startswith(("http://", "https://")):
-                product["imageUrl"] = _public_image_url(raw_url) or raw_url
+                resolved = _public_image_url(raw_url)
+                if resolved:
+                    product["imageUrl"] = resolved
             raw_images = product.get("images", [])
-            product["images"] = [
+            resolved_images = [
                 _public_image_url(img) or img if img and not img.startswith(("http://", "https://")) else img
                 for img in raw_images
             ]
+            # Dedup images against imageUrl (first entry wins)
+            cover = product.get("imageUrl")
+            product["images"] = list(dict.fromkeys(
+                [img for img in resolved_images if img != cover]
+            ))
     cart_dict["items"] = items
     return cart_dict
 

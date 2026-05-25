@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { buyerApi, resolveImageUrl } from "@/lib/api"
+import { buyerApi } from "@/lib/api"
+import { productCoverImage } from "@/lib/product-images"
 import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import { Icon } from "@/components/ui/icon"
 import type { Product } from "@/lib/types"
@@ -67,7 +68,7 @@ export default function RecentlyViewedPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {products.map((p) => {
-          const img = p.images?.[0] ? resolveImageUrl(p.images[0]) : "/placeholder.svg"
+          const img = productCoverImage(p)
           return (
             <Link
               key={p.id}

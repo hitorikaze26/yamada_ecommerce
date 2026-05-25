@@ -12,6 +12,7 @@ import { ProductModal } from "@/components/product/product-modal"
 import { useAuth } from "@/context/auth-context"
 import { useWishlist } from "@/context/wishlist-context"
 import { formatPrice } from "@/lib/format"
+import { productCoverImage } from "@/lib/product-images"
 import { useToast } from "@/hooks/use-toast"
 
 interface ProductCardProps {
@@ -29,7 +30,8 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const [imageError, setImageError] = useState(false)
   const [wishlistBusy, setWishlistBusy] = useState(false)
 
-  const hasValidImage = !!(product.images?.length) && !imageError
+  const coverImage = productCoverImage(product)
+  const hasValidImage = coverImage !== "/placeholder.svg" && !imageError
   const discount = product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0
 
   const liked = isWishlisted(product.id)
@@ -67,7 +69,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           <Link href={`/product/${product.slug}`} className="relative block w-full h-full">
             {hasValidImage ? (
               <Image
-                src={product.images[0]}
+                src={coverImage}
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-110"

@@ -8,6 +8,7 @@ import { useCart } from "@/context/cart-context"
 import { useAuth } from "@/context/auth-context"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
+import { productCoverImage } from "@/lib/product-images"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { formatShippingDisplay, FREE_SHIPPING_THRESHOLD, FALLBACK_SHIPPING_FEE, type ShippingCalculation } from "@/lib/shipping"
 import { shippingApi } from "@/lib/api"
@@ -305,7 +306,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                               </div>
                             ) : (
                               <Image
-                                src={item.product?.images?.[0] || item.product?.imageUrl || "/placeholder.svg?height=80&width=80&query=fashion"}
+                                 src={productCoverImage(item.product)}
                                 alt={item.product?.name || "Product"}
                                 fill
                                 className="object-cover"

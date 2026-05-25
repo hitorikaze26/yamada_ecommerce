@@ -536,6 +536,22 @@ class Product(Base):
         if self.image_url:
             images.append(self.image_url)
 
+        # Include ProductMedia paths (may trigger lazy load if not eager-loaded)
+        media_list = getattr(self, "media", None)
+        raw_media = []
+        if media_list is not None:
+            for m in media_list:
+                if m.path and m.path not in images:
+                    images.append(m.path)
+                raw_media.append({
+                    "id": m.id,
+                    "media_type": m.media_type,
+                    "path": m.path,
+                    "sort_order": m.sort_order,
+                    "is_cover": m.is_cover,
+                    "created_at": m.created_at.isoformat() if m.created_at else None,
+                })
+
         tags = []
         if self.tags_json:
             try:
@@ -563,6 +579,8 @@ class Product(Base):
             'quantity': self.quantity,
             'lowStockThreshold': self.low_stock_threshold,
             'images': images,
+            'media': raw_media,
+            'isCover': bool(self.image_url) or None,
             'isLive': self.is_live,
             'moderationStatus': (
                 self.moderation_status.value
@@ -637,6 +655,8 @@ class ProductMedia(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id', ondelete='CASCADE'))
     media_type: Mapped[str] = mapped_column(String(20), default='image')
     path: Mapped[str] = mapped_column(String(500), nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_cover: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
 
     product: Mapped["Product"] = relationship(back_populates='media')

@@ -9,6 +9,7 @@ import { Footer } from "@/components/layout/footer"
 import { Icon } from "@/components/ui/icon"
 import { useRouter } from "next/navigation"
 import { ordersApi, resolveImageUrl } from "@/lib/api"
+import { productCoverImage } from "@/lib/product-images"
 import { resolveStoreIdFromOrder } from "@/lib/buyer/order-chat"
 import { canMessageSellerForBuyerOrder } from "@/lib/chat/navigation"
 import { useChatOpen } from "@/hooks/use-chat-open"
@@ -631,7 +632,7 @@ function OrderContent({ orderId }: { orderId: string }) {
                     <h2 className="text-xl font-semibold mb-4">Order Items</h2>
                     <div className="space-y-4">
                       {order.items.map((item, index) => {
-                        const img = resolveImageUrl(item.product?.imageUrl) || "/placeholder.svg"
+                        const img = productCoverImage(item.product)
                         const storeId = item.sellerId ?? order.storeId
                         const storeName = item.sellerName ?? order.storeName
                         return (

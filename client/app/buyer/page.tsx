@@ -5,7 +5,8 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { formatPrice } from "@/lib/format"
-import { ordersApi, productsApi, reportsApi, resolveImageUrl } from "@/lib/api"
+import { ordersApi, productsApi, reportsApi } from "@/lib/api"
+import { productCoverImage } from "@/lib/product-images"
 import type { Order, Product, ProblemReportDto } from "@/lib/types"
 import { useAuth } from "@/context/auth-context"
 import {
@@ -236,7 +237,7 @@ export default function BuyerDashboard() {
           <h2 className="text-xl font-semibold mb-6">Recommended Products</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {products.map((product) => {
-              const img = resolveImageUrl(product.image_url || product.images?.[0]) || "/placeholder.svg"
+              const img = productCoverImage(product)
               return (
                 <Link key={product.id} href={`/product/${product.slug}`} className="group">
                   <div className="relative aspect-square rounded-xl overflow-hidden bg-muted mb-3">

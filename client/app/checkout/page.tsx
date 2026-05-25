@@ -11,6 +11,7 @@ import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
+import { productCoverImage } from "@/lib/product-images"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -579,7 +580,7 @@ function CheckoutContent() {
                                   </div>
                                 ) : (
                                   <Image
-                                    src={item.product?.images?.[0] || item.product?.imageUrl || "/placeholder.svg"}
+                                     src={productCoverImage(item.product)}
                                     alt={item.product?.name || "Product"}
                                     fill
                                     className="object-cover"
