@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, current_app
 from flask_cors import CORS
 from .models import (
     db,
@@ -15,7 +15,7 @@ from .extensions import (
     bcrypt,
     limiter,
 )
-from config import config
+from config import config, apply_env_overrides
 
 
 PLACEHOLDER_SVG = (
@@ -43,6 +43,7 @@ def create_app(test_config=None):
         env = os.environ.get("FLASK_ENV", "development")
         config_class = config.get(env, config["development"])
         app.config.from_object(config_class)
+        apply_env_overrides(app)
         if env == "production":
             missing = []
             if not app.config.get("SQLALCHEMY_DATABASE_URI"):

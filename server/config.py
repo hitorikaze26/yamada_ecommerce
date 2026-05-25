@@ -128,21 +128,6 @@ class Config:
 
     OPENROUTESERVICE_API_KEY = os.environ.get("OPENROUTESERVICE_API_KEY", "")
 
-    FRONTEND_URL = _resolve_frontend_url()
-    API_BASE_URL = _resolve_api_base_url()
-
-    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
-    SUPABASE_ENABLED = bool(SUPABASE_URL and SUPABASE_SERVICE_KEY)
-
-    FORCE_SUPABASE_UPLOADS = os.environ.get("FORCE_SUPABASE_UPLOADS", "").lower() in (
-        "1",
-        "true",
-        "yes",
-    )
-
-    CORS_ORIGINS = _resolve_cors_origins(FRONTEND_URL)
-
     DISABLE_STRICT_SLASHES = True
 
 
@@ -217,3 +202,43 @@ config = {
     "testing": TestingConfig,
     "default": DevelopmentConfig,
 }
+
+
+def apply_env_overrides(app) -> None:
+    """Recompute env-dependent config values after .env is loaded.
+
+    Must be called from ``create_app()`` *after* ``load_dotenv()``.
+    """
+    env = os.environ.get("FLASK_ENV", "development")
+    frontend_url = _resolve_frontend_url()
+    app.config["FRONTEND_URL"] = frontend_url
+    app.config["API_BASE_URL"] = _resolve_api_base_url()
+    app.config["SUPABASE_URL"] = os.environ.get("SUPABASE_URL", "")
+    app.config["SUPABASE_SERVICE_KEY"] = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    app.config["SUPABASE_ENABLED"] = bool(
+        app.config["SUPABASE_URL"] and app.config["SUPABASE_SERVICE_KEY"]
+    )
+    app.config["FORCE_SUPABASE_UPLOADS"] = os.environ.get(
+        "FORCE_SUPABASE_UPLOADS", ""
+    ).lower() in ("1", "true", "yes")
+    app.config["CORS_ORIGINS"] = _resolve_cors_origins(frontend_url)
+
+    if env == "production":
+        uri = _database_url()
+    elif env == "testing":
+        uri = _database_url(
+            os.environ.get(
+                "TEST_DATABASE_URL",
+                "mysql+pymysql://root:changeme@localhost:3306/yamada_db_test",
+            )
+        )
+    else:
+        uri = _database_url(
+            os.environ.get(
+                "DEV_DATABASE_URL",
+                "mysql+pymysql://root:changeme@localhost:3306/yamada_db",
+            )
+        )
+    if uri:
+        app.config["SQLALCHEMY_DATABASE_URI"] = uri
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = _engine_options_for_uri(uri)
