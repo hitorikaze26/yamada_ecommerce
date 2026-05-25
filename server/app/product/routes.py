@@ -242,7 +242,7 @@ def getProduct(product_id):
                     "id": v.id,
                     "size": v.size,
                     "color": v.color,
-                    "colorHex": getattr(v, 'color_hex', None),
+                        "colorHex": getattr(v, 'color', None),
                     "sku": v.sku,
                     "inventory": v.inventory,
                     "price": v.price,
