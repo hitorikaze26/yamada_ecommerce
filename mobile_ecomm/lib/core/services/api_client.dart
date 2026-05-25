@@ -4,18 +4,20 @@ import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../config/env_config.dart';
 import 'secure_storage.dart';
+import 'auth_retry_interceptor.dart';
 
 /// API Client configuration for YAMADA backend integration
-/// Handles JWT cookies, CSRF tokens, and request/response interceptors
+/// Handles JWT Bearer, CSRF tokens, cookie persistence, and token refresh.
 class ApiClient {
   static Dio? _dio;
+  static Dio? _refreshDio;
   static PersistCookieJar? _cookieJar;
 
-  /// Called when a protected API returns 401 (expired/invalid session).
+  /// Called when session is fully expired (refresh also failed).
   /// Registered by [AuthNotifier] to clear local auth state.
   static void Function()? onSessionExpired;
 
@@ -24,24 +26,32 @@ class ApiClient {
   );
   static const _lastUrlKey = 'yamada_last_api_url';
 
-  /// Get the configured Dio instance
-  static Future<Dio> getInstance() async {
+  /// Get the configured Dio instance.
+  ///
+  /// If [refreshOnly] is true, returns a lightweight instance without
+  /// the full interceptor chain (used internally by AuthRetryInterceptor
+  /// to avoid circular retry loops).
+  static Future<Dio> getInstance({bool refreshOnly = false}) async {
+    if (refreshOnly) {
+      if (_refreshDio != null) return _refreshDio!;
+      _refreshDio = _buildBaseDio();
+      return _refreshDio!;
+    }
+
     if (_dio != null) return _dio!;
 
-    final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:5000/api';
+    final baseUrl = EnvConfig.apiBaseUrl;
 
     developer.log('ApiClient initializing with baseUrl: $baseUrl',
         name: 'ApiClient');
 
-    // If the base URL changed since last run, wipe stale cookies so the
-    // old host's JWT is not sent to the new host (causes 401).
+    // If the base URL changed since last run, wipe stale cookies
     final lastUrl = await _storage.read(key: _lastUrlKey);
     if (lastUrl != null && lastUrl != baseUrl) {
       developer.log(
         'ApiClient: base URL changed ($lastUrl → $baseUrl), clearing cookies',
         name: 'ApiClient',
       );
-      // Delete cookie files directly before the jar is initialised
       final directory = await getApplicationDocumentsDirectory();
       final cookieDir = Directory('${directory.path}/.cookies/');
       if (await cookieDir.exists()) {
@@ -50,28 +60,25 @@ class ApiClient {
     }
     await _storage.write(key: _lastUrlKey, value: baseUrl);
 
-    _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
+    _dio = _buildBaseDio();
 
     // Initialize cookie jar for persistent cookie storage
     _cookieJar = await _initCookieJar();
     _dio!.interceptors.add(CookieManager(_cookieJar!));
 
-    // Request interceptor: Bearer JWT (mobile) + CSRF for mutating requests.
-    // Login returns `access_token` in JSON and stores it in [SecureStorage];
-    // cookies may not be present or sent reliably on Android/iOS, while the
-    // backend accepts JWT via Authorization (see JWT_TOKEN_LOCATION).
+    // Auth retry interceptor — handles 401 → refresh → retry
+    AuthRetryInterceptor.onRefreshFailed = () {
+      onSessionExpired?.call();
+    };
+    _dio!.interceptors.add(AuthRetryInterceptor());
+
+    // Request interceptor: Bearer JWT + CSRF for mutating requests.
     _dio!.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final path = options.path;
-        final isAuthAnonymous = path.contains('/accounts/login') ||
+        final skipCsrf = options.extra['skipCsrf'] == true;
+        final isAuthAnonymous =
+            path.contains('/accounts/login') ||
             path.contains('/accounts/register') ||
             path.contains('/accounts/forgot-password') ||
             path.contains('/accounts/verify-pin') ||
@@ -84,11 +91,13 @@ class ApiClient {
           }
         }
 
-        final method = options.method.toLowerCase();
-        if (['post', 'put', 'patch', 'delete'].contains(method)) {
-          final csrfToken = await _getCsrfToken();
-          if (csrfToken != null) {
-            options.headers['X-CSRF-TOKEN'] = csrfToken;
+        if (!skipCsrf) {
+          final method = options.method.toLowerCase();
+          if (['post', 'put', 'patch', 'delete'].contains(method)) {
+            final csrfToken = await _getCsrfToken();
+            if (csrfToken != null) {
+              options.headers['X-CSRF-TOKEN'] = csrfToken;
+            }
           }
         }
         handler.next(options);
@@ -97,31 +106,9 @@ class ApiClient {
         handler.next(response);
       },
       onError: (error, handler) async {
-        // Handle 401 Unauthorized
-        if (error.response?.statusCode == 401) {
-          final requestUrl = error.requestOptions.path;
-
-          // Let auth endpoints handle their own 401s
-          if (requestUrl.contains('/accounts/login') ||
-              requestUrl.contains('/accounts/protected')) {
-            handler.next(error);
-            return;
-          }
-
-          developer.log(
-            'ApiClient: 401 on $requestUrl — clearing session',
-            name: 'ApiClient',
-          );
-          await _cookieJar?.deleteAll();
-          await SecureStorage.deleteToken();
-          onSessionExpired?.call();
-        }
-
-        // Handle 403 on role-protected endpoints — stale JWT claims.
-        // Clear cookies so the next checkAuth forces a fresh login.
+        // Handle 403 on role-protected endpoints
         if (error.response?.statusCode == 403) {
           final requestUrl = error.requestOptions.path;
-          // Only clear for role-gated API paths, not auth endpoints
           if (!requestUrl.contains('/accounts/')) {
             developer.log(
               'ApiClient: 403 on $requestUrl — clearing stale cookies',
@@ -130,13 +117,12 @@ class ApiClient {
             await _cookieJar?.deleteAll();
           }
         }
-
         handler.next(error);
       },
     ));
 
-    // Logging interceptor for debugging (only in debug mode)
-    if (const bool.fromEnvironment('dart.vm.product') != true) {
+    // Logging interceptor (debug builds only)
+    if (EnvConfig.enableDebugLogging) {
       _dio!.interceptors.add(LogInterceptor(
         requestBody: true,
         responseBody: true,
@@ -147,12 +133,22 @@ class ApiClient {
     return _dio!;
   }
 
+  static Dio _buildBaseDio() {
+    return Dio(BaseOptions(
+      baseUrl: EnvConfig.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ));
+  }
+
   /// Initialize persistent cookie jar
   static Future<PersistCookieJar> _initCookieJar() async {
     final directory = await getApplicationDocumentsDirectory();
     final cookiePath = '${directory.path}/.cookies/';
-
-    // Ensure directory exists
     await Directory(cookiePath).create(recursive: true);
 
     return PersistCookieJar(
@@ -165,10 +161,9 @@ class ApiClient {
   static Future<String?> _getCsrfToken() async {
     if (_cookieJar == null) return null;
 
-    final uri = Uri.parse(dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:5000/api');
+    final uri = Uri.parse(EnvConfig.apiBaseUrl);
     final cookies = await _cookieJar!.loadForRequest(uri);
 
-    // Look for CSRF token cookie (Flask-JWT-Extended uses csrf_access_token)
     for (final cookie in cookies) {
       if (cookie.name == 'csrf_access_token' || cookie.name == 'access_csrf') {
         return cookie.value;
@@ -182,51 +177,93 @@ class ApiClient {
     if (_cookieJar != null) {
       await _cookieJar!.deleteAll();
     }
-    // Also clear the stored URL so next init doesn't skip the stale-check
     await _storage.delete(key: _lastUrlKey);
   }
 
-  /// Reset the Dio client (useful after changing .env config)
+  /// Reset the Dio client (useful after env config change)
   static void reset() {
     developer.log('ApiClient reset called', name: 'ApiClient');
     _dio = null;
+    _refreshDio = null;
     _cookieJar = null;
   }
 
   /// Get API base URL origin (for resolving image URLs)
-  static String get baseOrigin {
-    final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:5000/api';
-    return baseUrl.replaceAll('/api', '');
-  }
+  static String get baseOrigin => EnvConfig.baseOrigin;
 
-  /// Resolve image URL from backend path
+  /// Resolve image URL from backend path.
+  ///
+  /// The backend already resolves paths to full Supabase public URLs
+  /// in API responses (via `public_url_for_stored_path`). This method
+  /// handles edge cases:
+  /// - Already absolute HTTPS URLs (Supabase public URLs) → pass through
+  /// - `/static/...` paths (legacy dev) → prepend base origin
+  /// - Relative DB paths → try Supabase Storage URL + bucket mapping
   static String? resolveImageUrl(String? url) {
     if (url == null || url.isEmpty) return null;
 
-    // If already a full URL, return as-is
+    // Already absolute — return as-is (Supabase public URLs from backend)
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
 
-    // Normalize path separators (Windows backslashes to forward slashes)
-    String normalizedUrl = url.replaceAll('\\', '/');
+    // Normalize separators
+    String normalized = url.replaceAll('\\', '/');
 
-    // If starts with /static/, prepend base origin
-    if (normalizedUrl.startsWith('/static/')) {
-      return '$baseOrigin$normalizedUrl';
+    // Legacy development paths
+    if (normalized.startsWith('/static/')) {
+      return '${EnvConfig.baseOrigin}$normalized';
     }
 
-    // Handle relative paths like "product_images/filename.jpg"
-    // by prepending /static/
-    if (normalizedUrl.contains('/') && !normalizedUrl.startsWith('/')) {
-      return '$baseOrigin/static/$normalizedUrl';
+    // Supabase storage direct resolution (relative DB paths like
+    // "product_images/uuid.jpg" or "avatars/uuid.jpg")
+    final storageUrl = EnvConfig.supabaseStorageUrl;
+    if (storageUrl != null && storageUrl.isNotEmpty) {
+      final bucket = _inferBucket(normalized);
+      if (bucket != null) {
+        return '$storageUrl/$bucket/$normalized';
+      }
+      return '$storageUrl/$normalized';
     }
 
-    // Handle legacy paths or simple filenames
-    if (!normalizedUrl.startsWith('/')) {
-      return '$baseOrigin/static/product_images/$normalizedUrl';
+    // Fallback to /static/ relative path
+    if (normalized.contains('/') && !normalized.startsWith('/')) {
+      return '${EnvConfig.baseOrigin}/static/$normalized';
     }
 
-    return normalizedUrl;
+    // Simple filename
+    if (!normalized.startsWith('/')) {
+      return '${EnvConfig.baseOrigin}/static/product_images/$normalized';
+    }
+
+    return normalized;
+  }
+
+  /// Map folder prefix to Supabase bucket name.
+  static String? _inferBucket(String path) {
+    final folder = path.split('/').first;
+    switch (folder) {
+      case 'product_images':
+      case 'product_videos':
+        return 'product-images';
+      case 'avatars':
+      case 'seller_avatars':
+      case 'rider_avatars':
+      case 'seller_banners':
+        return 'avatars';
+      case 'chat_uploads':
+        return 'chat';
+      case 'buyer_ids':
+      case 'seller_ids':
+      case 'seller_dti':
+      case 'seller_permits':
+      case 'seller_bir':
+      case 'rider_docs':
+      case 'report_evidence':
+      case 'proof_photos':
+        return 'docs';
+      default:
+        return 'misc';
+    }
   }
 }

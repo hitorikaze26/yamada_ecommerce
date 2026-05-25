@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import '../../core/config/env_config.dart';
 
 /// NCR region codes — NCR has no provinces; cities are under the region.
 const ncrRegionCodes = [
@@ -65,14 +66,8 @@ class PhGeoApi {
   }
 
   static String get _baseUrl {
-    // Fallback to PSGC API if env variable not set
-    final url = dotenv.env['PH_SGG_BASE_URL'];
-    if (url != null && url.isNotEmpty) {
-      developer.log('Using PH_SGG_BASE_URL from env: $url', name: 'PhGeoApi');
-      return url;
-    }
-    developer.log('Using default PSGC API URL', name: 'PhGeoApi');
-    return 'https://psgc.gitlab.io/api';
+    developer.log('Using PH_SGG_BASE_URL: ${EnvConfig.phSggBaseUrl}', name: 'PhGeoApi');
+    return EnvConfig.phSggBaseUrl;
   }
 
   /// Get all regions

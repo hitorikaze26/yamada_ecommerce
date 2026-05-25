@@ -1,8 +1,8 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/config/env_config.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -198,7 +198,7 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
     final product = _product;
     if (product == null) return;
 
-    final shareBase = dotenv.env['APP_SHARE_BASE_URL']?.trim();
+    final shareBase = EnvConfig.shareBaseUrl;
     final path = product.slug.isNotEmpty ? product.slug : product.id;
     final link = (shareBase != null && shareBase.isNotEmpty)
         ? '$shareBase/product/$path'

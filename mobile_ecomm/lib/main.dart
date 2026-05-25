@@ -5,26 +5,31 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
+import 'core/config/env_config.dart';
 import 'data/providers/auth_notifier.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
+  // Load .env for local development (not bundled in release builds)
   await dotenv.load();
-  
+
+  // Initialize production-safe environment config
+  // Resolution: --dart-define > .env > hardcoded default
+  final dartDefineUrl = const String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: '',
+  );
+  EnvConfig.init(
+    dartDefineUrl: dartDefineUrl.isNotEmpty ? dartDefineUrl : null,
+    dotEnvUrl: dotenv.env['API_BASE_URL'],
+  );
+
   // Log configuration for debugging
-  final apiUrl = dotenv.env['API_BASE_URL'];
-  final geoUrl = dotenv.env['PH_SGG_BASE_URL'] ?? 'https://psgc.gitlab.io/api';
   developer.log('═══════════════════════════════════════', name: 'YAMADA');
-  if (apiUrl == null || apiUrl.isEmpty) {
-    developer.log(
-      'WARNING: API_BASE_URL not set in .env — copy .env.example and set your LAN IP or 10.0.2.2',
-      name: 'YAMADA',
-    );
-  } else {
-    developer.log('API_BASE_URL: $apiUrl', name: 'YAMADA');
-  }
-  developer.log('PH_SGG_BASE_URL: $geoUrl', name: 'YAMADA');
+  developer.log('ENV: ${EnvConfig.label}', name: 'YAMADA');
+  developer.log('API_BASE_URL: ${EnvConfig.apiBaseUrl}', name: 'YAMADA');
+  developer.log('PH_SGG_BASE_URL: ${EnvConfig.phSggBaseUrl}', name: 'YAMADA');
   developer.log('═══════════════════════════════════════', name: 'YAMADA');
 
   // Set preferred orientations

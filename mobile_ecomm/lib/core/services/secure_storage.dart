@@ -16,6 +16,7 @@ class SecureStorage {
   // Keys for stored data
   static const String _userKey = 'yamada_user';
   static const String _tokenKey = 'yamada_token';
+  static const String _refreshTokenKey = 'yamada_refresh_token';
   static const String _roleKey = 'yamada_role';
   static const String _isVerifiedKey = 'yamada_verified';
 
@@ -72,6 +73,16 @@ class SecureStorage {
     return value == 'true';
   }
 
+  /// Save refresh token (for silent session recovery)
+  static Future<void> saveRefreshToken(String token) async {
+    await _storage.write(key: _refreshTokenKey, value: token);
+  }
+
+  /// Get stored refresh token
+  static Future<String?> getRefreshToken() async {
+    return await _storage.read(key: _refreshTokenKey);
+  }
+
   /// Clear all stored data (used on logout)
   static Future<void> clearAll() async {
     await _storage.deleteAll();
@@ -84,5 +95,6 @@ class SecureStorage {
 
   static Future<void> deleteToken() async {
     await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _refreshTokenKey);
   }
 }

@@ -1,7 +1,8 @@
 import 'dart:developer' as developer;
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+
+import '../config/env_config.dart';
 
 typedef NotificationSocketCallback = void Function(Map<String, dynamic> payload);
 typedef NotificationsReadCallback = void Function(Map<String, dynamic>? payload);
@@ -13,7 +14,7 @@ class NotificationSocketService {
   NotificationsReadCallback? _onNotificationsRead;
 
   static String socketBaseUrl() {
-    final apiBase = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:5000/api';
+    final apiBase = EnvConfig.apiBaseUrl;
     final uri = Uri.parse(apiBase);
     if (uri.hasPort) {
       return '${uri.scheme}://${uri.host}:${uri.port}';

@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/api_client.dart';
 import '../../core/services/secure_storage.dart';
@@ -90,11 +91,45 @@ class AuthNotifier extends StateNotifier<AuthNotifierState> {
     return false;
   }
 
+  /// Attempt proactive token refresh (extends session silently).
+  Future<bool> _tryProactiveRefresh() async {
+    final token = await SecureStorage.getToken();
+    if (token == null || token.isEmpty) return false;
+    try {
+      final dio = await ApiClient.getInstance(refreshOnly: true);
+      final response = await dio.post(
+        '/accounts/refresh',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          extra: {'skipCsrf': true},
+        ),
+      );
+      if (response.statusCode == 200) {
+        final newToken = response.data['access_token'] as String?;
+        if (newToken != null && newToken.isNotEmpty) {
+          await SecureStorage.saveToken(newToken);
+          developer.log('Proactive token refresh succeeded', name: 'AuthNotifier');
+          return true;
+        }
+      }
+    } catch (e) {
+      developer.log('Proactive token refresh failed: $e', name: 'AuthNotifier');
+    }
+    return false;
+  }
+
   /// Check for existing authentication on app startup
   Future<void> checkAuth() async {
     state = state.copyWith(isCheckingAuth: true);
 
     try {
+      // Proactively refresh token if stored, before checking session.
+      // This extends the session before the 1hr token expires.
+      await _tryProactiveRefresh();
+
       final sessionResult = await AuthApi.checkSession();
 
       if (sessionResult == SessionCheckResult.unknown) {

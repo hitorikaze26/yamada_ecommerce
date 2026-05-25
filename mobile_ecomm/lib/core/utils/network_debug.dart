@@ -1,26 +1,24 @@
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import '../config/env_config.dart';
 
 /// Network debugging utility
 /// Helps diagnose connection issues between Flutter app and backend
 class NetworkDebug {
   /// Log current API configuration
   static void logConfig() {
-    final apiUrl = dotenv.env['API_BASE_URL'] ?? 'NOT SET';
-    final phGeoUrl = dotenv.env['PH_SGG_BASE_URL'] ?? 'NOT SET';
-    
     developer.log('═' * 50, name: 'NetworkDebug');
     developer.log('API Configuration:', name: 'NetworkDebug');
-    developer.log('  API_BASE_URL: $apiUrl', name: 'NetworkDebug');
-    developer.log('  PH_SGG_BASE_URL: $phGeoUrl', name: 'NetworkDebug');
+    developer.log('  API_BASE_URL: ${EnvConfig.apiBaseUrl}', name: 'NetworkDebug');
+    developer.log('  PH_SGG_BASE_URL: ${EnvConfig.phSggBaseUrl}', name: 'NetworkDebug');
     developer.log('═' * 50, name: 'NetworkDebug');
   }
 
   /// Test if backend is reachable
   static Future<bool> testBackendConnection() async {
-    final apiUrl = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:5000/api';
+    final apiUrl = EnvConfig.apiBaseUrl;
     final baseUrl = apiUrl.replaceAll('/api', '');
     
     developer.log('Testing connection to: $baseUrl', name: 'NetworkDebug');
@@ -43,13 +41,13 @@ class NetworkDebug {
   /// Check if running on emulator
   static bool get isEmulator {
     return Platform.isAndroid && 
-           (dotenv.env['API_BASE_URL']?.contains('10.0.2.2') ?? false);
+           (EnvConfig.apiBaseUrl.contains('10.0.2.2'));
   }
 
   /// Check if running on physical device (likely)
   static bool get isPhysicalDevice {
     if (kIsWeb) return false;
-    final apiUrl = dotenv.env['API_BASE_URL'] ?? '';
+    final apiUrl = EnvConfig.apiBaseUrl;
     return apiUrl.contains('192.168.') || apiUrl.contains('10.0.') && !apiUrl.contains('10.0.2.2');
   }
 
