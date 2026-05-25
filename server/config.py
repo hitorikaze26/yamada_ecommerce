@@ -61,6 +61,8 @@ def _resolve_api_base_url() -> str:
 
 def _resolve_cors_origins(frontend_url: str) -> list[str]:
     """Build allowed CORS origins from FRONTEND_URL, CORS_ORIGINS env, and defaults."""
+    LOCAL_FALLBACKS = ("http://localhost:3000", "http://127.0.0.1:3000")
+
     raw = os.environ.get("CORS_ORIGINS", "").strip()
     origins: list[str] = []
     seen: set[str] = set()
@@ -74,6 +76,12 @@ def _resolve_cors_origins(frontend_url: str) -> list[str]:
     if frontend_url and frontend_url not in seen:
         seen.add(frontend_url)
         origins.append(frontend_url)
+
+    if frontend_url == "http://localhost:3000":
+        for fallback in LOCAL_FALLBACKS:
+            if fallback not in seen:
+                seen.add(fallback)
+                origins.append(fallback)
 
     railwy_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip()
     if railwy_domain:
