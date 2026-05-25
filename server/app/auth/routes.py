@@ -979,7 +979,11 @@ def protected():
     ).scalar_one_or_none()
     if user is None:
         return jsonify(msg="User not found"), 404
-    return jsonify(**_session_snapshot(user)), 200
+
+    csrf_token = get_csrf_token(
+        create_access_token(identity=user.id, additional_claims=_build_jwt_claims(user))
+    )
+    return jsonify(**_session_snapshot(user), csrf_token=csrf_token), 200
 
 
 def _serialize_buyer_profile(user, buyer_profile=None):

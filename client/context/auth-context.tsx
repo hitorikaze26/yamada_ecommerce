@@ -79,6 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } catch {}
         }
         const session = parseSessionPayload(sessionRes.data as Record<string, unknown>)
+        const csrfToken = (sessionRes.data as Record<string, unknown>)?.csrf_token as string | undefined
+        if (csrfToken) {
+          setStoredCsrfToken(csrfToken)
+        }
 
         if (!session.user_id || session.roles.length === 0) {
           clearClientAuth()
