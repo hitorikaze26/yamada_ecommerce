@@ -1183,6 +1183,7 @@ export const adminReportsApi = {
 export interface ProductVariation {
   size: string
   color: string
+  colorHex?: string
   sku: string
   inventory: number
   price?: number

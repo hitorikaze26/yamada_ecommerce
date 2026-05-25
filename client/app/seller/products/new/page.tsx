@@ -1,19 +1,19 @@
 "use client"
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect } from "react"
 import type React from "react"
 
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { motion } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { sellerApi, sellerAccountApi } from "@/lib/api"
 import { toast } from "@/hooks/use-toast"
+import { ProductVariantBuilder } from "@/components/seller/variant/variant-builder"
+import type { VariantEntry } from "@/components/seller/variant/types"
 import {
   CATEGORIES,
   SUBCATEGORIES,
   SHOES_SUBCATEGORIES,
   ACCESSORY_SUBCATEGORIES,
-  SHOE_SIZES,
   type SizeChartCategoryKey,
   type SizeChartMeasurementId,
 } from "@/lib/types"
@@ -21,46 +21,12 @@ import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import { PendingStoreGate } from "@/components/seller/pending-store-gate"
 
-const clothingSizes = ["XS", "S", "M", "L", "XL", "XXL"]
-
 interface ClothingSizeRow {
   label: string
   international: string
   numeric: string
   cm: Record<SizeChartMeasurementId, string | "" | null>
   inch: Record<SizeChartMeasurementId, string | "" | null>
-}
-
-function formatShoeSizeLabel(raw: string): string {
-  if (!raw) return ""
-
-  const [system, value] = raw.split(" ")
-  if (!system || !value) return raw
-
-  const normalizedSystem = system.toUpperCase() as keyof typeof SHOE_SIZES
-  const sizeArrays = SHOE_SIZES as any
-
-  if (!sizeArrays[normalizedSystem] || !Array.isArray(sizeArrays[normalizedSystem])) {
-    return raw
-  }
-
-  const baseArray: any[] = sizeArrays[normalizedSystem]
-  const index = baseArray.findIndex((s) => String(s) === String(value))
-  if (index === -1) return raw
-
-  const parts: string[] = []
-
-  if (Array.isArray(sizeArrays.US) && sizeArrays.US[index] != null) {
-    parts.push(`US ${sizeArrays.US[index]}`)
-  }
-  if (Array.isArray(sizeArrays.EU) && sizeArrays.EU[index] != null) {
-    parts.push(`EU ${sizeArrays.EU[index]}`)
-  }
-  if (Array.isArray(sizeArrays.UK) && sizeArrays.UK[index] != null) {
-    parts.push(`UK ${sizeArrays.UK[index]}`)
-  }
-
-  return parts.length > 0 ? parts.join(" / ") : raw
 }
 
 interface ClothingSizeChartMatrix {
@@ -185,83 +151,7 @@ function createInitialSizeChartMatrix(categoryId: string, subcategory: string): 
   }
 }
 
-const variationColors = [
-  "Black",
-  "White",
-  "Off White",
-  "Cream",
-  "Beige",
-  "Nude",
-  "Taupe",
-  "Khaki",
-  "Sand",
-  "Camel",
-  "Brown",
-  "Chocolate Brown",
-  "Coffee",
-  "Caramel",
-  "Tan",
-  "Light Gray",
-  "Gray",
-  "Charcoal",
-  "Silver",
-  "Gold",
-  "Rose Gold",
-  "Blush Pink",
-  "Baby Pink",
-  "Dusty Pink",
-  "Mauve",
-  "Rose",
-  "Hot Pink",
-  "Red",
-  "Maroon",
-  "Wine",
-  "Burgundy",
-  "Coral",
-  "Peach",
-  "Orange",
-  "Rust",
-  "Burnt Orange",
-  "Yellow",
-  "Mustard",
-  "Olive",
-  "Army Green",
-  "Sage Green",
-  "Mint Green",
-  "Forest Green",
-  "Emerald Green",
-  "Teal",
-  "Turquoise",
-  "Aqua",
-  "Blue",
-  "Baby Blue",
-  "Sky Blue",
-  "Powder Blue",
-  "Steel Blue",
-  "Royal Blue",
-  "Navy Blue",
-  "Midnight Blue",
-  "Lavender",
-  "Lilac",
-  "Violet",
-  "Purple",
-  "Plum",
-  "Deep Plum",
-  "Multicolor",
-  "Patterned",
-  "Floral Print",
-  "Animal Print",
-  "Other",
-]
 
-interface Variation {
-  id: string
-  colors: string[]
-  size: string
-  stock: number
-  sku: string
-  customOther?: string
-}
 
 function NewProductPageContent() {
   const router = useRouter()
@@ -269,7 +159,7 @@ function NewProductPageContent() {
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [videos, setVideos] = useState<string[]>([])
   const [videoFiles, setVideoFiles] = useState<File[]>([])
-  const [variations, setVariations] = useState<Variation[]>([])
+  const [variants, setVariants] = useState<VariantEntry[]>([])
   const [allowedCategories, setAllowedCategories] = useState<string[] | null>(null)
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [formData, setFormData] = useState({
@@ -301,38 +191,6 @@ function NewProductPageContent() {
   const isShoeSubcategory = isAccessoriesShoes && SHOES_SUBCATEGORIES.includes(formData.subcategory)
   const isAccessorySubcategory = isAccessoriesShoes && ACCESSORY_SUBCATEGORIES.includes(formData.subcategory)
 
-  const variationsEndRef = useRef<HTMLDivElement | null>(null)
-
-  // Group variations by first color/customOther so each card in the UI represents
-  // a single color group with multiple size/stock/SKU rows. This is memoized so we don't
-  // recompute on every render unless `variations` actually changes.
-  const variationGroups = useMemo(() => {
-    const groups: {
-      key: string
-      colorValue: string
-      customOther?: string
-      items: Variation[]
-    }[] = []
-
-    const map = new Map<string, { key: string; colorValue: string; customOther?: string; items: Variation[] }>()
-
-    variations.forEach((v) => {
-      const colorValue = (v.colors || [""])[0] || ""
-      const customOther = v.customOther || ""
-      const key = `${colorValue}__${customOther}`
-
-      if (!map.has(key)) {
-        map.set(key, { key, colorValue, customOther: v.customOther, items: [v] })
-      } else {
-        map.get(key)!.items.push(v)
-      }
-    })
-
-    map.forEach((group) => groups.push(group))
-    return groups
-  }, [variations])
-  const prevVariationsCountRef = useRef(variations.length)
-
   const editor = useEditor({
     extensions: [StarterKit],
     content: formData.description,
@@ -344,12 +202,6 @@ function NewProductPageContent() {
     },
     immediatelyRender: false,
   })
-
-  const shoeSizeOptions = [
-    ...SHOE_SIZES.US.map((s) => `US ${s}`),
-    ...SHOE_SIZES.EU.map((s) => `EU ${s}`),
-    ...SHOE_SIZES.UK.map((s) => `UK ${s}`),
-  ]
 
   useEffect(() => {
     const next = createInitialSizeChartMatrix(formData.category, formData.subcategory)
@@ -407,44 +259,6 @@ function NewProductPageContent() {
     setImageFiles(imageFiles.filter((_, i) => i !== index))
   }
 
-  const addVariation = () => {
-    let initialSize = clothingSizes[0]
-    if (isAccessoriesShoes) {
-      if (isAccessorySubcategory) {
-        initialSize = "Free Size"
-      } else if (isShoeSubcategory) {
-        initialSize = shoeSizeOptions[0] ?? "US 4"
-      }
-    }
-
-    setVariations([
-      ...variations,
-      {
-        id: Date.now().toString(),
-        colors: [],
-        size: initialSize,
-        stock: 0,
-        sku: "",
-        customOther: "",
-      },
-    ])
-  }
-
-  useEffect(() => {
-    if (variations.length > prevVariationsCountRef.current && variationsEndRef.current) {
-      variationsEndRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
-    }
-    prevVariationsCountRef.current = variations.length
-  }, [variations.length])
-
-  const updateVariation = (id: string, field: keyof Variation, value: string | number | string[]) => {
-    setVariations(variations.map((v) => (v.id === id ? { ...v, [field]: value } : v)))
-  }
-
-  const removeVariation = (id: string) => {
-    setVariations(variations.filter((v) => v.id !== id))
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const form = new FormData()
@@ -465,8 +279,7 @@ function NewProductPageContent() {
       form.append("cost_price", formData.costPrice)
     }
 
-    // Compute total stock from all variations (used as overall product quantity)
-    const totalStock = variations.reduce((sum, v) => sum + (v.stock || 0), 0)
+    const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0)
     form.append("quantity", String(totalStock))
     form.append("description", formData.description)
     if (formData.category) {
@@ -528,37 +341,20 @@ function NewProductPageContent() {
       }
     }
 
-    // Derive unique product colors from variations (for storage in a single column)
-    const colorSet = new Set(
-      variations
-        .flatMap((v) => {
-          const baseColors = v.colors ?? []
-          return baseColors.map((c) => {
-            if (c === "Other" && v.customOther) {
-              return v.customOther
-            }
-            return c
-          })
-        })
-        .map((c) => c.trim())
-        .filter((c) => c),
-    )
-    const allColors = Array.from(colorSet)
-    if (allColors.length > 0) {
-      form.append("colors", allColors.join(", "))
+    const colorSet = Array.from(new Set(variants.map((v) => v.color.name)))
+    if (colorSet.length > 0) {
+      form.append("colors", colorSet.join(", "))
     }
 
-    // Send structured variations payload so backend can create ProductVariation rows
-    if (variations.length > 0) {
-      const variationPayload = variations.map((v) => ({
+    if (variants.length > 0) {
+      const variationPayload = variants.map((v) => ({
         size: v.size,
-        colors: (v.colors || []).map((c) =>
-          c === "Other" && v.customOther ? v.customOther : c,
-        ),
+        colors: [v.color.name],
+        colorHex: v.color.hex,
         stock: v.stock,
         sku: v.sku,
+        price: v.price ?? undefined,
       }))
-
       form.append("variations", JSON.stringify(variationPayload))
     }
 
@@ -1200,271 +996,12 @@ function NewProductPageContent() {
               </div>
             </div>
 
-            {/* Variations */}
-            <div className="bg-card border rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-lg font-semibold">Variations</h2>
-                  <p className="text-sm text-muted-foreground">Add different sizes and colors for this product.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={addVariation}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors"
-                >
-                  <Icon name="plus" />
-                  Add Variation
-                </button>
-              </div>
-
-          {/* Overall variations summary (by color group: colors, sizes, total stock, SKU) */}
-          {variationGroups.length > 0 && (
-            <div className="mb-4 text-xs text-muted-foreground space-y-1">
-              <p className="font-medium text-[11px] text-foreground/80">Overview by color</p>
-              {variationGroups.map((group, idx) => {
-                const rawColor = group.colorValue || "Unspecified color"
-                const displayColor =
-                  rawColor === "Other" && group.customOther ? group.customOther : rawColor
-
-                const sizeSet = new Set(group.items.map((item) => item.size).filter(Boolean))
-                const summarySizes = Array.from(sizeSet).map((size) =>
-                  isAccessoriesShoes && isShoeSubcategory ? formatShoeSizeLabel(String(size)) : String(size),
-                )
-
-                const totalStock = group.items.reduce((sum, item) => sum + (item.stock || 0), 0)
-
-                return (
-                  <div
-                    key={group.key}
-                    className="flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border"
-                  >
-                    <span className="font-medium text-foreground">Var {idx + 1}:</span>
-                    <span>
-                      Color: <span className="text-foreground">{displayColor || "N/A"}</span>
-                    </span>
-                    {summarySizes.length > 0 && (
-                      <span>
-                        Sizes: <span className="text-foreground">{summarySizes.join(", ")}</span>
-                      </span>
-                    )}
-                    <span>
-                      Total stock: <span className="text-foreground">{totalStock}</span>
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {variations.length === 0 ? (
-            <div className="text-center py-8 border-2 border-dashed rounded-xl">
-              <Icon name="palette" size="xl" className="mx-auto text-muted-foreground mb-2" />
-              <p className="text-muted-foreground">No variations added yet.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/**
-               * Group variations by color/SKU/customOther so each card represents a single color,
-               * with multiple size/stock rows inside. Underlying `variations` array and submit
-               * logic remain unchanged.
-               */}
-              {variationGroups.map((group) => (
-                <motion.div
-                  key={group.key}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4 p-4 border rounded-xl bg-muted/20"
-                >
-                  {/* Top row: Color dropdown + low stock threshold + group delete */}
-                  <div className="grid grid-cols-5 gap-4 items-end relative">
-                    <div className="col-span-3">
-                      <label className="block text-xs font-medium mb-1">Colors</label>
-                      <select
-                        value={group.colorValue}
-                        onChange={(e) => {
-                          const value = e.target.value
-                          const nextColors = value ? [value] : []
-                          setVariations((prev) =>
-                            prev.map((v) =>
-                              group.items.some((item) => item.id === v.id)
-                                ? { ...v, colors: nextColors }
-                                : v,
-                            ),
-                          )
-                        }}
-                        className="w-full px-3 py-2 rounded-xl border bg-background text-sm"
-                      >
-                        <option value="">Select a color</option>
-                        {variationColors.map((color) => (
-                          <option key={color} value={color}>
-                            {color}
-                          </option>
-                        ))}
-                      </select>
-                      {(group.items[0].colors || []).includes("Other") && (
-                        <div className="mt-2">
-                          <label className="block text-[10px] font-medium mb-1">Custom color for Other</label>
-                          <input
-                            type="text"
-                            value={group.customOther ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value
-                              setVariations((prev) =>
-                                prev.map((v) =>
-                                  group.items.some((item) => item.id === v.id)
-                                    ? { ...v, customOther: val }
-                                    : v,
-                                ),
-                              )
-                            }}
-                            placeholder="Type a custom color (e.g., Rose Beige)"
-                            className="w-full px-3 py-2 rounded-xl border bg-background focus:ring-1 focus:ring-primary focus:border-transparent outline-none"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-xs font-medium mb-1">Low stock threshold</label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={formData.lowStockThreshold}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            lowStockThreshold: e.target.value,
-                          }))
-                        }
-                        placeholder="e.g., 3 (optional)"
-                        className="w-full px-3 py-2 rounded-xl border bg-background focus:ring-1 focus:ring-primary focus:border-transparent outline-none"
-                      />
-                      <p className="mt-1 text-[11px] text-muted-foreground">
-                        We’ll notify you when any variant’s stock falls below this threshold.
-                      </p>
-                    </div>
-                    {/* Group delete icon above SKU (top-right of card) */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const ids = new Set(group.items.map((g) => g.id))
-                        setVariations((prev) => prev.filter((v) => !ids.has(v.id)))
-                      }}
-                      className="absolute -top-2 right-0 w-8 h-8 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 flex items-center justify-center text-red-500 transition-colors"
-                      aria-label="Remove all sizes for this color"
-                    >
-                      <Icon name="trash" size="sm" />
-                    </button>
-                  </div>
-
-                  {/* Bottom rows: one row per size with Size, Stock and SKU side by side */}
-                  <div className="space-y-3 bg-muted/40 rounded-xl p-3">
-                    <p className="text-[11px] text-muted-foreground mb-1">
-                      Set the size, available stock, and optional SKU for this color.
-                    </p>
-                    {group.items.map((variation) => (
-                      <div
-                        key={variation.id}
-                        className="grid grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,2fr)_auto] gap-4 items-end"
-                      >
-                        <div>
-                          <label className="block text-xs font-medium mb-1">Size</label>
-                          {isAccessoriesShoes && isAccessorySubcategory ? (
-                            <p className="text-xs text-muted-foreground">Free Size</p>
-                          ) : (
-                            <select
-                              value={variation.size}
-                              onChange={(e) => updateVariation(variation.id, "size", e.target.value)}
-                              className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
-                            >
-                              {(isAccessoriesShoes && isShoeSubcategory ? shoeSizeOptions : clothingSizes).map(
-                                (size) => (
-                                  <option key={size} value={size}>
-                                    {size}
-                                  </option>
-                                ),
-                              )}
-                            </select>
-                          )}
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium mb-1">Stock</label>
-                          <input
-                            type="number"
-                            value={variation.stock}
-                            onChange={(e) =>
-                              updateVariation(
-                                variation.id,
-                                "stock",
-                                Number.parseInt(e.target.value) || 0,
-                              )
-                            }
-                            min="0"
-                            className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium mb-1">SKU (optional)</label>
-                          <input
-                            type="text"
-                            value={variation.sku || ""}
-                            onChange={(e) => updateVariation(variation.id, "sku", e.target.value)}
-                            placeholder="e.g., BRA-CNDY-XS"
-                            className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeVariation(variation.id)}
-                          className="w-8 h-8 rounded-full border border-dashed border-muted-foreground/50 flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors"
-                          aria-label="Remove this size"
-                        >
-                          <Icon name="minus" size="sm" />
-                        </button>
-                      </div>
-                    ))}
-
-                    {/* Add new size/stock row inside this color group */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const template = group.items[0]
-                        const baseSizeOptions =
-                          isAccessoriesShoes && isShoeSubcategory ? shoeSizeOptions : clothingSizes
-
-                        // Prefer the next unused size in this color group, falling back to the
-                        // template size or the first size option.
-                        const usedSizes = new Set(group.items.map((v) => v.size))
-                        const nextFree = baseSizeOptions.find((s) => !usedSizes.has(s))
-                        const fallbackSize = template.size || baseSizeOptions[0]
-                        const newSize = nextFree || fallbackSize || ""
-
-                        setVariations((prev) => [
-                          ...prev,
-                          {
-                            id: Date.now().toString(),
-                            colors: template.colors ? [...template.colors] : [],
-                            size: newSize,
-                            stock: 0,
-                            sku: template.sku,
-                            customOther: template.customOther,
-                          },
-                        ])
-                      }}
-                      className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      <span className="inline-flex w-5 h-5 items-center justify-center rounded-full border border-dashed border-muted-foreground/50 mr-1">
-                        <Icon name="plus" size="sm" />
-                      </span>
-                      Add size for this color
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-              <div ref={variationsEndRef} />
-            </div>
-          )}
+            <ProductVariantBuilder
+              value={variants}
+              onChange={setVariants}
+              sizeOptions={isAccessorySubcategory ? "accessory" : isShoeSubcategory ? "shoes" : "clothing"}
+            />
         </div>
-          </div>
         )}
 
         {/* Actions */}

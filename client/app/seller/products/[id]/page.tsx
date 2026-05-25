@@ -1,19 +1,11 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { productsApi, sellerApi, type ProductVariation as ApiProductVariation } from "@/lib/api"
 import { Icon } from "@/components/ui/icon"
-
-interface VariationRow {
-  id: string
-  colors: string[]
-  size: string
-  stock: number
-  sku: string
-}
-
-const clothingSizes = ["XS", "S", "M", "L", "XL", "XXL"]
+import { ProductVariantBuilder } from "@/components/seller/variant/variant-builder"
+import type { VariantEntry } from "@/components/seller/variant/types"
 
 export default function EditProductPage() {
   const router = useRouter()
@@ -41,7 +33,7 @@ export default function EditProductPage() {
   const [tags, setTags] = useState("")
 
   // Variations
-  const [variations, setVariations] = useState<VariationRow[]>([])
+  const [variants, setVariants] = useState<VariantEntry[]>([])
 
   // Load existing product
   useEffect(() => {
@@ -75,19 +67,19 @@ export default function EditProductPage() {
         }
 
         const apiVariations: ApiProductVariation[] = Array.isArray(data.variations) ? data.variations : []
-        const rows: VariationRow[] = apiVariations.map((v, index) => {
-          const rawColor = (v.color || "") as string
-          const firstColor = rawColor.split(",")[0]?.trim() || ""
-          return {
-            id: `var-${index}-${firstColor}-${v.size}`,
-            colors: firstColor ? [firstColor] : [],
-            size: String(v.size || ""),
-            stock: Number(v.inventory || 0),
-            sku: String(v.sku || ""),
-          }
-        })
+        const rows: VariantEntry[] = apiVariations.map((v, index) => ({
+          id: `var-${index}`,
+          color: {
+            name: (v.color || "Black") as string,
+            hex: (v.colorHex || "#000000") as string,
+          },
+          size: String(v.size || ""),
+          stock: Number(v.inventory || 0),
+          sku: String(v.sku || ""),
+          price: v.price != null ? Number(v.price) : null,
+        }))
 
-        setVariations(rows.length > 0 ? rows : [{ id: Date.now().toString(), colors: [], size: clothingSizes[0], stock: 0, sku: "" }])
+        setVariants(rows)
       } catch (e: any) {
         setError(e?.response?.data?.msg || "Failed to load product.")
       } finally {
@@ -97,17 +89,6 @@ export default function EditProductPage() {
 
     if (productId) void load()
   }, [productId])
-
-  const grouped = useMemo(() => {
-    const map = new Map<string, { key: string; colorValue: string; sku: string; items: VariationRow[] }>()
-    variations.forEach((v) => {
-      const colorValue = (v.colors || [""])[0] || ""
-      const key = `${colorValue}__${v.sku}`
-      if (!map.has(key)) map.set(key, { key, colorValue, sku: v.sku, items: [v] })
-      else map.get(key)!.items.push(v)
-    })
-    return Array.from(map.values())
-  }, [variations])
 
   const handleSave = async () => {
     try {
@@ -120,7 +101,7 @@ export default function EditProductPage() {
         description,
         price: price !== "" ? Number(price) : undefined,
         quantity: quantity !== "" ? Number(quantity) : undefined,
-        variations: variations.map((v) => ({ size: v.size, colors: v.colors, stock: v.stock, sku: v.sku })),
+        variations: variants.map((v) => ({ size: v.size, colors: [v.color.name], colorHex: v.color.hex, stock: v.stock, sku: v.sku })),
       }
 
       if (salePrice !== "") payload.sale_price = Number(salePrice)
@@ -263,129 +244,11 @@ export default function EditProductPage() {
         </div>
       </div>
 
-      {/* Variations */}
-      <div className="bg-card border rounded-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold">Variations</h2>
-            <p className="text-sm text-muted-foreground">Edit colors, sizes and stock.</p>
-          </div>
-          <button
-            type="button"
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm"
-            onClick={() => setVariations((prev) => [...prev, { id: Date.now().toString(), colors: [], size: clothingSizes[0], stock: 0, sku: "" }])}
-          >
-            <Icon name="plus" size="sm" />
-            Add Color / Size
-          </button>
-        </div>
-
-        {grouped.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No variations defined.</p>
-        ) : (
-          <div className="space-y-4">
-            {grouped.map((group) => (
-              <div key={group.key} className="space-y-3 p-4 border rounded-xl bg-muted/20 relative">
-                <div className="grid grid-cols-5 gap-4 items-end">
-                  <div className="col-span-3">
-                    <label className="block text-xs font-medium mb-1">Color</label>
-                    <input
-                      type="text"
-                      value={group.colorValue}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        setVariations((prev) => prev.map((v) => group.items.includes(v) ? { ...v, colors: val ? [val] : [] } : v))
-                      }}
-                      className="w-full px-3 py-2 rounded-xl border bg-background text-sm"
-                      placeholder="e.g., Black"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-xs font-medium mb-1">SKU</label>
-                    <input
-                      type="text"
-                      value={group.sku}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        setVariations((prev) => prev.map((v) => group.items.includes(v) ? { ...v, sku: val } : v))
-                      }}
-                      className="w-full px-3 py-2 rounded-xl border bg-background text-sm"
-                      placeholder="SKU"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="absolute top-3 right-3 w-7 h-7 rounded-full hover:bg-red-100 flex items-center justify-center text-red-500"
-                  onClick={() => {
-                    const ids = new Set(group.items.map((i) => i.id))
-                    setVariations((prev) => prev.filter((v) => !ids.has(v.id)))
-                  }}
-                >
-                  <Icon name="trash" size="sm" />
-                </button>
-
-                <div className="space-y-2 bg-muted/40 rounded-xl p-3">
-                  {group.items.map((row) => (
-                    <div key={row.id} className="grid grid-cols-[minmax(0,2fr)_minmax(0,2fr)_auto] gap-3 items-end">
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Size</label>
-                        <input
-                          type="text"
-                          value={row.size}
-                          onChange={(e) => {
-                            const val = e.target.value
-                            setVariations((prev) => prev.map((v) => v.id === row.id ? { ...v, size: val } : v))
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
-                          placeholder="Size"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Stock</label>
-                        <input
-                          type="number"
-                          value={row.stock}
-                          onChange={(e) => {
-                            const val = Number(e.target.value || 0)
-                            setVariations((prev) => prev.map((v) => v.id === row.id ? { ...v, stock: val } : v))
-                          }}
-                          min={0}
-                          className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className="w-8 h-8 rounded-full border border-dashed border-muted-foreground/60 flex items-center justify-center text-muted-foreground hover:bg-muted/60"
-                        onClick={() => setVariations((prev) => prev.filter((v) => v.id !== row.id))}
-                      >
-                        <Icon name="minus" size="sm" />
-                      </button>
-                    </div>
-                  ))}
-
-                  <button
-                    type="button"
-                    className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      const used = new Set(group.items.map((i) => i.size))
-                      const nextFree = clothingSizes.find((s) => !used.has(s)) || clothingSizes[0]
-                      const template = group.items[0]
-                      setVariations((prev) => [...prev, { id: Date.now().toString(), colors: [...(template.colors || [])], size: nextFree, stock: 0, sku: template.sku }])
-                    }}
-                  >
-                    <span className="inline-flex w-5 h-5 items-center justify-center rounded-full border border-dashed border-muted-foreground/60 mr-1">
-                      <Icon name="plus" size="sm" />
-                    </span>
-                    Add size for this color
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <ProductVariantBuilder
+        value={variants}
+        onChange={setVariants}
+        sizeOptions="clothing"
+      />
 
       {/* Actions */}
       <div className="flex gap-4">
