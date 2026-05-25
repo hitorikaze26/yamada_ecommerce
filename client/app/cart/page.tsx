@@ -26,8 +26,8 @@ export default function CartPage() {
   const { user, isAuthenticated, getRole, isVerified } = useAuth()
   const router = useRouter()
 
-  
   const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
 
   // Helper function to normalize image URLs
   const normalizeImageUrl = (imageUrl?: string | null): string => {
@@ -96,6 +96,34 @@ export default function CartPage() {
     const price = item.selectedVariation.price ?? item.product.salePrice ?? item.product.price
     return sum + price * item.quantity
   }, 0)
+
+  const itemsBySeller = useMemo(() => {
+    const map: Record<string, { sellerId: string; sellerName: string; items: typeof cart.items }> = {}
+    for (const item of cart.items) {
+      const id = String(item.product.sellerId ?? "unknown")
+      if (!map[id]) {
+        map[id] = { sellerId: id, sellerName: item.product.sellerName || "Store", items: [] }
+      }
+      map[id].items.push(item)
+    }
+    return map
+  }, [cart.items])
+
+  const selectedSellerIds = useMemo(
+    () => new Set(selectedCartItems.map((item) => String(item.product.sellerId ?? "unknown"))),
+    [selectedCartItems],
+  )
+
+  const totalShipping = useMemo(() => {
+    let total = 0
+    for (const sellerId of selectedSellerIds) {
+      const shipping = shippingBySeller[sellerId]
+      if (shipping && typeof shipping === "number") total += shipping
+    }
+    return total
+  }, [selectedSellerIds, shippingBySeller])
+
+  const selectedTotal = selectedSubtotal + totalShipping
 
   if (cart.items.length === 0) {
     return (
@@ -223,12 +251,19 @@ export default function CartPage() {
                             href={`/product/${item.product.slug}`}
                             className="relative w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-muted flex-shrink-0"
                           >
-                            <Image
-                              src={normalizeImageUrl(item.product?.images?.[0] || item.product?.imageUrl)}
-                              alt={item.product?.name || "Product"}
-                              fill
-                              className="object-cover"
-                            />
+                            {imageErrors[item.id] ? (
+                              <div className="w-full h-full flex items-center justify-center bg-muted">
+                                <Icon name="image" className="text-muted-foreground/50" />
+                              </div>
+                            ) : (
+                              <Image
+                                src={normalizeImageUrl(item.product?.images?.[0] || item.product?.imageUrl)}
+                                alt={item.product?.name || "Product"}
+                                fill
+                                className="object-cover"
+                                onError={() => setImageErrors((prev) => ({ ...prev, [item.id]: true }))}
+                              />
+                            )}
                           </Link>
 
                           <div className="flex-1 min-w-0">

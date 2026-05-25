@@ -25,6 +25,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const { addToCart } = useCart()
   const { toast } = useToast()
+  const [imageError, setImageError] = useState(false)
 
   const currentPrice = product.salePrice || product.price
 
@@ -57,12 +58,19 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                   exit={{ opacity: 0 }}
                   className="absolute inset-0"
                 >
-                  <Image
-                    src={product.images[currentImageIndex] || "/placeholder.svg"}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
+                  {imageError ? (
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                      <Icon name="image" className="text-muted-foreground/50" size="xl" />
+                    </div>
+                  ) : (
+                    <Image
+                      src={product.images[currentImageIndex] || "/placeholder.svg"}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                      onError={() => setImageError(true)}
+                    />
+                  )}
                 </motion.div>
               </AnimatePresence>
             </div>
