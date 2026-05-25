@@ -94,6 +94,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         const sessionRes = await authApi.checkSession()
+        if (process.env.NODE_ENV !== 'production') {
+          try {
+            // Helpful developer debug: show raw session payload
+            // eslint-disable-next-line no-console
+            console.debug('[Auth] checkSession response:', sessionRes.status, sessionRes.data)
+          } catch {}
+        }
         const session = parseSessionPayload(sessionRes.data as Record<string, unknown>)
 
         if (!session.user_id || session.roles.length === 0) {
@@ -112,6 +119,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           pathname,
         )
 
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.debug('[Auth] hydrated user:', hydrated)
+        }
         if (!hydrated) {
           clearClientAuth()
           setUser(null)
