@@ -8,6 +8,7 @@ import type { Product, ProductVariation } from "@/lib/types"
 import { useCart } from "@/context/cart-context"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
+import { formatPrice } from "@/lib/format"
 import { VariantPicker } from "@/components/product/variant-picker"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
@@ -24,6 +25,21 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const { addToCart } = useCart()
   const { toast } = useToast()
+
+  const currentPrice = product.salePrice || product.price
+
+  const handleAddToCart = async () => {
+    if (product.variations?.length && !selectedVariation) {
+      toast({ title: "Please select a variation", variant: "destructive" })
+      return
+    }
+    try {
+      await addToCart(product, quantity, selectedVariation!)
+      toast({ title: "Added to cart", description: `${product.name} has been added to your cart.` })
+    } catch {
+      toast({ title: "Could not add to cart", variant: "destructive" })
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
