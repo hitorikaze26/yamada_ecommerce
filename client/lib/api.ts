@@ -194,6 +194,13 @@ apiClient.interceptors.response.use(
     const body = response.data as Record<string, unknown> | undefined
     if (body?.csrf_token && typeof body.csrf_token === "string") {
       setStoredCsrfToken(body.csrf_token)
+    } else {
+      const headerCsrfToken =
+        response.headers?.["x-csrf-token"] ||
+        response.headers?.["X-CSRF-TOKEN"]
+      if (typeof headerCsrfToken === "string" && headerCsrfToken.trim() !== "") {
+        setStoredCsrfToken(headerCsrfToken)
+      }
     }
     return response
   },

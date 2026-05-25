@@ -29,7 +29,8 @@ from sqlalchemy.orm import selectinload
 from werkzeug.utils import secure_filename
 
 CATEGORY_ID_TO_NAME = {
-    "dress-skirts": "Dressess and Skirts",
+    "dress-skirts": "Dresses and Skirts",
+    "bottoms": "Bottoms",
     "tops-blouses": "tops and blouses",
     "activewear": "activewear and yoga pants",
     "lingerie-sleepwear": "lingerie and sleepwear",
@@ -117,6 +118,7 @@ def getProduct(product_id):
                     "id": v.id,
                     "size": v.size,
                     "color": v.color,
+                    "colorHex": v.color_hex,
                     "sku": v.sku,
                     "inventory": v.inventory,
                     "price": v.price,
@@ -131,11 +133,9 @@ def getProduct(product_id):
 
 @products_bp.get('/product/<string:product_name>')
 def getProductByName(product_name):
-    product_name_input = request.args.get(product_name)
-    products=db.session.execute(select(Product).where(Product.name.ilike(f'%{product_name_input}%'))).scalars().all()
-
     try:
-        return jsonify(products=products)
+        products=db.session.execute(select(Product).where(Product.name.ilike(f'%{product_name}%'))).scalars().all()
+        return jsonify(products=[p.to_json() for p in products])
     except:
         return jsonify(msg="Error occurred!"), 500
 
@@ -335,8 +335,8 @@ def createProduct():
             return jsonify(msg="Product name is required"), 400
 
         try:
-            # Handle both integer and decimal string inputs from the frontend (e.g. "1999" or "1999.00")
-            price_value = int(float(price)) if price is not None else 0
+            # Handle decimal string inputs from the frontend (e.g. "1999" or "1999.00")
+            price_value = float(price) if price is not None else 0.0
         except (TypeError, ValueError):
             price_value = 0
 
@@ -346,7 +346,7 @@ def createProduct():
             quantity_value = 0
 
         try:
-            sale_price_value = int(float(sale_price)) if sale_price is not None else None
+            sale_price_value = float(sale_price) if sale_price is not None else None
         except (TypeError, ValueError):
             sale_price_value = None
 
@@ -453,10 +453,13 @@ def createProduct():
                     else:
                         color_value = str(colors)
 
+                    color_hex = v.get('colorHex') or v.get('color_hex') or None
+
                     variation = ProductVariation(
                         product=product,
                         size=size,
                         color=color_value,
+                        color_hex=color_hex,
                         sku=sku,
                         inventory=stock,
                         price=None,
@@ -611,6 +614,7 @@ def updateProduct(product_id):
         low_stock_threshold = data.get('low_stock_threshold')
         cost_price = data.get('cost_price')
         size_chart_raw = data.get('size_chart')
+        subcategory = data.get('subcategory')
 
         if name is not None and name != '':
             product.name = name
@@ -631,6 +635,9 @@ def updateProduct(product_id):
                 product.low_stock_threshold = int(low_stock_threshold)
             except (TypeError, ValueError):
                 product.low_stock_threshold = None
+
+        if subcategory is not None:
+            product.subcategory = subcategory
 
         # Optional size chart update (accept either legacy flat or matrix JSON)
         if size_chart_raw is not None:
@@ -680,10 +687,13 @@ def updateProduct(product_id):
                         else:
                             color_value = str(colors)
 
+                        color_hex = v.get('colorHex') or v.get('color_hex') or None
+
                         variation = ProductVariation(
                             product=product,
                             size=size,
                             color=color_value,
+                            color_hex=color_hex,
                             sku=sku,
                             inventory=stock,
                             price=None,

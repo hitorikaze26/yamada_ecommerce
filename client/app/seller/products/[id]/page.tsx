@@ -31,6 +31,8 @@ export default function EditProductPage() {
   const [careInstructions, setCareInstructions] = useState("")
   const [lowStockThreshold, setLowStockThreshold] = useState("")
   const [tags, setTags] = useState("")
+  const [category, setCategory] = useState("")
+  const [subcategory, setSubcategory] = useState("")
 
   // Variations
   const [variants, setVariants] = useState<VariantEntry[]>([])
@@ -53,6 +55,8 @@ export default function EditProductPage() {
         setQuantity(String(data.quantity ?? ""))
         setBrand(data.brand || "")
         setCondition(data.product_condition || "new")
+        setCategory(data.subcategory ? "" : "")
+        setSubcategory(data.subcategory || "")
         setWeightKg(data.weight_kg != null ? String(data.weight_kg) : "")
         setMaterial(data.material || "")
         setCareInstructions(data.care_instructions || "")
@@ -112,6 +116,7 @@ export default function EditProductPage() {
       if (material !== "") payload.material = material
       if (careInstructions !== "") payload.care_instructions = careInstructions
       if (lowStockThreshold !== "") payload.low_stock_threshold = Number(lowStockThreshold)
+      if (subcategory !== "") payload.subcategory = subcategory
 
       await sellerApi.updateProduct(String(productId), payload as any)
       setSuccess("Product updated successfully.")
@@ -121,6 +126,12 @@ export default function EditProductPage() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const determineSizeOptions = (subcat: string): "clothing" | "shoes" | "accessory" => {
+    if (["shoes", "sneakers", "boots", "sandals", "heels"].includes(subcat.toLowerCase())) return "shoes"
+    if (["accessories", "bags", "jewelry", "watches", "belts", "hats"].includes(subcat.toLowerCase())) return "accessory"
+    return "clothing"
   }
 
   const inputCls = "w-full px-4 py-2.5 rounded-xl border bg-background text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
@@ -182,9 +193,7 @@ export default function EditProductPage() {
             <label className={labelCls}>Condition</label>
             <select value={condition} onChange={(e) => setCondition(e.target.value)} className={inputCls}>
               <option value="new">New</option>
-              <option value="like_new">Like New</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
+              <option value="used">Pre-loved / Used</option>
             </select>
           </div>
           <div>
@@ -206,6 +215,18 @@ export default function EditProductPage() {
         <div>
           <label className={labelCls}>Tags (comma-separated)</label>
           <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g., summer, casual, floral" className={inputCls} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Category</label>
+            <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g., dress-skirts" className={inputCls} />
+            <p className="text-xs text-muted-foreground mt-1">Category slug (contact support to change)</p>
+          </div>
+          <div>
+            <label className={labelCls}>Subcategory</label>
+            <input type="text" value={subcategory} onChange={(e) => setSubcategory(e.target.value)} placeholder="e.g., Midi Dresses" className={inputCls} />
+          </div>
         </div>
       </div>
 
@@ -247,7 +268,7 @@ export default function EditProductPage() {
       <ProductVariantBuilder
         value={variants}
         onChange={setVariants}
-        sizeOptions="clothing"
+        sizeOptions={determineSizeOptions(subcategory)}
       />
 
       {/* Actions */}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useReducer } from "react"
+import { useEffect, useReducer } from "react"
 import { Icon } from "@/components/ui/icon"
 import { ColorPickerHybrid } from "./color-picker-hybrid"
 import { SizeSelector } from "./size-selector"
@@ -31,6 +31,10 @@ export function ProductVariantBuilder({
     selectedSizes: extractSizes(value),
     variants: value,
   })
+
+  useEffect(() => {
+    onChange(state.variants)
+  }, [state.variants])
 
   const sizes =
     sizeOptions === "shoes"
@@ -134,13 +138,9 @@ export function ProductVariantBuilder({
         </button>
 
         {state.variants.length > 0 && (
-          <button
-            type="button"
-            onClick={syncToParent}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
-          >
-            Sync to form
-          </button>
+          <span className="text-xs text-muted-foreground">
+            Variants auto-synced
+          </span>
         )}
       </div>
 

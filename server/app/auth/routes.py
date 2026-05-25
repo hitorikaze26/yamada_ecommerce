@@ -85,7 +85,14 @@ def refresh_expiring_jwts(response):
                 identity=identity,
                 additional_claims=claims,
             )
+            csrf_token = None
+            try:
+                csrf_token = get_csrf_token(access_token)
+            except Exception:
+                csrf_token = None
             set_access_cookies(response, access_token)
+            if csrf_token:
+                response.headers["X-CSRF-TOKEN"] = csrf_token
         return response
     except (RuntimeError, KeyError):
         # Case where there is not a valid JWT. Just return the original response

@@ -162,6 +162,7 @@ function NewProductPageContent() {
   const [variants, setVariants] = useState<VariantEntry[]>([])
   const [allowedCategories, setAllowedCategories] = useState<string[] | null>(null)
   const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     brand: "",
@@ -261,11 +262,15 @@ function NewProductPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const form = new FormData()
+    if (isSubmitting) return
+    setIsSubmitting(true)
 
     if (!formData.termsAgreed) {
+      setIsSubmitting(false)
       return
     }
+
+    const form = new FormData()
 
     form.append("name", formData.name)
     if (formData.brand) {
@@ -383,6 +388,8 @@ function NewProductPageContent() {
         description: msg,
         variant: "destructive",
       })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -1024,9 +1031,11 @@ function NewProductPageContent() {
           ) : (
             <button
               type="submit"
-              className="flex-1 py-3 px-4 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors"
+              disabled={isSubmitting}
+              className="flex-1 py-3 px-4 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Create Product
+              {isSubmitting && <Icon name="arrow-path" className="animate-spin" size="sm" />}
+              {isSubmitting ? "Creating..." : "Create Product"}
             </button>
           )}
         </div>
