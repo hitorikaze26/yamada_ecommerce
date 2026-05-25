@@ -344,9 +344,11 @@ def login():
 
     # Use the stable primary key as the JWT identity
     access_token = create_access_token(identity=user.id, additional_claims=claims)
+    csrf_token = create_access_token(identity=user.id, additional_claims={"csrf": True})
     response = jsonify(
         msg="Successfully logged in!",
         access_token=access_token,
+        csrf_token=csrf_token,
         is_verified=is_verified,
         roles=role_names,
         user_id=user.id,
@@ -375,7 +377,8 @@ def refresh_access():
 
     claims = _build_jwt_claims(user)
     access_token = create_access_token(identity=user.id, additional_claims=claims)
-    response = jsonify(access_token=access_token)
+    csrf_token = create_access_token(identity=user.id, additional_claims={"csrf": True})
+    response = jsonify(access_token=access_token, csrf_token=csrf_token)
     set_access_cookies(response, access_token)
     return response, 200
 

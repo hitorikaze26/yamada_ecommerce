@@ -125,6 +125,29 @@ const getStoredToken = (): string | null => {
   return localStorage.getItem("yamada-access-token")
 }
 
+// CSRF token is stored in localStorage (returned in login/refresh response body)
+const CSRF_STORAGE_KEY = "yamada-csrf-token"
+
+const getStoredCsrfToken = (): string | null => {
+  if (typeof window === "undefined") return null
+  return localStorage.getItem(CSRF_STORAGE_KEY)
+}
+
+// Exported so auth-context can store the token on login
+export const setStoredCsrfToken = (token: string | null): void => {
+  if (typeof window === "undefined") return
+  if (token) {
+    localStorage.setItem(CSRF_STORAGE_KEY, token)
+  } else {
+    localStorage.removeItem(CSRF_STORAGE_KEY)
+  }
+}
+
+export const clearStoredCsrfToken = (): void => {
+  if (typeof window === "undefined") return
+  localStorage.removeItem(CSRF_STORAGE_KEY)
+}
+
 // Request interceptor to add CSRF token for state-changing requests
 apiClient.interceptors.request.use(
   (config) => {
@@ -138,8 +161,13 @@ apiClient.interceptors.request.use(
     // For POST/PUT/PATCH/DELETE we also need to send the CSRF token header.
     const method = (config.method || "get").toLowerCase()
     if (["post", "put", "patch", "delete"].includes(method)) {
-      // Default Flask-JWT-Extended cookie name for access CSRF token
-      const csrfToken = getCookie("csrf_access_token") || getCookie("access_csrf")
+      // Cross-origin (Vercel → Railway): the csrf_access_token cookie is on the backend
+      // domain, so document.cookie won't see it. Fall back to localStorage CSRF token
+      // returned in the login/refresh JSON body.
+      const csrfToken =
+        getCookie("csrf_access_token") ||
+        getCookie("access_csrf") ||
+        getStoredCsrfToken()
       if (csrfToken) {
         config.headers = config.headers ?? {}
         ;(config.headers as any)["X-CSRF-TOKEN"] = csrfToken
@@ -159,9 +187,16 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 )
 
-// Response interceptor for error handling
+// Response interceptor — capture CSRF token from response body + error handling
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Capture CSRF token from any API response (login, refresh, etc.)
+    const body = response.data as Record<string, unknown> | undefined
+    if (body?.csrf_token && typeof body.csrf_token === "string") {
+      setStoredCsrfToken(body.csrf_token)
+    }
+    return response
+  },
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       const requestUrl = error.config?.url || ""

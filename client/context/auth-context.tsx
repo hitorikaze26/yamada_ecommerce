@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react"
 import { useRouter } from "next/navigation"
-import { authApi } from "@/lib/api"
+import { authApi, setStoredCsrfToken, clearStoredCsrfToken } from "@/lib/api"
 import type { User, UserRole } from "@/lib/types"
 import {
   ROLE_STORAGE_KEY,
@@ -45,6 +45,7 @@ function clearClientAuth() {
   localStorage.removeItem(USER_STORAGE_KEY)
   localStorage.removeItem(TOKEN_STORAGE_KEY)
   localStorage.removeItem(ROLE_STORAGE_KEY)
+  clearStoredCsrfToken()
 }
 
 async function hydrateUser(
@@ -154,6 +155,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     localStorage.setItem(TOKEN_STORAGE_KEY, accessToken)
+
+    // Store CSRF token for cross-origin state-changing requests
+    const csrfToken = data.csrf_token as string | undefined
+    if (csrfToken) {
+      setStoredCsrfToken(csrfToken)
+    }
 
     const serverRoles = session.roles.length > 0 ? session.roles : [role]
     if (!serverRoles.includes(role)) {
