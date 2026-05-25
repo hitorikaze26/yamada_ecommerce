@@ -1,6 +1,7 @@
 import datetime
 import os
 import json
+import math
 
 from . import (
     products as products_bp,
@@ -25,6 +26,7 @@ from flask_jwt_extended import (
     current_user
 )
 from sqlalchemy import select, or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 from werkzeug.utils import secure_filename
 
@@ -36,6 +38,10 @@ CATEGORY_ID_TO_NAME = {
     "lingerie-sleepwear": "lingerie and sleepwear",
     "jackets-coats": "jackets and coats",
     "accessories-shoes": "shoes and accessories",
+}
+
+CATEGORY_ID_FALLBACK_NAMES = {
+    "dress-skirts": ["Dresses and Skirts", "Dressess and Skirts"],
 }
 
 
@@ -334,36 +340,44 @@ def createProduct():
         if not name:
             return jsonify(msg="Product name is required"), 400
 
-        try:
-            # Handle decimal string inputs from the frontend (e.g. "1999" or "1999.00")
-            price_value = float(price) if price is not None else 0.0
-        except (TypeError, ValueError):
-            price_value = 0
+        def _parse_float(value, field_name: str, *, required: bool = False, min_value: float | None = None):
+            if value is None or (isinstance(value, str) and value.strip() == ""):
+                if required:
+                    raise ValueError(f"{field_name} is required")
+                return None
+            try:
+                parsed = float(value)
+            except (TypeError, ValueError):
+                raise ValueError(f"{field_name} must be numeric")
+            if not math.isfinite(parsed):
+                raise ValueError(f"{field_name} must be a finite number")
+            if min_value is not None and parsed < min_value:
+                raise ValueError(f"{field_name} must be at least {min_value}")
+            return parsed
 
-        try:
-            quantity_value = int(quantity) if quantity is not None else 0
-        except (TypeError, ValueError):
-            quantity_value = 0
+        def _parse_int(value, field_name: str, *, required: bool = False, min_value: int | None = None):
+            if value is None or (isinstance(value, str) and value.strip() == ""):
+                if required:
+                    raise ValueError(f"{field_name} is required")
+                return None
+            try:
+                parsed = int(value)
+            except (TypeError, ValueError):
+                raise ValueError(f"{field_name} must be an integer")
+            if min_value is not None and parsed < min_value:
+                raise ValueError(f"{field_name} must be at least {min_value}")
+            return parsed
 
-        try:
-            sale_price_value = float(sale_price) if sale_price is not None else None
-        except (TypeError, ValueError):
-            sale_price_value = None
-
-        try:
-            cost_price_value = float(cost_price) if cost_price is not None else 0.0
-        except (TypeError, ValueError):
-            cost_price_value = 0.0
-
-        try:
-            weight_kg_value = float(weight_kg) if weight_kg is not None else None
-        except (TypeError, ValueError):
-            weight_kg_value = None
-
-        try:
-            low_stock_threshold_value = int(low_stock_threshold_raw) if low_stock_threshold_raw is not None else None
-        except (TypeError, ValueError):
-            low_stock_threshold_value = None
+        price_value = _parse_float(price, "Product price", required=True, min_value=0.0) or 0.0
+        quantity_value = _parse_int(quantity, "Quantity", min_value=0) or 0
+        sale_price_value = _parse_float(sale_price, "Sale price", min_value=0.0)
+        cost_price_value = _parse_float(cost_price, "Cost price", min_value=0.0)
+        weight_kg_value = _parse_float(weight_kg, "Weight (kg)", min_value=0.0)
+        low_stock_threshold_value = _parse_int(
+            low_stock_threshold_raw,
+            "Low stock threshold",
+            min_value=0,
+        )
 
         tags_json = None
         if tags_raw:
@@ -403,6 +417,7 @@ def createProduct():
         )
 
         db.session.add(product)
+        db.session.flush()
 
         if category_ids:
             resolved_categories = []
@@ -410,12 +425,21 @@ def createProduct():
                 category_name = CATEGORY_ID_TO_NAME.get(cat_id)
                 if not category_name:
                     continue
-                category_row = db.session.execute(
-                    select(Category).where(Category.name == category_name)
-                ).scalar_one_or_none()
+
+                candidate_names = CATEGORY_ID_FALLBACK_NAMES.get(cat_id, [category_name])
+                category_row = None
+                for candidate_name in candidate_names:
+                    category_row = db.session.execute(
+                        select(Category).where(Category.name == candidate_name)
+                    ).scalar_one_or_none()
+                    if category_row is not None:
+                        break
                 if category_row is None:
                     continue
                 resolved_categories.append(category_row)
+
+            if not resolved_categories:
+                raise ValueError("Selected category is invalid for this seller")
 
             for category in resolved_categories:
                 link = ProductCategory(
@@ -437,34 +461,50 @@ def createProduct():
                 variations_data = []
 
         if variations_data:
+            if not isinstance(variations_data, list):
+                raise ValueError("Variations payload must be a list")
+
+            seen_skus: set[str] = set()
             for v in variations_data:
-                try:
-                    size = v.get('size')
-                    sku = v.get('sku') or ''
-                    stock = int(v.get('stock') or 0)
-                    colors = v.get('colors') or []
+                if not isinstance(v, dict):
+                    raise ValueError("Each variation must be an object")
 
-                    if not size:
-                        continue
+                size = str(v.get('size') or '').strip()
+                if not size:
+                    raise ValueError("Each variation must include size")
 
-                    # Collapse colors into a single comma-separated string for the existing color column
-                    if isinstance(colors, list):
-                        color_value = ', '.join(str(c).strip() for c in colors if c)
-                    else:
-                        color_value = str(colors)
+                stock = _parse_int(v.get('stock'), "Variant stock", min_value=0) or 0
 
-                    variation = ProductVariation(
-                        product=product,
-                        size=size,
-                        color=color_value,
-                        sku=sku,
-                        inventory=stock,
-                        price=None,
-                    )
-                    db.session.add(variation)
-                except Exception:
-                    # Skip invalid variation entries but continue creating the product
-                    continue
+                sku_raw = str(v.get('sku') or '').strip()
+                sku = sku_raw or None
+                if sku:
+                    if sku in seen_skus:
+                        raise ValueError(f"Duplicate SKU detected: {sku}")
+                    seen_skus.add(sku)
+
+                colors = v.get('colors') or []
+
+                # Collapse colors into a single comma-separated string for the existing color column
+                if isinstance(colors, list):
+                    color_value = ', '.join(str(c).strip() for c in colors if c)
+                else:
+                    color_value = str(colors).strip()
+
+                variant_price = _parse_float(
+                    v.get('price'),
+                    "Variant price",
+                    min_value=0.0,
+                )
+
+                variation = ProductVariation(
+                    product=product,
+                    size=size,
+                    color=color_value,
+                    sku=sku,
+                    inventory=stock,
+                    price=variant_price,
+                )
+                db.session.add(variation)
 
         # Handle optional uploaded images and videos when using multipart/form-data
         if not request.is_json:
@@ -529,6 +569,13 @@ def createProduct():
         db.session.commit()
 
         return jsonify(msg="Succesfully created product!"), 201
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify(msg=str(exc)), 400
+    except IntegrityError:
+        db.session.rollback()
+        current_app.logger.exception("createProduct integrity failure")
+        return jsonify(msg="Database constraint failed while creating product"), 409
     except Exception:
         db.session.rollback()
         current_app.logger.exception("createProduct failed")

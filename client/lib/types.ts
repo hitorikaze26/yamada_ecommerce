@@ -257,6 +257,7 @@ export type CategoryId = (typeof CATEGORIES)[number]["id"]
 
 // Map database category names -> CategoryId for cross-linking
 export const CATEGORY_NAME_TO_ID: Record<string, CategoryId> = {
+  "Dresses and Skirts": "dress-skirts",
   "Dressess and Skirts": "dress-skirts",
   "tops and blouses": "tops-blouses",
   "activewear and yoga pants": "activewear",

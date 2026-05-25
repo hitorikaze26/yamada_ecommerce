@@ -353,12 +353,17 @@ function NewProductPageContent() {
 
     if (variants.length > 0) {
       const variationPayload = variants.map((v) => ({
+        // Never send UI placeholders/non-numeric strings to the API.
+        // Empty per-variant price means "use base product price" on display.
+        price:
+          typeof v.price === "number" && Number.isFinite(v.price) && v.price >= 0
+            ? v.price
+            : undefined,
         size: v.size,
         colors: [v.color.name],
         colorHex: v.color.hex,
         stock: v.stock,
-        sku: v.sku,
-        price: v.price ?? undefined,
+        sku: v.sku.trim() || undefined,
       }))
       form.append("variations", JSON.stringify(variationPayload))
     }

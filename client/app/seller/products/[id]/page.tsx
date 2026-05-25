@@ -105,7 +105,13 @@ export default function EditProductPage() {
         description,
         price: price !== "" ? Number(price) : undefined,
         quantity: quantity !== "" ? Number(quantity) : undefined,
-        variations: variants.map((v) => ({ size: v.size, colors: [v.color.name], colorHex: v.color.hex, stock: v.stock, sku: v.sku })),
+        variations: variants.map((v) => ({
+          size: v.size,
+          colors: [v.color.name],
+          colorHex: v.color.hex,
+          stock: v.stock,
+          sku: v.sku.trim() || undefined,
+        })),
       }
 
       if (salePrice !== "") payload.sale_price = Number(salePrice)
