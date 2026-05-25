@@ -44,6 +44,45 @@ CATEGORY_ID_FALLBACK_NAMES = {
     "dress-skirts": ["Dresses and Skirts", "Dressess and Skirts"],
 }
 
+CATEGORY_ALIASES_TO_ID = {
+    # IDs
+    "dress-skirts": "dress-skirts",
+    "bottoms": "bottoms",
+    "tops-blouses": "tops-blouses",
+    "activewear": "activewear",
+    "lingerie-sleepwear": "lingerie-sleepwear",
+    "jackets-coats": "jackets-coats",
+    "accessories-shoes": "accessories-shoes",
+
+    # Canonical names
+    "dresses and skirts": "dress-skirts",
+    "dressess and skirts": "dress-skirts",
+    "bottoms": "bottoms",
+    "tops and blouses": "tops-blouses",
+    "activewear and yoga pants": "activewear",
+    "lingerie and sleepwear": "lingerie-sleepwear",
+    "jackets and coats": "jackets-coats",
+    "shoes and accessories": "accessories-shoes",
+
+    # Frontend display labels / legacy variants
+    "dress & skirts": "dress-skirts",
+    "tops & blouses": "tops-blouses",
+    "activewear & yoga pants": "activewear",
+    "lingerie & sleepwear": "lingerie-sleepwear",
+    "jackets & coats": "jackets-coats",
+    "accessories & shoes": "accessories-shoes",
+    "accessories and shoes": "accessories-shoes",
+}
+
+
+def _normalize_category_token(value) -> str | None:
+    if value is None:
+        return None
+    token = str(value).strip()
+    if not token:
+        return None
+    return CATEGORY_ALIASES_TO_ID.get(token.lower())
+
 
 from app.utils.static_urls import public_static_url as _public_image_url
 
@@ -333,9 +372,28 @@ def createProduct():
             else:
                 category_ids = [str(categories_raw)]
 
+        # Normalize selected categories and seller-allowed categories to canonical IDs
+        normalized_selected = [
+            norm
+            for norm in (_normalize_category_token(c) for c in category_ids)
+            if norm
+        ]
+        normalized_allowed = [
+            norm
+            for norm in (_normalize_category_token(c) for c in allowed_category_ids)
+            if norm
+        ]
+
+        # Keep order but dedupe
+        category_ids = list(dict.fromkeys(normalized_selected))
+        allowed_category_ids = list(dict.fromkeys(normalized_allowed))
+
         # Enforce that selected categories are restricted to those registered for this seller
         if allowed_category_ids:
             category_ids = [cid for cid in category_ids if cid in allowed_category_ids]
+
+        if categories_raw and not category_ids:
+            raise ValueError("Selected category is not allowed for this seller")
 
         if not name:
             return jsonify(msg="Product name is required"), 400
@@ -430,7 +488,7 @@ def createProduct():
                 category_row = None
                 for candidate_name in candidate_names:
                     category_row = db.session.execute(
-                        select(Category).where(Category.name == candidate_name)
+                        select(Category).where(Category.name.ilike(candidate_name))
                     ).scalar_one_or_none()
                     if category_row is not None:
                         break

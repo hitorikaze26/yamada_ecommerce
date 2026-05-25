@@ -11,6 +11,7 @@ import { ProductVariantBuilder } from "@/components/seller/variant/variant-build
 import type { VariantEntry } from "@/components/seller/variant/types"
 import {
   CATEGORIES,
+  CATEGORY_NAME_TO_ID,
   SUBCATEGORIES,
   SHOES_SUBCATEGORIES,
   ACCESSORY_SUBCATEGORIES,
@@ -57,6 +58,31 @@ const SIZE_CATEGORY_FROM_PRODUCT_CATEGORY: Record<string, SizeChartCategoryKey |
   "lingerie-sleepwear": "lingerie_and_sleepwear",
   "jackets-coats": "jackets",
   "accessories-shoes": null,
+}
+
+const CATEGORY_ALIAS_TO_ID: Record<string, string> = {
+  ...CATEGORY_NAME_TO_ID,
+  "dresses and skirts": "dress-skirts",
+  "dressess and skirts": "dress-skirts",
+  "dress & skirts": "dress-skirts",
+  "tops & blouses": "tops-blouses",
+  "activewear & yoga pants": "activewear",
+  "lingerie & sleepwear": "lingerie-sleepwear",
+  "jackets & coats": "jackets-coats",
+  "accessories & shoes": "accessories-shoes",
+  "accessories and shoes": "accessories-shoes",
+}
+
+for (const category of CATEGORIES) {
+  CATEGORY_ALIAS_TO_ID[category.id.toLowerCase()] = category.id
+  CATEGORY_ALIAS_TO_ID[category.name.toLowerCase()] = category.id
+}
+
+function normalizeCategoryId(value: unknown): string | null {
+  if (typeof value !== "string") return null
+  const token = value.trim().toLowerCase()
+  if (!token) return null
+  return CATEGORY_ALIAS_TO_ID[token] || null
 }
 
 function createEmptyMeasurementMap(measurements: SizeChartMeasurementId[]): Record<SizeChartMeasurementId, string | "" | null> {
@@ -216,7 +242,11 @@ function NewProductPageContent() {
         const profile = (res.data as any)?.profile
         const cats: string[] | undefined = profile?.categories
         if (Array.isArray(cats)) {
-          setAllowedCategories(cats)
+          const normalized = Array.from(
+            new Set(cats.map((c) => normalizeCategoryId(c)).filter((c): c is string => Boolean(c))),
+          )
+          // If we cannot normalize server categories, do not hard-block the form.
+          setAllowedCategories(normalized.length > 0 ? normalized : null)
         } else {
           setAllowedCategories(null)
         }
