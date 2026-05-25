@@ -144,7 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: UserRole,
     redirectTo?: string,
   ) => {
-    const response = await authApi.login(email.trim().toLowerCase(), password, role)
+    const normalizedEmail = email.trim()
+    const response = await authApi.login(normalizedEmail, password, role)
     const data = response.data as Record<string, unknown>
     const accessToken = data.access_token as string | undefined
     const loginVerified = Boolean(data.is_verified)
@@ -152,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const session = {
       ...parsed,
       user_id: parsed.user_id || Number(data.user_id ?? 0),
-      email: parsed.email || email.trim().toLowerCase(),
+      email: String(data.email ?? parsed.email ?? normalizedEmail),
       roles: parsed.roles.length > 0 ? parsed.roles : [role],
     }
 
@@ -187,7 +188,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ? redirectTo
         : dashboardRoutes[userData.role]
 
-    router.push(destination)
+    // Full navigation avoids Next.js soft-route staying on /auth/login after success
+    if (typeof window !== "undefined") {
+      window.location.assign(destination)
+      return
+    }
+    router.replace(destination)
   }
 
   const logout = async () => {

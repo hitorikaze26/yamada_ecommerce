@@ -2,11 +2,12 @@
 
 import type React from "react"
 
-import { useState, Suspense } from "react"
+import { useEffect, useState, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { useAuth } from "@/context/auth-context"
+import { dashboardRoutes } from "@/lib/auth/session"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -74,10 +75,20 @@ function LoginContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const { login, getLoginErrorMessage } = useAuth()
+  const { login, getLoginErrorMessage, isAuthenticated, isLoading, user } = useAuth()
   const passwordResetSuccess = searchParams.get("reset") === "true"
 
   const config = roleConfig[roleParam]
+
+  // Already signed in (e.g. session restored) — leave login page
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || !user) return
+    const destination =
+      redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+        ? redirectTo
+        : dashboardRoutes[user.role]
+    window.location.assign(destination)
+  }, [isLoading, isAuthenticated, user, redirectTo])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,7 +100,7 @@ function LoginContent() {
     setIsLoading(true)
 
     try {
-      await login(email.trim().toLowerCase(), password, roleParam, redirectTo)
+      await login(email.trim(), password, roleParam, redirectTo)
     } catch (err) {
       const msg = getLoginErrorMessage(err)
       setError(msg)

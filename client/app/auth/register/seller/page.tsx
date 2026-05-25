@@ -214,7 +214,7 @@ export default function SellerRegistrationPage() {
       await authApi.registerSeller({
         givenName: formData.givenName,
         surname: formData.surname,
-        email: formData.email.trim().toLowerCase(),
+        email: formData.email.trim(),
         password: formData.password,
         contactNumber: formData.contactNumber,
         shopName: formData.shopName,

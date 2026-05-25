@@ -173,7 +173,10 @@ apiClient.interceptors.response.use(
       if (
         requestUrl.includes("/accounts/protected") ||
         requestUrl.includes("/accounts/login") ||
-        requestUrl.includes("/accounts/refresh")
+        requestUrl.includes("/accounts/refresh") ||
+        requestUrl.includes("/accounts/seller/profile") ||
+        requestUrl.includes("/accounts/buyer/profile") ||
+        requestUrl.includes("/accounts/rider/profile")
       ) {
         return Promise.reject(error)
       }

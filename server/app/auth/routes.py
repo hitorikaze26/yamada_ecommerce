@@ -248,28 +248,29 @@ def login():
     data = request.get_json()
     current_app.logger.info(f"Login attempt with data keys: {list(data.keys())}")
 
-    username = data.get('username', '').strip().lower()
+    username_input = data.get('username', '').strip()
+    username_lookup = username_input.lower()
     password = data.get('password', '')
     requested_role = data.get('role', '').lower().strip()
     
     current_app.logger.info(f"Login attempt for username/email: {username}, requested role: {requested_role}")
 
-    if username=="" or password=="":
+    if username_input == "" or password == "":
         current_app.logger.warning("Login failed: Empty username or password")
         return jsonify(msg="Please input your credentials!"), 401
 
-    # Allow login via either username OR email using the same field
+    # Case-insensitive match only — never rewrite stored email on login
     user = db.session.execute(
         select(User).where(
             or_(
-                func.lower(User.username) == username,
-                func.lower(User.email) == username,
+                func.lower(User.username) == username_lookup,
+                func.lower(User.email) == username_lookup,
             )
         )
     ).scalar_one_or_none()
 
     if user is None:
-        current_app.logger.warning(f"Login failed: User not found for {username}")
+        current_app.logger.warning(f"Login failed: User not found for {username_input}")
         return jsonify(msg="User does not exist!"), 401
     
     current_app.logger.info(f"User found: {user.email}, checking password...")
@@ -279,7 +280,7 @@ def login():
     current_app.logger.info(f"Password check result: {password_valid}")
     
     if not password_valid:
-        current_app.logger.warning(f"Login failed: Invalid password for user {username}")
+        current_app.logger.warning(f"Login failed: Invalid password for user {username_input}")
         return jsonify(msg="Incorrect password!"), 401
 
     if user.is_archived:
@@ -288,7 +289,7 @@ def login():
             user.setActive(True)
         db.session.commit()
     elif not user.active:
-        current_app.logger.warning(f"Login denied: inactive account {username}")
+        current_app.logger.warning(f"Login denied: inactive account {username_input}")
         return jsonify(msg="This account has been deactivated. Contact support if you need help."), 403
     else:
         user.touch_activity()
@@ -301,7 +302,7 @@ def login():
         if requested_role not in role_names:
             current_app.logger.warning(
                 "Login denied for %s: missing %s role (has ids=%s names=%s)",
-                username,
+                username_input,
                 requested_role,
                 user_roles,
                 role_names,
@@ -329,6 +330,7 @@ def login():
         is_verified=is_verified,
         roles=role_names,
         user_id=user.id,
+        email=user.email,
     )
     set_access_cookies(response, access_token)
 
@@ -410,7 +412,7 @@ def change_email():
         return jsonify(msg="JSON required"), 400
 
     data = request.get_json() or {}
-    new_email = (data.get('newEmail') or '').strip().lower()
+    new_email = (data.get('newEmail') or '').strip()
     password = data.get('password', '')
 
     if not new_email or not password:
@@ -429,7 +431,7 @@ def change_email():
 
         # Check email not already taken
         existing = db.session.execute(
-            select(User).where(User.email == new_email)
+            select(User).where(func.lower(User.email) == new_email.lower())
         ).scalar_one_or_none()
         if existing is not None and existing.id != user.id:
             return jsonify(msg="Email already in use"), 400
@@ -644,7 +646,7 @@ def register_seller():
     current_app.logger.info("[register_seller] file keys=%s", list(request.files.keys()))
 
     try:
-        email = (form.get('email') or '').strip().lower()
+        email = (form.get('email') or '').strip()
         password = form.get('password') or ''
         given_name = (form.get('givenName') or '').strip()
         surname = (form.get('surname') or '').strip()
@@ -868,7 +870,7 @@ def register_buyer():
     current_app.logger.info("[register_buyer] file keys=%s", list(request.files.keys()))
 
     try:
-        email = (form.get('email') or '').strip().lower()
+        email = (form.get('email') or '').strip()
         password = form.get('password') or ''
         given_name = form.get('givenName', '')
         surname = form.get('surname', '')
