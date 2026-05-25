@@ -43,6 +43,7 @@ from app.chat.service import get_platform_admin_user
 from app.notifications.service import create_notification, notify_admin_order_issue_reported
 from app.stores_public.routes import _serialize_store_card
 from app.utils.static_urls import public_static_url as _public_image_url
+from app.decorators import buyer_required, rider_required, seller_required
 from flask import (
     jsonify,
     abort,
@@ -210,17 +211,20 @@ def _user_is_verified(user: User, role_ids: list | None = None) -> bool:
 
 def _build_jwt_claims(user: User) -> dict:
     _, role_names = _roles_for_user(user.id)
+    roles = [name for name in role_names if name in VALID_ROLE_NAMES]
+    is_admin = "admin" in roles
     claims = {
-        "is_buyer": "buyer" in role_names,
-        "is_seller": "seller" in role_names,
-        "is_rider": "rider" in role_names,
-        "is_admin": "admin" in role_names,
-        "roles": role_names,
+        "is_buyer": "buyer" in roles,
+        "is_seller": "seller" in roles,
+        "is_rider": "rider" in roles,
+        "is_admin": is_admin,
+        "roles": roles,
     }
-    if claims["is_admin"]:
+    if is_admin:
         claims["is_rider"] = False
         claims["is_seller"] = False
         claims["is_buyer"] = False
+        claims["roles"] = ["admin"]
     return claims
 
 
@@ -253,7 +257,7 @@ def login():
     password = data.get('password', '')
     requested_role = data.get('role', '').lower().strip()
     
-    current_app.logger.info(f"Login attempt for username/email: {username}, requested role: {requested_role}")
+    current_app.logger.info(f"Login attempt for username/email: {username_input}, requested role: {requested_role}")
 
     if username_input == "" or password == "":
         current_app.logger.warning("Login failed: Empty username or password")
@@ -297,6 +301,22 @@ def login():
 
     user_roles = _user_role_ids(user.id)
     role_names = _user_role_names(user_id=user.id)
+
+    if "admin" in role_names and requested_role and requested_role != "admin":
+        current_app.logger.warning(
+            "Login denied for %s: admin account attempted non-admin portal %s",
+            username_input,
+            requested_role,
+        )
+        return (
+            jsonify(
+                msg=(
+                    "Admin accounts must sign in through the admin portal. "
+                    "Use the admin login link or contact support."
+                )
+            ),
+            403,
+        )
 
     if requested_role:
         if requested_role not in role_names:
@@ -992,6 +1012,7 @@ def _serialize_buyer_profile(user, buyer_profile=None):
 
 @auth_bp.get('/buyer/profile')
 @jwt_required()
+@buyer_required()
 def get_buyer_profile():
     """Return the currently authenticated buyer's profile and address data."""
 
@@ -1007,6 +1028,7 @@ def get_buyer_profile():
 
 @auth_bp.put('/buyer/profile')
 @jwt_required()
+@buyer_required()
 def update_buyer_profile():
     """Update buyer name, contact, and optional registration address."""
     if not request.is_json:
@@ -1063,6 +1085,7 @@ def update_buyer_profile():
 
 @auth_bp.get('/buyer/reviews')
 @jwt_required()
+@buyer_required()
 def list_buyer_reviews():
     """Paginated list of reviews written by the current buyer."""
     from app.review_utils import serialize_review_row
@@ -1133,6 +1156,7 @@ def _build_rider_profile_payload(user: User, rider_profile: RiderProfile) -> dic
 
 @auth_bp.get('/rider/profile')
 @jwt_required()
+@rider_required()
 def get_rider_profile():
     """Return the currently authenticated rider's profile (read allowed while pending)."""
 
@@ -1153,6 +1177,7 @@ def get_rider_profile():
 
 @auth_bp.put('/rider/profile')
 @jwt_required()
+@rider_required()
 def update_rider_profile():
     """Update the currently authenticated rider's basic profile information.
 
@@ -1241,6 +1266,7 @@ def update_rider_profile():
 
 @auth_bp.post('/rider/documents')
 @jwt_required()
+@rider_required()
 def upload_rider_documents():
     """Re-upload rider license and/or OR/CR (verified riders only)."""
 
@@ -1292,6 +1318,7 @@ def upload_rider_documents():
 
 @auth_bp.put('/seller/profile')
 @jwt_required()
+@seller_required()
 def update_seller_profile():
     """Update the currently authenticated seller's basic profile information.
 
@@ -1456,6 +1483,7 @@ def update_seller_profile():
 
 @auth_bp.post('/buyer/avatar')
 @jwt_required()
+@buyer_required()
 def upload_buyer_avatar():
     """Upload and save a buyer avatar image for the current user."""
 
@@ -1492,6 +1520,7 @@ def upload_buyer_avatar():
 
 @auth_bp.post('/rider/avatar')
 @jwt_required()
+@rider_required()
 def upload_rider_avatar():
     """Upload and save a rider avatar image for the current user."""
 
@@ -1528,6 +1557,7 @@ def upload_rider_avatar():
 
 @auth_bp.post('/seller/avatar')
 @jwt_required()
+@seller_required()
 def upload_seller_avatar():
     """Upload and save a seller avatar (shop logo) image for the current user."""
 
@@ -1564,6 +1594,7 @@ def upload_seller_avatar():
 
 @auth_bp.post('/seller/banner')
 @jwt_required()
+@seller_required()
 def upload_seller_banner():
     """Upload a seller shop banner image for the current user.
 
@@ -1604,6 +1635,7 @@ def upload_seller_banner():
 
 @auth_bp.get('/seller/profile')
 @jwt_required()
+@seller_required()
 def get_seller_profile():
     """Return the currently authenticated seller's profile and shop data.
 
@@ -1780,6 +1812,7 @@ def _serialize_wishlist_product(product: Product) -> dict:
 
 @auth_bp.get('/buyer/wishlist')
 @jwt_required()
+@buyer_required()
 def get_buyer_wishlist():
     """Return the current buyer's wishlist products."""
 
@@ -1806,6 +1839,7 @@ def get_buyer_wishlist():
 
 @auth_bp.post('/buyer/wishlist')
 @jwt_required()
+@buyer_required()
 def add_to_wishlist():
     data = request.get_json() or {}
     product_id = data.get('productId')
@@ -1843,6 +1877,7 @@ def add_to_wishlist():
 
 @auth_bp.delete('/buyer/wishlist')
 @jwt_required()
+@buyer_required()
 def clear_buyer_wishlist():
     """Remove all wishlist items for the current buyer."""
     user = db.session.execute(select(User).where(User.id == current_user.id)).scalar_one_or_none()
@@ -1863,6 +1898,7 @@ def clear_buyer_wishlist():
 
 @auth_bp.delete('/buyer/wishlist/<int:product_id>')
 @jwt_required()
+@buyer_required()
 def remove_from_wishlist(product_id):
     user = db.session.execute(select(User).where(User.id == current_user.id)).scalar_one_or_none()
     if user is None:
@@ -1906,6 +1942,7 @@ def _trim_recently_viewed(user_id: int) -> None:
 
 @auth_bp.get('/buyer/following-stores')
 @jwt_required()
+@buyer_required()
 def get_following_stores():
     user = db.session.execute(select(User).where(User.id == current_user.id)).scalar_one_or_none()
     if user is None:
@@ -1931,6 +1968,7 @@ def get_following_stores():
 
 @auth_bp.get('/buyer/following-stores/<int:store_id>')
 @jwt_required()
+@buyer_required()
 def get_following_store_status(store_id: int):
     user = db.session.execute(select(User).where(User.id == current_user.id)).scalar_one_or_none()
     if user is None:
@@ -1948,6 +1986,7 @@ def get_following_store_status(store_id: int):
 
 @auth_bp.post('/buyer/following-stores')
 @jwt_required()
+@buyer_required()
 def follow_store():
     data = request.get_json() or {}
     store_id = data.get('storeId')
@@ -1984,6 +2023,7 @@ def follow_store():
 
 @auth_bp.delete('/buyer/following-stores/<int:store_id>')
 @jwt_required()
+@buyer_required()
 def unfollow_store(store_id: int):
     user = db.session.execute(select(User).where(User.id == current_user.id)).scalar_one_or_none()
     if user is None:
@@ -2010,6 +2050,7 @@ def unfollow_store(store_id: int):
 
 @auth_bp.get('/buyer/recently-viewed')
 @jwt_required()
+@buyer_required()
 def get_recently_viewed():
     user = db.session.execute(select(User).where(User.id == current_user.id)).scalar_one_or_none()
     if user is None:
@@ -2038,6 +2079,7 @@ def get_recently_viewed():
 
 @auth_bp.delete('/buyer/recently-viewed')
 @jwt_required()
+@buyer_required()
 def clear_recently_viewed():
     """Clear all recently viewed products for the current buyer."""
     user = db.session.execute(select(User).where(User.id == current_user.id)).scalar_one_or_none()
@@ -2058,6 +2100,7 @@ def clear_recently_viewed():
 
 @auth_bp.post('/buyer/recently-viewed')
 @jwt_required()
+@buyer_required()
 def record_recently_viewed():
     data = request.get_json() or {}
     product_id = data.get('productId')
@@ -2142,6 +2185,7 @@ def _notify_admins_problem_report(report: ProblemReport) -> None:
 
 @auth_bp.get('/buyer/coupons')
 @jwt_required()
+@buyer_required()
 def get_buyer_coupons():
     store_id = request.args.get('storeId', type=int)
     now = datetime.now()
@@ -2165,6 +2209,7 @@ def get_buyer_coupons():
 
 @auth_bp.post('/buyer/coupons/validate')
 @jwt_required()
+@buyer_required()
 def validate_buyer_coupon():
     data = request.get_json() or {}
     code = data.get('code') or data.get('couponCode')
@@ -2190,6 +2235,7 @@ def validate_buyer_coupon():
 
 @auth_bp.post('/buyer/reports')
 @jwt_required()
+@buyer_required()
 def submit_buyer_report():
     """Deprecated — use POST /api/reports instead."""
     return jsonify(

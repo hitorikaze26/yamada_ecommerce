@@ -4,8 +4,8 @@ const ROUTE_ROLE_MAP: { prefix: string; roles: UserRole[] }[] = [
   { prefix: "/admin", roles: ["admin"] },
   { prefix: "/seller", roles: ["seller"] },
   { prefix: "/rider", roles: ["rider"] },
-  { prefix: "/buyer", roles: ["buyer", "seller"] },
-  { prefix: "/checkout", roles: ["buyer", "seller"] },
+  { prefix: "/buyer", roles: ["buyer"] },
+  { prefix: "/checkout", roles: ["buyer"] },
 ]
 
 export function roleForPathname(pathname: string): UserRole | null {

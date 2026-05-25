@@ -100,7 +100,7 @@ class ProductionConfig(Config):
     DEBUG = False
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_SAMESITE = "None"
-    JWT_COOKIE_CSRF_PROTECT = False
+    JWT_COOKIE_CSRF_PROTECT = True
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=2)
     MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "smtp")
     _prod_uri = _database_url()

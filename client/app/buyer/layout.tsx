@@ -120,7 +120,7 @@ function BuyerLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function BuyerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ProtectedRoute allowedRoles={["buyer", "seller"]} redirectTo="/auth/login?role=buyer">
+    <ProtectedRoute allowedRoles={["buyer"]} redirectTo="/auth/login?role=buyer">
       <BuyerLayoutContent>{children}</BuyerLayoutContent>
     </ProtectedRoute>
   )

@@ -1062,6 +1062,7 @@ def _restore_order_inventory(order: Order) -> None:
 
 @orders_bp.put("/orders/<int:order_id>/cancel")
 @jwt_required()
+@buyer_required()
 def buyer_cancel_order(order_id: int):
     """Allow the buyer to cancel their own order while it is still pending or processing."""
     try:
@@ -1133,6 +1134,7 @@ def buyer_cancel_order(order_id: int):
 
 @orders_bp.post("/orders/<int:order_id>/confirm-received")
 @jwt_required()
+@buyer_required()
 def confirm_order_received(order_id: int):
     """Allow the buyer to confirm that an order has been received.
 
@@ -1344,6 +1346,7 @@ def list_refunds():
 
 @orders_bp.get("/orders/<int:order_id>/financials")
 @jwt_required()
+@buyer_required()
 def get_order_financials(order_id: int):
     """Return the financial breakdown for a single order.
 

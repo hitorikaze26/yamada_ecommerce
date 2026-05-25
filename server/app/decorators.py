@@ -20,17 +20,18 @@ ROLE_PRIORITY = ("admin", "seller", "rider", "buyer")
 
 
 def get_effective_role(claims: dict | None = None, user_id: int | None = None) -> str | None:
-    """Resolve portal role from JWT claims; admin > seller > rider > buyer."""
+    """Resolve portal role from JWT claims and DB roles; admin > seller > rider > buyer."""
     claims = claims or {}
-    if claims.get("is_admin"):
-        return "admin"
-    if claims.get("is_seller"):
-        return "seller"
-    if claims.get("is_rider"):
-        return "rider"
-    if claims.get("is_buyer"):
-        return "buyer"
     if user_id is not None:
+        if claims.get("is_admin") and _user_has_db_role(user_id, RoleTypes.ADMIN):
+            return "admin"
+        if claims.get("is_seller") and _user_has_db_role(user_id, RoleTypes.SELLER):
+            return "seller"
+        if claims.get("is_rider") and _user_has_db_role(user_id, RoleTypes.RIDER):
+            return "rider"
+        if claims.get("is_buyer") and _user_has_db_role(user_id, RoleTypes.BUYER):
+            return "buyer"
+
         role_ids = list(
             db.session.execute(
                 select(UserRole.role_id).where(UserRole.user_id == user_id)
@@ -84,9 +85,6 @@ def _user_has_db_role(user_id: int, role_type: RoleTypes) -> bool:
 
 
 def _claim_or_db_role(claim_key: str, role_type: RoleTypes) -> bool:
-    claims = get_jwt()
-    if claims.get(claim_key, False):
-        return True
     try:
         user_id = int(get_jwt_identity())
     except (TypeError, ValueError):
