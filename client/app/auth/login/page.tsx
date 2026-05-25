@@ -89,9 +89,11 @@ function LoginContent() {
     setIsLoading(true)
 
     try {
-      await login(email, password, roleParam, redirectTo)
+      await login(email.trim().toLowerCase(), password, roleParam, redirectTo)
     } catch (err) {
-      setError(getLoginErrorMessage(err))
+      const msg = getLoginErrorMessage(err)
+      setError(msg)
+      console.error("[login]", msg, err)
     } finally {
       setIsLoading(false)
     }

@@ -47,14 +47,40 @@ def get_effective_role(claims: dict | None = None, user_id: int | None = None) -
     return None
 
 
+ROLE_NAME_BY_TYPE = {
+    RoleTypes.ADMIN: "admin",
+    RoleTypes.BUYER: "buyer",
+    RoleTypes.SELLER: "seller",
+    RoleTypes.RIDER: "rider",
+}
+
+
 def _user_has_db_role(user_id: int, role_type: RoleTypes) -> bool:
+    role_name = ROLE_NAME_BY_TYPE.get(role_type)
+    if not role_name:
+        return False
+    from sqlalchemy import func
+    from app.models import Role
+
     found = db.session.execute(
-        select(UserRole.role_id).where(
+        select(UserRole.role_id)
+        .join(Role, Role.id == UserRole.role_id)
+        .where(
             UserRole.user_id == user_id,
-            UserRole.role_id == role_type.value,
+            func.lower(Role.name) == role_name,
         )
     ).scalar_one_or_none()
-    return found is not None
+    if found is not None:
+        return True
+    return (
+        db.session.execute(
+            select(UserRole.role_id).where(
+                UserRole.user_id == user_id,
+                UserRole.role_id == role_type.value,
+            )
+        ).scalar_one_or_none()
+        is not None
+    )
 
 
 def _claim_or_db_role(claim_key: str, role_type: RoleTypes) -> bool:

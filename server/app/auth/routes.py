@@ -119,6 +119,7 @@ ROLE_NAME_BY_ID = {
 }
 
 ROLE_ID_BY_NAME = {v: k for k, v in ROLE_NAME_BY_ID.items()}
+VALID_ROLE_NAMES = frozenset(ROLE_NAME_BY_ID.values())
 
 
 def _user_role_ids(user_id: int) -> list:
@@ -129,10 +130,34 @@ def _user_role_ids(user_id: int) -> list:
     )
 
 
-def _user_role_names(role_ids: list) -> list:
+def _roles_for_user(user_id: int) -> tuple[list[int], list[str]]:
+    """Resolve role IDs and canonical names from DB (source of truth)."""
+    rows = db.session.execute(
+        select(UserRole.role_id, Role.name)
+        .join(Role, Role.id == UserRole.role_id)
+        .where(UserRole.user_id == user_id)
+    ).all()
+    role_ids: list[int] = []
+    names: list[str] = []
+    for role_id, role_name in rows:
+        role_ids.append(int(role_id))
+        canonical = (role_name or "").strip().lower()
+        if canonical in VALID_ROLE_NAMES and canonical not in names:
+            names.append(canonical)
+        elif role_id in ROLE_NAME_BY_ID:
+            mapped = ROLE_NAME_BY_ID[role_id]
+            if mapped not in names:
+                names.append(mapped)
+    return role_ids, names
+
+
+def _user_role_names(role_ids: list | None = None, user_id: int | None = None) -> list:
+    if user_id is not None:
+        _, names = _roles_for_user(user_id)
+        return names
     names: list[str] = []
     missing_ids: list[int] = []
-    for role_id in role_ids:
+    for role_id in role_ids or []:
         name = ROLE_NAME_BY_ID.get(role_id)
         if name:
             if name not in names:
@@ -145,14 +170,33 @@ def _user_role_names(role_ids: list) -> list:
         ).scalars().all()
         for role_row in db_roles:
             db_name = (role_row.name or "").strip().lower()
-            if db_name and db_name not in names:
+            if db_name in VALID_ROLE_NAMES and db_name not in names:
                 names.append(db_name)
     return names
 
 
-def _user_is_verified(user: User, role_ids: list) -> bool:
+def _ensure_role_by_name(role_name: str) -> Role:
+    """Attach roles by name so auto-increment role IDs never break login."""
+    canonical = role_name.strip().lower()
+    role = db.session.execute(
+        select(Role).where(func.lower(Role.name) == canonical)
+    ).scalar_one_or_none()
+    if role is None:
+        role = Role(name=canonical)
+        db.session.add(role)
+        db.session.flush()
+    return role
+
+
+def _user_has_role_name(user_id: int, role_name: str) -> bool:
+    _, names = _roles_for_user(user_id)
+    return role_name.strip().lower() in names
+
+
+def _user_is_verified(user: User, role_ids: list | None = None) -> bool:
     is_verified = user.email_verified
-    if RoleTypes.SELLER.value in role_ids:
+    _, role_names = _roles_for_user(user.id)
+    if "seller" in role_names:
         seller = db.session.execute(
             select(Seller).where(Seller.user_id == user.id)
         ).scalar_one_or_none()
@@ -165,13 +209,12 @@ def _user_is_verified(user: User, role_ids: list) -> bool:
 
 
 def _build_jwt_claims(user: User) -> dict:
-    user_roles = _user_role_ids(user.id)
-    role_names = _user_role_names(user_roles)
+    _, role_names = _roles_for_user(user.id)
     claims = {
-        "is_buyer": RoleTypes.BUYER.value in user_roles,
-        "is_seller": RoleTypes.SELLER.value in user_roles,
-        "is_rider": RoleTypes.RIDER.value in user_roles,
-        "is_admin": RoleTypes.ADMIN.value in user_roles,
+        "is_buyer": "buyer" in role_names,
+        "is_seller": "seller" in role_names,
+        "is_rider": "rider" in role_names,
+        "is_admin": "admin" in role_names,
         "roles": role_names,
     }
     if claims["is_admin"]:
@@ -183,13 +226,14 @@ def _build_jwt_claims(user: User) -> dict:
 
 def _session_snapshot(user: User) -> dict:
     role_ids = _user_role_ids(user.id)
+    _, role_names = _roles_for_user(user.id)
     return {
         "user_id": user.id,
         "email": user.email,
         "given_name": user.given_name or "",
         "surname": user.surname or "",
         "contact_number": user.contact_number or "",
-        "roles": _user_role_names(role_ids),
+        "roles": role_names,
         "is_verified": _user_is_verified(user, role_ids),
     }
 
@@ -251,18 +295,23 @@ def login():
         db.session.commit()
 
     user_roles = _user_role_ids(user.id)
+    role_names = _user_role_names(user_id=user.id)
 
     if requested_role:
-        required_role_id = ROLE_ID_BY_NAME.get(requested_role)
-        if required_role_id and required_role_id not in user_roles:
+        if requested_role not in role_names:
             current_app.logger.warning(
-                f"Login denied for {username}: missing {requested_role} role (has {user_roles})"
+                "Login denied for %s: missing %s role (has ids=%s names=%s)",
+                username,
+                requested_role,
+                user_roles,
+                role_names,
             )
             return (
                 jsonify(
                     msg=(
                         f"This account does not have {requested_role} access. "
-                        "Use the correct portal for your account."
+                        f"Roles on this account: {', '.join(role_names) or 'none'}. "
+                        "Use the correct portal or contact support."
                     )
                 ),
                 403,
@@ -278,7 +327,7 @@ def login():
         msg="Successfully logged in!",
         access_token=access_token,
         is_verified=is_verified,
-        roles=_user_role_names(user_roles),
+        roles=role_names,
         user_id=user.id,
     )
     set_access_cookies(response, access_token)
@@ -444,7 +493,7 @@ def register():
         user = User(email=data['email'], username=data['username'])
         user.set_password(data['password'])
 
-        role = db.session.execute(select(Role).where(Role.id == RoleTypes.BUYER.value)).scalar_one_or_none()
+        role = _ensure_role_by_name("buyer")
         user_role = UserRole(user=user, role=role)
 
         db.session.add(user)
@@ -506,12 +555,7 @@ def register_rider():
 		)
 		user.set_password(password)
 
-		role = db.session.execute(select(Role).where(Role.id == RoleTypes.RIDER.value)).scalar_one_or_none()
-		if role is None:
-			role = Role(id=RoleTypes.RIDER.value, name="rider")
-			db.session.add(role)
-			db.session.flush()
-
+		role = _ensure_role_by_name("rider")
 		user_role = UserRole(user=user, role=role)
 
 		rider_profile = RiderProfile(
@@ -634,13 +678,7 @@ def register_seller():
         )
         user.set_password(password)
 
-        # Attach SELLER role (create if missing)
-        role = db.session.execute(select(Role).where(Role.id == RoleTypes.SELLER.value)).scalar_one_or_none()
-        if role is None:
-            role = Role(id=RoleTypes.SELLER.value, name="seller")
-            db.session.add(role)
-            db.session.flush()
-
+        role = _ensure_role_by_name("seller")
         user_role = UserRole(user=user, role=role)
 
         # Create seller profile with detailed address
@@ -852,13 +890,7 @@ def register_buyer():
         )
         user.set_password(password)
 
-        # Attach BUYER role
-        role = db.session.execute(select(Role).where(Role.id == RoleTypes.BUYER.value)).scalar_one_or_none()
-        if role is None:
-            role = Role(id=RoleTypes.BUYER.value, name="buyer")
-            db.session.add(role)
-            db.session.flush()
-
+        role = _ensure_role_by_name("buyer")
         user_role = UserRole(user=user, role=role)
 
         # Create buyer profile
@@ -1352,13 +1384,14 @@ def update_seller_profile():
         except Exception:
             categories_list = []
 
-    # Build avatar and banner URLs
-    avatar_url = None
-    if seller.avatar_path:
-        avatar_url = url_for('static', filename=seller.avatar_path, _external=True)
-    banner_url = None
-    if getattr(seller, 'banner_path', None):
-        banner_url = url_for('static', filename=seller.banner_path, _external=True)
+    from app.utils.upload import public_url_for_stored_path
+
+    avatar_url = public_url_for_stored_path(seller.avatar_path) if seller.avatar_path else None
+    banner_url = (
+        public_url_for_stored_path(seller.banner_path)
+        if getattr(seller, "banner_path", None)
+        else None
+    )
 
     # Calculate total sales from completed orders
     total_sales = 0.0
@@ -1598,13 +1631,14 @@ def get_seller_profile():
         except Exception:
             categories = []
 
-    # Build avatar and banner URLs
-    avatar_url = None
-    if seller.avatar_path:
-        avatar_url = url_for('static', filename=seller.avatar_path, _external=True)
-    banner_url = None
-    if getattr(seller, 'banner_path', None):
-        banner_url = url_for('static', filename=seller.banner_path, _external=True)
+    from app.utils.upload import public_url_for_stored_path
+
+    avatar_url = public_url_for_stored_path(seller.avatar_path) if seller.avatar_path else None
+    banner_url = (
+        public_url_for_stored_path(seller.banner_path)
+        if getattr(seller, "banner_path", None)
+        else None
+    )
 
     # Calculate total sales from completed orders
     total_sales = 0.0

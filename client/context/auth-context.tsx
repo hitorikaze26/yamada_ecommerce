@@ -148,9 +148,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = response.data as Record<string, unknown>
     const accessToken = data.access_token as string | undefined
     const loginVerified = Boolean(data.is_verified)
+    const parsed = parseSessionPayload(data)
     const session = {
-      ...parseSessionPayload(data),
-      email: parseSessionPayload(data).email || email.trim(),
+      ...parsed,
+      user_id: parsed.user_id || Number(data.user_id ?? 0),
+      email: parsed.email || email.trim().toLowerCase(),
+      roles: parsed.roles.length > 0 ? parsed.roles : [role],
     }
 
     if (!accessToken) {

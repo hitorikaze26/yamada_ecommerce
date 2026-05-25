@@ -2,13 +2,13 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
 
 interface FileUploaderProps {
   accept?: string
-  onUpload: (file: File) => void
+  onUpload: (file: File | null) => void
   value: File | null
   maxSize?: number // in MB
 }
@@ -18,14 +18,23 @@ export function FileUploader({ accept = "image/*,.pdf", onUpload, value, maxSize
   const [error, setError] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const previewUrl = useMemo(() => {
+    if (!value || !value.type.startsWith("image/")) return null
+    return URL.createObjectURL(value)
+  }, [value])
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
   const validateFile = (file: File): boolean => {
-    // Check file size
     if (file.size > maxSize * 1024 * 1024) {
       setError(`File size must be less than ${maxSize}MB`)
       return false
     }
 
-    // Check file type
     const acceptedTypes = accept.split(",").map((t) => t.trim())
     const fileType = file.type
     const fileExtension = `.${file.name.split(".").pop()?.toLowerCase()}`
@@ -35,7 +44,8 @@ export function FileUploader({ accept = "image/*,.pdf", onUpload, value, maxSize
         return fileExtension === type
       }
       if (type.endsWith("/*")) {
-        return fileType.startsWith(type.replace("/*", "/"))
+        const prefix = type.replace("/*", "/")
+        return fileType.startsWith(prefix) || (fileType === "" && fileExtension.match(/\.(png|jpe?g|webp|gif)$/))
       }
       return fileType === type
     })
@@ -82,7 +92,7 @@ export function FileUploader({ accept = "image/*,.pdf", onUpload, value, maxSize
   }
 
   const handleRemove = () => {
-    onUpload(null as unknown as File)
+    onUpload(null)
     if (inputRef.current) {
       inputRef.current.value = ""
     }
@@ -131,22 +141,37 @@ export function FileUploader({ accept = "image/*,.pdf", onUpload, value, maxSize
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-          <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center">
-            {value.type.startsWith("image/") ? (
-              <Icon name="image" className="text-primary" />
-            ) : (
-              <Icon name="file-pdf" className="text-destructive" />
-            )}
+        <div className="space-y-2">
+          {previewUrl && (
+            <div className="relative overflow-hidden rounded-xl border border-border bg-muted/40">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt={`Preview of ${value.name}`}
+                className="max-h-48 w-full object-contain"
+              />
+            </div>
+          )}
+          <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
+            <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center overflow-hidden">
+              {previewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+              ) : value.type.startsWith("image/") ? (
+                <Icon name="image" className="text-primary" />
+              ) : (
+                <Icon name="file-pdf" className="text-destructive" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">{value.name}</p>
+              <p className="text-xs text-muted-foreground">{(value.size / 1024).toFixed(1)} KB</p>
+            </div>
+            <Button type="button" variant="ghost" size="icon" onClick={handleRemove} className="flex-shrink-0">
+              <Icon name="cross" />
+              <span className="sr-only">Remove file</span>
+            </Button>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm truncate">{value.name}</p>
-            <p className="text-xs text-muted-foreground">{(value.size / 1024).toFixed(1)} KB</p>
-          </div>
-          <Button type="button" variant="ghost" size="icon" onClick={handleRemove} className="flex-shrink-0">
-            <Icon name="cross" />
-            <span className="sr-only">Remove file</span>
-          </Button>
         </div>
       )}
 
