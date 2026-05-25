@@ -143,7 +143,8 @@ export default function AdminCommissionPage() {
     void loadData()
   }, [])
 
-  return (
+  if (isLoading) {
+    return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg">

@@ -97,7 +97,8 @@ export default function CartPage() {
     return sum + price * item.quantity
   }, 0)
 
-  return (
+  if (cart.items.length === 0) {
+    return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
