@@ -41,7 +41,33 @@ CATEGORY_ID_TO_NAME = {
 }
 
 CATEGORY_ID_FALLBACK_NAMES = {
-    "dress-skirts": ["Dresses and Skirts", "Dressess and Skirts"],
+    "dress-skirts": [
+        "Dresses and Skirts",
+        "Dress & Skirts",
+        "Dresses & Skirts",
+        "Dressess and Skirts",
+    ],
+    "tops-blouses": [
+        "tops and blouses",
+        "Tops & Blouses",
+    ],
+    "activewear": [
+        "activewear and yoga pants",
+        "Activewear & Yoga Pants",
+    ],
+    "lingerie-sleepwear": [
+        "lingerie and sleepwear",
+        "Lingerie & Sleepwear",
+    ],
+    "jackets-coats": [
+        "jackets and coats",
+        "Jackets & Coats",
+    ],
+    "accessories-shoes": [
+        "shoes and accessories",
+        "Accessories & Shoes",
+        "Shoes & Accessories",
+    ],
 }
 
 CATEGORY_ALIASES_TO_ID = {
@@ -546,6 +572,11 @@ def createProduct():
                 resolved_categories.append(category_row)
 
             if not resolved_categories:
+                current_app.logger.warning(
+                    "[createProduct] failed to resolve category rows seller_id=%s category_ids=%s",
+                    current_user.id if current_user else None,
+                    category_ids,
+                )
                 raise ValueError("Selected category is invalid for this seller")
 
             for category in resolved_categories:
