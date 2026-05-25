@@ -971,6 +971,14 @@ def register_buyer():
         db.session.rollback()
         return jsonify(msg="An error occurred!"), 500
     
+def _get_current_access_token() -> str | None:
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        return auth_header.split(None, 1)[1].strip()
+
+    return request.cookies.get(current_app.config.get("JWT_ACCESS_COOKIE_NAME", "access_token_cookie"))
+
+
 @auth_bp.get('/protected')
 @jwt_required()
 def protected():
@@ -980,9 +988,14 @@ def protected():
     if user is None:
         return jsonify(msg="User not found"), 404
 
-    csrf_token = get_csrf_token(
-        create_access_token(identity=user.id, additional_claims=_build_jwt_claims(user))
-    )
+    csrf_token = None
+    encoded_token = _get_current_access_token()
+    if encoded_token:
+        try:
+            csrf_token = get_csrf_token(encoded_token)
+        except Exception:
+            csrf_token = None
+
     return jsonify(**_session_snapshot(user), csrf_token=csrf_token), 200
 
 
