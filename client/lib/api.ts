@@ -35,39 +35,40 @@ export const apiClient: AxiosInstance = axios.create({
   },
 })
 
-// Resolve image URLs that may come from the backend as "/static/..." paths
-// so that Next.js requests them from the Flask origin instead of the Next host.
-const STATIC_UPLOAD_PREFIXES = [
-  "product_images/",
-  "rider_docs/",
-  "report_evidence/",
-  "avatars/",
-  "seller_avatars/",
-  "seller_banners/",
-  "rider_avatars/",
-  "buyer_ids/",
-  "seller_ids/",
-  "seller_dti/",
-  "seller_bir/",
-  "seller_permits/",
-  "chat_uploads/",
-  "orders/product_images/",
-]
-
-const isStaticUploadPath = (path: string): boolean =>
-  STATIC_UPLOAD_PREFIXES.some((prefix) => path.startsWith(prefix) || path.includes(`/${prefix}`))
-
+/**
+ * Resolve a stored file path to a usable image URL.
+ *
+ * RESOLUTION ORDER
+ * ---------------
+ * 1. null/undefined/empty → null
+ * 2. Full HTTPS URL      → pass through unchanged
+ * 3. `/static/...` path  → prepend Flask origin (local dev or legacy)
+ * 4. Relative path       → the backend SHOULD have already resolved
+ *    this to an absolute URL via `public_url_for_stored_path()` in API
+ *    responses. If one slips through (e.g. localStorage cache), try
+ *    prepending the Flask origin as best-effort fallback.
+ *
+ * IMPORTANT
+ * ---------
+ * This function is a safety net, not the primary URL resolver. The backend
+ * always returns absolute HTTPS URLs in profile/product list API responses
+ * (via `public_url_for_stored_path()`). This function only handles edge
+ * cases like /static/ paths from local dev or stale cache data.
+ */
 export const resolveImageUrl = (url?: string | null): string | null => {
   if (!url) return null
-  // Windows DB paths may use backslashes — URLs must use forward slashes
-  const value = String(url).replace(/\\/g, "/")
 
-  const origin = API_BASE_ORIGIN.replace(/\/static$/, "")
+  const value = String(url).replace(/\\/g, "/").trim()
+  if (!value) return null
 
+  // Already a full URL — use as-is
   if (value.startsWith("http://") || value.startsWith("https://")) {
     return value
   }
 
+  const origin = API_BASE_ORIGIN.replace(/\/static$/, "")
+
+  // Flask static file (local development)
   if (value.startsWith("/static/")) {
     return `${origin}${value}`
   }
@@ -76,36 +77,35 @@ export const resolveImageUrl = (url?: string | null): string | null => {
   if (trimmed.startsWith("static/")) {
     return `${origin}/${trimmed}`
   }
-  if (isStaticUploadPath(trimmed)) {
-    return `${origin}/static/${trimmed}`
-  }
 
-  return value
+  // Best-effort: treat unknown relative path as Flask static
+  return `${origin}/static/${trimmed}`
 }
 
-/** Resolve private doc paths via admin signed-url API (admin UI only). */
+/**
+ * Resolve a private document path (verification docs, etc.) to a signed URL.
+ *
+ * The stored path is a relative path like ``seller_dti/a1b2c3_1712345678.pdf``.
+ * This function sends the full path to the backend, which resolves the
+ * bucket mapping and returns a short-lived signed URL.
+ *
+ * NOTE: The backend endpoint requires admin authentication. For non-admin
+ * users viewing their own documents, a separate user-facing endpoint should
+ * be added (future work).
+ */
 export async function resolvePrivateDocUrl(
   path?: string | null,
-  bucket = "docs",
 ): Promise<string | null> {
   if (!path) return null
+
   const value = String(path).replace(/\\/g, "/")
   if (value.startsWith("http://") || value.startsWith("https://")) {
     return value
   }
 
-  let storageBucket = bucket
-  let storagePath = value.replace(/^\/+/, "")
-  const knownBuckets = ["docs", "product-images", "avatars", "chat", "misc"]
-  const first = storagePath.split("/")[0]
-  if (knownBuckets.includes(first)) {
-    storageBucket = first
-    storagePath = storagePath.slice(first.length + 1)
-  }
-
   try {
     const res = await apiClient.get("/admin/files/signed-url", {
-      params: { bucket: storageBucket, path: storagePath },
+      params: { path: value },
     })
     const url = (res.data as { url?: string })?.url
     return url ?? null

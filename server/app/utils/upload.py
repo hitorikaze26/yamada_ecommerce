@@ -1,4 +1,19 @@
-"""Unified file upload: Supabase Storage in production, local static in development."""
+"""Unified file upload: Supabase Storage in production, local static in development.
+
+PRINCIPLES
+----------
+1. All stored DB paths use the same relative format:
+   ``{folder}/{uuid}_{timestamp}.{ext}``  (e.g. ``avatars/a1b2c3_1712345678.jpg``)
+
+2. URL resolution (relative → absolute HTTPS) happens at serve-time only,
+   in ``public_url_for_stored_path()`` or via the frontend's ``resolveImageUrl()``.
+
+3. Development (local filesystem) stores files under ``app/static/{folder}/``
+   and generates ``/static/{folder}/{file}`` URLs.
+
+4. The ``save_upload()`` function delegates to ``SupabaseStorage.save()``;
+   validation runs once in the storage layer, not duplicated here.
+"""
 
 from __future__ import annotations
 
@@ -6,17 +21,27 @@ import os
 import uuid
 from datetime import datetime, timezone
 
-from flask import current_app  # used in public_url_for_stored_path error logging
+from flask import current_app
 from werkzeug.utils import secure_filename
 
+from app.utils.supabase_storage import storage, path_is_private
 
+
+# Re-export for convenience
 def use_supabase_storage() -> bool:
     """Use Supabase when configured (production with keys, or explicit force)."""
     if os.environ.get("FORCE_SUPABASE_UPLOADS", "").lower() in ("1", "true", "yes"):
-        return bool(os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY"))
+        return bool(
+            os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY")
+        )
     if os.environ.get("FLASK_ENV", "development") != "production":
         return False
-    return bool(os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY"))
+    return bool(
+        os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY")
+    )
+
+
+# ── Save ──────────────────────────────────────────────────────────────────
 
 
 def save_upload(
@@ -27,71 +52,97 @@ def save_upload(
 ) -> str:
     """Save an uploaded file.
 
-    Returns:
-        - Full HTTPS public URL when using Supabase Storage (public buckets)
-        - Bucket-relative path for private docs (e.g. ``docs/rider_docs/...``)
-        - Relative path under static/ (e.g. ``product_images/foo.jpg``) for local disk
+    Returns a relative path string suitable for DB storage:
+    ``{folder}/{uuid}_{timestamp}.{ext}``
+
+    In development (local filesystem), files are saved to
+    ``app/static/{folder}/`` and the returned path is relative to the
+    static directory.
+
+    In production (Supabase Storage), files are uploaded to the
+    appropriate bucket and the returned path is the bucket-relative path.
     """
     if use_supabase_storage():
-        from app.utils.supabase_storage import storage, validate_upload_file
+        return storage.save(file, folder, filename=filename)
 
-        validate_upload_file(file, folder)
-        name = filename
-        if not name:
-            raw = secure_filename(getattr(file, "filename", None) or "file")
-            name = f"{uuid.uuid4().hex}_{int(datetime.now(timezone.utc).timestamp())}_{raw}"
-        return storage.save(file, folder, filename=name)
-
+    # ── Local filesystem (development) ────────────────────────────────
     upload_root = current_app.static_folder or os.path.join(
         current_app.root_path, "static"
     )
     target_dir = os.path.join(upload_root, folder)
     os.makedirs(target_dir, exist_ok=True)
 
-    if filename:
-        stored_name = secure_filename(filename)
-    else:
-        raw = secure_filename(getattr(file, "filename", None) or "file")
-        stored_name = f"{uuid.uuid4().hex}_{int(datetime.now(timezone.utc).timestamp())}_{raw}"
+    raw_name = filename or secure_filename(
+        getattr(file, "filename", "file") or "file"
+    )
+    stored_name = (
+        f"{uuid.uuid4().hex}_{int(datetime.now(timezone.utc).timestamp())}_"
+        f"{secure_filename(raw_name)}"
+    )
 
     filepath = os.path.join(target_dir, stored_name)
     file.save(filepath)
     return os.path.join(folder, stored_name).replace("\\", "/")
 
 
-def public_url_for_stored_path(stored: str, *, allow_private: bool = False) -> str:
-    """Build a client-facing URL for a DB-stored path or Supabase URL."""
+# ── URL resolution ────────────────────────────────────────────────────────
+
+
+def public_url_for_stored_path(
+    stored: str | None,
+    *,
+    allow_private: bool = False,
+) -> str:
+    """Build a client-facing absolute URL from a stored path.
+
+    Args:
+        stored: The path as stored in the DB (relative path or legacy HTTPS URL).
+        allow_private: If True, return a signed URL for private bucket files.
+                       If False, return empty string for private files.
+
+    Resolution order:
+        1. Empty / None → empty string
+        2. Already an HTTPS URL → pass through
+        3. Supabase Storage (public) → ``get_public_url()``
+        4. Supabase Storage (private, allowed) → ``get_signed_url()``
+        5. Supabase Storage (private, not allowed) → empty string
+        6. Local filesystem → ``/static/{path}`` via Flask
+    """
     if not stored:
         return ""
+
     value = str(stored).replace("\\", "/")
+
+    # Already resolved
     if value.startswith("http://") or value.startswith("https://"):
         return value
 
+    # Supabase Storage
     if use_supabase_storage():
-        from app.utils.supabase_storage import (
-            BUCKET_MAP,
-            is_private_stored_path,
-            storage,
-            is_private_bucket,
-        )
+        is_private = path_is_private(value)
 
-        if is_private_stored_path(value) and not allow_private:
+        if is_private and not allow_private:
             return ""
 
-        if "/" in value and not value.startswith("static/"):
-            bucket, _, path = value.partition("/")
-            if is_private_bucket(bucket) and allow_private:
-                try:
-                    return storage.create_signed_url(bucket, path, expires_in=300)
-                except Exception:
-                    current_app.logger.exception("Failed to sign private storage URL")
-                    return ""
-            if bucket in BUCKET_MAP.values() and not is_private_bucket(bucket):
-                try:
-                    return storage.client.storage.from_(bucket).get_public_url(path)
-                except Exception:
-                    pass
+        if is_private and allow_private:
+            try:
+                return storage.get_signed_url(value, expires_in=300)
+            except Exception:
+                current_app.logger.exception(
+                    "Failed to sign private storage URL: %s", value
+                )
+                return ""
 
+        # Public bucket
+        try:
+            return storage.get_public_url(value)
+        except Exception:
+            current_app.logger.exception(
+                "Failed to resolve public storage URL: %s", value
+            )
+            pass
+
+    # Local filesystem (development)
     from app.utils.static_urls import public_static_url
 
     return public_static_url(value) or ""

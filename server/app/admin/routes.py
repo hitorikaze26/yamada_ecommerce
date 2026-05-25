@@ -206,33 +206,22 @@ def _serialize_store_registration_for_admin(registration: StoreRegistration) -> 
 @jwt_required()
 @admin_required()
 def admin_signed_storage_url():
-    """Return a short-lived signed URL for a private storage object (docs bucket)."""
-    from flask import current_app
-    from app.utils.supabase_storage import (
-        PRIVATE_BUCKETS,
-        PUBLIC_BUCKETS,
-        is_private_bucket,
-        storage,
-    )
+    """Return a short-lived signed URL for a stored file path.
 
-    bucket = (request.args.get('bucket') or 'docs').strip()
-    path = (request.args.get('path') or '').strip().lstrip('/')
+    Accepts a stored relative path like ``seller_dti/a1b2c3_1712345678.pdf``
+    and resolves it to the appropriate bucket automatically.
+    """
+    from flask import current_app
+    from app.utils.upload import public_url_for_stored_path
+
+    path = (request.args.get('path') or '').strip()
     if not path:
         return jsonify(msg='path is required'), 400
-    if bucket not in PUBLIC_BUCKETS and bucket not in PRIVATE_BUCKETS:
-        return jsonify(msg='Invalid bucket'), 400
 
-    try:
-        if is_private_bucket(bucket):
-            signed = storage.create_signed_url(bucket, path, expires_in=300)
-            if not signed:
-                return jsonify(msg='Could not sign URL'), 404
-            return jsonify(url=signed), 200
-        public = storage.client.storage.from_(bucket).get_public_url(path)
-        return jsonify(url=public), 200
-    except Exception as exc:
-        current_app.logger.exception('signed-url failed: %s', exc)
-        return jsonify(msg='Could not resolve file URL'), 500
+    url = public_url_for_stored_path(path, allow_private=True)
+    if not url:
+        return jsonify(msg='Could not resolve file URL'), 404
+    return jsonify(url=url), 200
 
 
 @admin_bp.get('/get-users')
