@@ -214,7 +214,7 @@ export default function SellerRegistrationPage() {
       await authApi.registerSeller({
         givenName: formData.givenName,
         surname: formData.surname,
-        email: formData.email,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
         contactNumber: formData.contactNumber,
         shopName: formData.shopName,
@@ -233,15 +233,19 @@ export default function SellerRegistrationPage() {
 
       localStorage.removeItem(STORAGE_KEY)
       showAlert("Seller registration successful.", "success")
+      setIsLoading(false)
 
-      await Swal.fire({
+      const result = await Swal.fire({
         title: "Registration Successful",
         text: "Your seller account has been created. You can now log in.",
         icon: "success",
         confirmButtonText: "Go to Login",
       })
 
-      router.push("/auth/login?role=seller&registered=true")
+      if (result.isConfirmed || result.isDismissed) {
+        router.push("/auth/login?role=seller&registered=true")
+      }
+      return
     } catch (err: any) {
       const msg = err?.response?.data?.msg || "Registration failed. Please try again."
       setError(msg)

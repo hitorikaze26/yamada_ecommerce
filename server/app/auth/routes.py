@@ -204,7 +204,7 @@ def login():
     data = request.get_json()
     current_app.logger.info(f"Login attempt with data keys: {list(data.keys())}")
 
-    username = data.get('username', '').strip()
+    username = data.get('username', '').strip().lower()
     password = data.get('password', '')
     requested_role = data.get('role', '').lower().strip()
     
@@ -217,7 +217,10 @@ def login():
     # Allow login via either username OR email using the same field
     user = db.session.execute(
         select(User).where(
-            or_(User.username == username, User.email == username)
+            or_(
+                func.lower(User.username) == username,
+                func.lower(User.email) == username,
+            )
         )
     ).scalar_one_or_none()
 
@@ -597,7 +600,7 @@ def register_seller():
     current_app.logger.info("[register_seller] file keys=%s", list(request.files.keys()))
 
     try:
-        email = (form.get('email') or '').strip()
+        email = (form.get('email') or '').strip().lower()
         password = form.get('password') or ''
         given_name = (form.get('givenName') or '').strip()
         surname = (form.get('surname') or '').strip()
@@ -684,11 +687,12 @@ def register_seller():
         from app.utils.upload import save_upload
 
         def save_logo() -> str | None:
+            from app.utils.mime_utils import is_allowed_upload
+
             file = request.files.get('logo')
             if not file or not file.filename:
                 return None
-            allowed_logo = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
-            if file.mimetype not in allowed_logo:
+            if not is_allowed_upload(file.filename, file.mimetype, ("image/",)):
                 raise ValueError(
                     f"Invalid file type for logo: {file.mimetype}. Allowed: JPEG, PNG, WebP"
                 )
@@ -697,20 +701,31 @@ def register_seller():
             return save_upload(file, "seller_avatars", filename=filename)
 
         def save_doc(field_name: str, folder: str, prefix: str) -> str | None:
+            from app.utils.mime_utils import infer_content_type, is_allowed_upload
+
             file = request.files.get(field_name)
             if not file or not file.filename:
                 current_app.logger.info(f"[register_seller] {field_name}: no file provided")
                 return None
 
-            current_app.logger.info(f"[register_seller] {field_name}: filename={file.filename}, mimetype={file.mimetype}")
+            inferred = infer_content_type(file.filename, file.mimetype)
+            current_app.logger.info(
+                "[register_seller] %s: filename=%s mimetype=%s inferred=%s",
+                field_name,
+                file.filename,
+                file.mimetype,
+                inferred,
+            )
 
-            allowed_types = {
-                "image/jpeg", "image/jpg", "image/png", "image/webp",
-                "application/pdf", "application/x-pdf",
-                "image/heic", "image/heif",
-            }
-            if file.mimetype not in allowed_types:
-                raise ValueError(f"Invalid file type for {field_name}: {file.mimetype}. Allowed: PDF, JPEG, PNG, WebP, HEIC")
+            if not is_allowed_upload(
+                file.filename,
+                inferred,
+                ("image/", "application/pdf"),
+            ):
+                raise ValueError(
+                    f"Invalid file type for {field_name}: {inferred}. "
+                    "Allowed: PDF, JPEG, PNG, WebP, HEIC"
+                )
 
             safe_name = secure_filename(file.filename or field_name)
             filename = f"{prefix}_{email}_{int(datetime.now(timezone.utc).timestamp())}_{safe_name}"
@@ -815,8 +830,8 @@ def register_buyer():
     current_app.logger.info("[register_buyer] file keys=%s", list(request.files.keys()))
 
     try:
-        email = form.get('email', '')
-        password = form.get('password', '')
+        email = (form.get('email') or '').strip().lower()
+        password = form.get('password') or ''
         given_name = form.get('givenName', '')
         surname = form.get('surname', '')
         contact_number = form.get('contactNumber', '')

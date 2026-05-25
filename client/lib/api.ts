@@ -148,6 +148,14 @@ apiClient.interceptors.request.use(
       }
     }
 
+    // Let the browser set multipart boundary — manual Content-Type breaks file uploads.
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      config.headers = config.headers ?? {}
+      const headers = config.headers as Record<string, unknown>
+      delete headers["Content-Type"]
+      delete headers["content-type"]
+    }
+
     return config
   },
   (error) => Promise.reject(error),
@@ -256,9 +264,7 @@ export const authApi = {
       formData.append("validId", data.documents.validId)
     }
 
-    return apiClient.post("/accounts/register-seller", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
+    return apiClient.post("/accounts/register-seller", formData)
   },
 
   registerRider: (data: RiderRegistrationData) => {

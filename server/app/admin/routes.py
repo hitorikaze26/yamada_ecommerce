@@ -162,6 +162,13 @@ def _serialize_admin_refund(r: RefundRequest) -> dict:
 
 def _serialize_store_registration_for_admin(registration: StoreRegistration) -> dict:
     """Serialize pending store registration without loading seller_profiles columns."""
+    from app.utils.upload import public_url_for_stored_path
+
+    def doc_url(path: str | None) -> str | None:
+        if not path:
+            return None
+        return public_url_for_stored_path(path, allow_private=True) or path
+
     user = registration.user
     status = registration.request_status.name if registration.request_status else "PENDING"
     seller_name = ""
@@ -176,8 +183,11 @@ def _serialize_store_registration_for_admin(registration: StoreRegistration) -> 
         "Store tagline": registration.tagline or "",
         "Categories json": registration.categories_json or "",
         "DTI path": registration.dti_path,
+        "DTI url": doc_url(registration.dti_path),
         "BIR TIN path": registration.bir_tin_path,
+        "BIR TIN url": doc_url(registration.bir_tin_path),
         "Business permit path": registration.business_permit_path,
+        "Business permit url": doc_url(registration.business_permit_path),
         "Request status": status,
         "Request date created": (
             registration.created_at.isoformat() if registration.created_at else None

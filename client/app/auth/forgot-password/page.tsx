@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
@@ -13,7 +13,7 @@ import { DarkModeToggle } from "@/components/ui/dark-mode-toggle"
 import { YamadaLogo } from "@/components/brand/yamada-logo"
 import { authApi } from "@/lib/api"
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [accountEmail, setAccountEmail] = useState("")
@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
     try {
       const res = await authApi.forgotPassword({
         channel: "email",
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
       })
       setAccountEmail(res.data.email ?? email.trim())
       setIsSubmitted(true)
@@ -137,5 +137,19 @@ export default function ForgotPasswordPage() {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Icon name="spinner" className="animate-spin text-primary" size="xl" />
+        </div>
+      }
+    >
+      <ForgotPasswordContent />
+    </Suspense>
   )
 }

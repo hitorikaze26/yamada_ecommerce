@@ -122,7 +122,11 @@ def create_app(test_config=None):
             checks["database"] = "error"
             checks["database_error"] = str(exc)[:200]
         if os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY"):
-            checks["storage"] = "supabase"
+            from app.utils.supabase_storage import probe_storage_connection
+
+            probe = probe_storage_connection()
+            checks["storage"] = "supabase" if probe.get("reachable") else "supabase_misconfigured"
+            checks["storage_probe"] = probe
         status_code = 200 if checks["database"] == "ok" else 503
         return {"status": "ok" if status_code == 200 else "degraded", "checks": checks}, status_code
 

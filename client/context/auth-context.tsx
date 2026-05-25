@@ -144,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: UserRole,
     redirectTo?: string,
   ) => {
-    const response = await authApi.login(email, password, role)
+    const response = await authApi.login(email.trim().toLowerCase(), password, role)
     const data = response.data as Record<string, unknown>
     const accessToken = data.access_token as string | undefined
     const loginVerified = Boolean(data.is_verified)
