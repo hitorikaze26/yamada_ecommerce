@@ -215,7 +215,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ProtectedRoute allowedRoles={["admin"]} redirectTo="/auth/login?role=admin">
+    <ProtectedRoute allowedRoles={["admin"]}>
       <AdminLayoutContent>{children}</AdminLayoutContent>
     </ProtectedRoute>
   )

@@ -334,7 +334,7 @@ function SellerLayoutInner({ children }: { children: React.ReactNode }) {
 
 export default function SellerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ProtectedRoute allowedRoles={["seller"]} redirectTo="/auth/login?role=seller">
+    <ProtectedRoute allowedRoles={["seller"]}>
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
         <SellerLayoutInner>{children}</SellerLayoutInner>
       </Suspense>

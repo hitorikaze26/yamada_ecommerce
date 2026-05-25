@@ -147,7 +147,7 @@ function RiderLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function RiderLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ProtectedRoute allowedRoles={["rider"]} redirectTo="/auth/login?role=rider">
+    <ProtectedRoute allowedRoles={["rider"]}>
       <RiderLayoutContent>{children}</RiderLayoutContent>
     </ProtectedRoute>
   )

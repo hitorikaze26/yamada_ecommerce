@@ -1,45 +1,61 @@
 "use client"
 
-import { useEffect, type ReactNode } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/context/auth-context"
 import type { UserRole } from "@/lib/types"
 import { dashboardRoutes } from "@/lib/auth/session"
-import { canAccessRoute, loginPathForRole, roleForPathname } from "@/lib/auth/rbac"
+import { canAccessRoute, roleForPathname } from "@/lib/auth/rbac"
 import { Icon } from "@/components/ui/icon"
 
 interface ProtectedRouteProps {
   children: ReactNode
   allowedRoles?: UserRole[]
-  redirectTo?: string
 }
 
-export function ProtectedRoute({ children, allowedRoles, redirectTo = "/auth/login" }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
+  const redirectingRef = useRef(false)
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isLoading) return
+    if (redirectingRef.current) return
+
+    if (!isAuthenticated) {
+      redirectingRef.current = true
       const pathRole = roleForPathname(pathname)
-      const loginTarget =
-        pathRole != null
-          ? loginPathForRole(pathRole) + (pathname ? `&redirect=${encodeURIComponent(pathname)}` : "")
-          : redirectTo
-      router.push(loginTarget)
+      const params = new URLSearchParams()
+      if (pathRole) params.set("role", pathRole)
+      if (pathname) params.set("redirect", pathname)
+      const qs = params.toString()
+      router.replace(`/auth/login${qs ? `?${qs}` : ""}`)
       return
     }
 
-    if (!isLoading && isAuthenticated && user) {
+    if (user) {
       if (allowedRoles && !allowedRoles.includes(user.role)) {
-        router.push(dashboardRoutes[user.role])
+        const target = dashboardRoutes[user.role]
+        if (pathname !== target) {
+          redirectingRef.current = true
+          router.replace(target)
+        }
         return
       }
       if (!canAccessRoute(user.role, pathname)) {
-        router.push(dashboardRoutes[user.role])
+        const target = dashboardRoutes[user.role]
+        if (pathname !== target) {
+          redirectingRef.current = true
+          router.replace(target)
+        }
       }
     }
-  }, [isLoading, isAuthenticated, user, allowedRoles, router, redirectTo, pathname])
+  }, [isLoading, isAuthenticated, user, allowedRoles, router, pathname])
+
+  useEffect(() => {
+    redirectingRef.current = false
+  }, [pathname])
 
   if (isLoading) {
     return (
