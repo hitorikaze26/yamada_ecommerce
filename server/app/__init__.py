@@ -85,8 +85,9 @@ def create_app(test_config=None):
 
     CORS(
         app,
-        resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
+        origins=app.config["CORS_ORIGINS"],
         supports_credentials=True,
+        automatic_options=True,
     )
 
     @app.route("/placeholder.svg")
