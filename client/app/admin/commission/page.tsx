@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import { formatPrice, formatNumber } from "@/lib/format"
 import { adminApi } from "@/lib/api"
 
 interface CommissionSettings {
@@ -142,13 +143,7 @@ export default function AdminCommissionPage() {
     void loadData()
   }, [])
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(price || 0)
-
-  const formatNumber = (num: number) => new Intl.NumberFormat("en-PH").format(num || 0)
-
-  if (isLoading) {
-    return (
+  return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg">

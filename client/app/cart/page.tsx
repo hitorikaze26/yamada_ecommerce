@@ -17,6 +17,7 @@ import {
 } from "@/components/buyer/buyer-verification-banner"
 import { formatShippingDisplay, FREE_SHIPPING_THRESHOLD } from "@/lib/shipping"
 import { ShippingEstimator } from "@/components/cart/shipping-estimator"
+import { formatPrice } from "@/lib/format"
 import { resolveImageUrl } from "@/lib/api"
 import { StoreNameLink } from "@/components/store/store-name-link"
 
@@ -96,44 +97,7 @@ export default function CartPage() {
     return sum + price * item.quantity
   }, 0)
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
-
-  // Recalculate shipping when selection changes
-  useEffect(() => {
-    if (selectedItems.length > 0) {
-      void calculateShippingForItems(selectedItems)
-    }
-  }, [selectedItems, calculateShippingForItems, cart.items.length])
-
-  
-  // Group all cart items by seller for display
-  const itemsBySeller = cart.items.reduce((acc, item) => {
-    const sellerId = item.product.sellerId || 'unknown'
-    const sellerName = item.product.sellerName || 'Unknown Seller'
-    if (!acc[sellerId]) {
-      acc[sellerId] = { sellerId, sellerName, items: [] }
-    }
-    acc[sellerId].items.push(item)
-    return acc
-  }, {} as Record<string, { sellerId: string; sellerName: string; items: typeof cart.items }>)
-
-  // Sum shipping only for sellers with selected items
-  const selectedSellerIds = new Set(
-    selectedCartItems.map((item) => item.product.sellerId || "unknown"),
-  )
-  const totalShipping = Object.entries(shippingBySeller).reduce((sum, [sellerId, calc]) => {
-    if (!selectedSellerIds.has(sellerId)) return sum
-    return sum + calc.fee
-  }, 0)
-  const selectedTotal = selectedSubtotal + totalShipping
-
-  if (cart.items.length === 0) {
-    return (
+  return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">

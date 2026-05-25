@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { adminApi, productsApi, API_BASE_ORIGIN } from "@/lib/api"
+import { adminApi, productsApi, API_BASE_ORIGIN, resolveImageUrl } from "@/lib/api"
 import { Icon } from "@/components/ui/icon"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -691,7 +691,7 @@ export default function AdminProductsPage() {
                     <h3 className="text-sm font-medium">Media</h3>
                     <div className="flex flex-wrap gap-3">
                       {selectedProduct.media.map((m: any) => {
-                        const url = `${API_BASE_ORIGIN}/static/${m.path}`
+                        const url = resolveImageUrl(m.path) ?? ""
                         if (m.media_type === "video") {
                           return (
                             <video

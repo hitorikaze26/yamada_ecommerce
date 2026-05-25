@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react"
 import { riderApi } from "@/lib/api"
 import { riderDeliveryEntityId, riderDeliveryLabel } from "@/lib/rider-delivery"
+import { formatPrice } from "@/lib/format"
 import { useAuth } from "@/context/auth-context"
 
 const kPrimaryPink = "#E891A0"
@@ -63,10 +64,6 @@ export default function RiderMobileDeliveries() {
       return true
     })
   }, [deliveries, activeTab])
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(price)
-  }
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {

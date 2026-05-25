@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { riderApi } from "@/lib/api"
 import { riderDeliveryLabel } from "@/lib/rider-delivery"
+import { formatPrice } from "@/lib/format"
 import { useAuth } from "@/context/auth-context"
 
 const kPrimaryPink = "#E891A0"
@@ -130,10 +131,6 @@ export default function RiderMobileEarnings() {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       })
   }, [allDeliveries, days])
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(price)
-  }
 
   const formatDate = (value: string | null) => {
     if (!value) return ""

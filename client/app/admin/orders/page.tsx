@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
-import { adminApi } from "@/lib/api"
+import { formatPrice } from "@/lib/format"
+import { adminApi, resolveImageUrl } from "@/lib/api"
 import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 
 const tabs = ["all", "pending", "processing", "shipped", "delivered", "cancelled"]
@@ -157,13 +158,6 @@ export default function AdminOrdersPage() {
 
   const filteredOrders =
     activeTab === "all" ? orders : orders.filter((o) => o.status === activeTab)
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
 
   return (
     <div className="space-y-6">
@@ -460,13 +454,13 @@ export default function AdminOrdersPage() {
                               <p className="text-[11px] font-medium text-muted-foreground">Proof of delivery</p>
                               {orderDetail.riderDelivery.proofPhotoUrl && (
                                 <a
-                                  href={orderDetail.riderDelivery.proofPhotoUrl}
+                                  href={resolveImageUrl(orderDetail.riderDelivery.proofPhotoUrl) ?? ""}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="inline-flex items-center gap-2 text-xs text-primary hover:underline"
                                 >
                                   <img
-                                    src={orderDetail.riderDelivery.proofPhotoUrl}
+                                    src={resolveImageUrl(orderDetail.riderDelivery.proofPhotoUrl) ?? ""}
                                     alt="Proof of delivery"
                                     className="w-12 h-12 rounded-md object-cover border bg-background"
                                   />

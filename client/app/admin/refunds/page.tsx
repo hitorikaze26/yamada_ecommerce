@@ -6,6 +6,7 @@ import Swal from "sweetalert2"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { formatPrice } from "@/lib/format"
 import { adminApi } from "@/lib/api"
 import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 import { toast } from "sonner"
@@ -37,9 +38,7 @@ function formatStatus(status: string) {
   return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-function formatPrice(amount: number) {
-  return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount)
-}
+
 
 export default function AdminRefundsPage() {
   const [refunds, setRefunds] = useState<AdminRefundDto[]>([])

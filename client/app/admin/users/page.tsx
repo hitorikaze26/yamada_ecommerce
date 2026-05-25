@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import { formatPrice } from "@/lib/format"
 import { Icon } from "@/components/ui/icon"
 import { GlassAlert } from "@/components/ui/glass-alert"
 import { adminApi, resolveImageUrl } from "@/lib/api"
@@ -164,12 +165,7 @@ function AdminUsersContent() {
     return name === "admin" || email === "noeasumbra122602@gmail.com".toLowerCase()
   }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
+
 
   const handleApproveBuyer = async (user: AdminUserDto) => {
     try {

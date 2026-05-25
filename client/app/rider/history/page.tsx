@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { riderApi, resolveImageUrl } from "@/lib/api"
 import { riderDeliveryLabel } from "@/lib/rider-delivery"
+import { formatPrice } from "@/lib/format"
 import { useAuth } from "@/context/auth-context"
 import { ReportLinkButton } from "@/components/report/report-link-button"
 
@@ -110,13 +111,6 @@ export default function RiderHistoryPage() {
 
     return result
   }, [items, statusFilter, dateFilter])
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
 
   const formatDate = (value: string | null) => {
     if (!value) return ""

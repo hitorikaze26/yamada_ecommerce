@@ -9,6 +9,7 @@ import { GlassAlert } from "@/components/ui/glass-alert"
 import { useCart } from "@/context/cart-context"
 import { useWishlist } from "@/context/wishlist-context"
 import type { Product } from "@/lib/types"
+import { formatPrice } from "@/lib/format"
 
 export default function WishlistPage() {
   const { items: wishlistItems, isLoading, error, removeFromWishlist, fetchWishlist } = useWishlist()
@@ -44,13 +45,6 @@ export default function WishlistPage() {
 
     addToCart(product, 1, variation)
     showAlert("Added to cart.", "success")
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
   }
 
   return (

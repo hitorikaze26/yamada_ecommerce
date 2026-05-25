@@ -9,6 +9,7 @@ import { Icon } from "@/components/ui/icon"
 import { sellerApi, API_BASE_ORIGIN, notificationsApi, type NotificationDto } from "@/lib/api"
 import type { Product } from "@/lib/types"
 import { fetchSellerStoreGate } from "@/lib/seller-store-guard"
+import { formatPrice } from "@/lib/format"
 
 const tabs = ["all", "active", "draft", "out of stock"]
 
@@ -251,13 +252,6 @@ function SellerProductsContent() {
     } else {
       setSelectedProducts(filteredProducts.map((p) => p.id))
     }
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
   }
 
   const statusColors: Record<string, string> = {

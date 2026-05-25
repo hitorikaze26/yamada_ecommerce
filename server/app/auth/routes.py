@@ -980,11 +980,11 @@ def protected():
 
 def _serialize_buyer_profile(user, buyer_profile=None):
     """Build buyer profile JSON; empty address when profile row is missing."""
+    from app.utils.upload import public_url_for_stored_path
+
     avatar_url = None
     if buyer_profile is not None and buyer_profile.avatar_path:
-        avatar_url = url_for(
-            'static', filename=buyer_profile.avatar_path, _external=True
-        )
+        avatar_url = public_url_for_stored_path(buyer_profile.avatar_path)
     bp = buyer_profile
     return {
         "givenName": user.given_name or "",
@@ -1121,9 +1121,11 @@ def list_buyer_reviews():
 
 
 def _build_rider_profile_payload(user: User, rider_profile: RiderProfile) -> dict:
+    from app.utils.upload import public_url_for_stored_path
+
     avatar_url = None
     if rider_profile.avatar_path:
-        avatar_url = url_for('static', filename=rider_profile.avatar_path, _external=True)
+        avatar_url = public_url_for_stored_path(rider_profile.avatar_path)
     return {
         "givenName": user.given_name or "",
         "surname": user.surname or "",

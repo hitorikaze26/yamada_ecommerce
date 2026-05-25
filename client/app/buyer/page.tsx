@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
+import { formatPrice } from "@/lib/format"
 import { ordersApi, productsApi, reportsApi, resolveImageUrl } from "@/lib/api"
 import type { Order, Product, ProblemReportDto } from "@/lib/types"
 import { useAuth } from "@/context/auth-context"
@@ -75,13 +76,6 @@ export default function BuyerDashboard() {
   const recentOrders = [...orders]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3)
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
 
   return (
     <div className="space-y-8">

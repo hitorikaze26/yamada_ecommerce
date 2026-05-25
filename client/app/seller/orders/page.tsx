@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { useRouter } from "next/navigation"
 import { sellerApi, resolveImageUrl } from "@/lib/api"
+import { formatPrice } from "@/lib/format"
 import { SellerOrderExpandedDetails } from "@/components/seller/seller-order-expanded-details"
 
 const tabs = ["all", "pending", "processing", "shipped", "delivered", "cancelled"]
@@ -276,13 +277,6 @@ export default function SellerOrdersPage() {
   }, [successMessage])
 
   const filteredOrders = orders.filter((o) => sellerOrderMatchesTab(o.status, activeTab))
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     const target = orders.find((o) => o.id === orderId)

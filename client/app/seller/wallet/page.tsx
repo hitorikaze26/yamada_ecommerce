@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { sellerApi } from "@/lib/api"
+import { formatPrice } from "@/lib/format"
 import { Icon } from "@/components/ui/icon"
 
 interface Wallet {
@@ -59,13 +60,6 @@ export default function SellerWalletPage() {
 
     void load()
   }, [])
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
 
   const filteredTransactions = transactions.filter((tx) => {
     const statusOk =

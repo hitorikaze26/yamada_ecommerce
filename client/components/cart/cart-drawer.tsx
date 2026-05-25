@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { formatShippingDisplay, FREE_SHIPPING_THRESHOLD, FALLBACK_SHIPPING_FEE, type ShippingCalculation } from "@/lib/shipping"
 import { shippingApi } from "@/lib/api"
+import { formatPrice } from "@/lib/format"
 import { buyerApi } from "@/lib/api"
 import { StoreNameLink } from "@/components/store/store-name-link"
 
@@ -58,13 +59,6 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const handleDeleteSelected = () => {
     selectedItems.forEach((id) => removeFromCart(id))
     setSelectedItems([])
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
   }
 
   const handleCheckout = () => {

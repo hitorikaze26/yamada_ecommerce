@@ -6,6 +6,7 @@ import { riderDeliveryLabel } from "@/lib/rider-delivery"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 import { riderApi } from "@/lib/api"
+import { formatPrice } from "@/lib/format"
 import { useAuth } from "@/context/auth-context"
 
 interface RiderStats {
@@ -131,13 +132,6 @@ export default function RiderEarningsPage() {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       })
   }, [allDeliveries, days])
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
 
   const formatDate = (value: string | null) => {
     if (!value) return ""

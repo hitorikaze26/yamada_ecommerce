@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { riderApi } from "@/lib/api"
+import { riderApi, resolveImageUrl } from "@/lib/api"
 import { riderDeliveryLabel } from "@/lib/rider-delivery"
+import { formatPrice } from "@/lib/format"
 import { useAuth } from "@/context/auth-context"
 
 const kPrimaryPink = "#E891A0"
@@ -90,10 +91,6 @@ export default function RiderMobileHistory() {
 
     return result
   }, [items, statusFilter, dateFilter])
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(price)
-  }
 
   const formatDate = (value: string | null) => {
     if (!value) return ""
@@ -255,9 +252,9 @@ export default function RiderMobileHistory() {
                       <div className="flex-1">
                         <p className="text-xs text-gray-500 mb-1">Proof of delivery</p>
                         {item.proofPhotoUrl && (
-                          <button onClick={() => setSelectedImage(item.proofPhotoUrl!)} className="mb-2">
+                          <button onClick={() => setSelectedImage(resolveImageUrl(item.proofPhotoUrl) ?? "")} className="mb-2">
                             <img
-                              src={item.proofPhotoUrl}
+                              src={resolveImageUrl(item.proofPhotoUrl) ?? ""}
                               alt="Proof of delivery"
                               className="w-16 h-16 rounded-lg object-cover border"
                             />

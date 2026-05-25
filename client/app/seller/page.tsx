@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { sellerAccountApi, sellerApi, sellerInsightsApi } from "@/lib/api"
+import { formatPrice } from "@/lib/format"
 import StatCard from "@/components/dashboard/StatCard"
 
 interface RecentOrderRow {
@@ -103,13 +104,6 @@ export default function SellerDashboard() {
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
     return `${Math.floor(diff / 86400)}d ago`
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
   }
 
   const stats = profile

@@ -48,6 +48,7 @@ function isUserRole(value: string | null): value is UserRole {
 function inferRoleFromRedirectPath(pathname: string | null): UserRole {
   if (pathname === "/seller" || pathname?.startsWith("/seller/")) return "seller"
   if (pathname === "/rider" || pathname?.startsWith("/rider/")) return "rider"
+  if (pathname === "/admin" || pathname?.startsWith("/admin/")) return "admin"
   if (
     pathname === "/buyer" ||
     pathname?.startsWith("/buyer/") ||

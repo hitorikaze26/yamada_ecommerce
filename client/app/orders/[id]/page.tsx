@@ -30,6 +30,7 @@ import {
   riderHasProofOfDelivery,
   shouldPollOrderStatus,
 } from "@/lib/buyer/order-status"
+import { formatPrice } from "@/lib/format"
 
 interface OrderItemDetail {
   id: number
@@ -321,13 +322,6 @@ function OrderContent({ orderId }: { orderId: string }) {
     }
     void loadReviews()
   }, [order?.id, order?.status])
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
 
   const effectiveStatus = order
     ? getEffectiveOrderStatus(

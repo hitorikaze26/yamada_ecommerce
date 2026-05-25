@@ -27,6 +27,7 @@ import {
 import { useAuth } from "@/context/auth-context"
 import { buyerApi, ordersApi, type AddressData } from "@/lib/api"
 import { formatShippingDisplay } from "@/lib/shipping"
+import { formatPrice } from "@/lib/format"
 import { toast } from "sonner"
 import {
   BuyerVerificationBanner,
@@ -174,13 +175,6 @@ function CheckoutContent() {
     setAlertMessage(message)
     setAlertVariant(variant)
     setAlertOpen(true)
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

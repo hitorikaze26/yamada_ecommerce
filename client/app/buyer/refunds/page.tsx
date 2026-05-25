@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
 import Swal from "sweetalert2"
 import { toast } from "sonner"
+import { formatPrice } from "@/lib/format"
 import { ordersApi, resolveImageUrl } from "@/lib/api"
 import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import { StoreNameLink } from "@/components/store/store-name-link"
@@ -123,33 +124,6 @@ export default function BuyerRefundsPage() {
 
     void fetchRefunds()
   }, [])
-
-  const formatPrice = (amount: number) =>
-    new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount)
-
-  const handleDispute = async (refund: BuyerRefundDto) => {
-    const result = await Swal.fire({
-      title: "Dispute seller rejection",
-      text: "Explain why you disagree. An admin will review your case.",
-      input: "textarea",
-      inputPlaceholder: "Your explanation…",
-      showCancelButton: true,
-      confirmButtonText: "Submit dispute",
-    })
-    if (!result.isConfirmed) return
-    try {
-      await ordersApi.disputeRefund(refund.id, { note: result.value || undefined })
-      toast.success("Dispute submitted")
-      const res = await ordersApi.getRefundRequests()
-      setRefunds(unwrapBuyerList<BuyerRefundDto>(res.data, ["refunds"]))
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { msg?: string } } }).response?.data?.msg
-          : undefined
-      toast.error(msg || "Failed to submit dispute")
-    }
-  }
 
   return (
     <div className="space-y-6">

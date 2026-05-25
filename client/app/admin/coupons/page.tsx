@@ -5,6 +5,7 @@ import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { formatPrice } from "@/lib/format"
 import { adminApi } from "@/lib/api"
 import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 import { toast } from "sonner"
@@ -138,9 +139,6 @@ export default function AdminCouponsPage() {
       toast.error("Failed to delete coupon")
     }
   }
-
-  const formatPrice = (amount: number) =>
-    new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount)
 
   return (
     <div className="space-y-6">

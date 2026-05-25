@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { riderApi, riderAccountApi } from "@/lib/api"
 import { riderDeliveryEntityId, riderDeliveryLabel } from "@/lib/rider-delivery"
+import { formatPrice } from "@/lib/format"
 import { useAuth } from "@/context/auth-context"
 import { useChatOpen } from "@/hooks/use-chat-open"
 import { ReportLinkButton } from "@/components/report/report-link-button"
@@ -145,13 +146,6 @@ export default function RiderDeliveriesPage() {
 
     return true
   })
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
 
   const updateStatus = (id: number, newStatus: string) => {
     setDeliveries((prev) => prev.map((d) => (d.id === id ? { ...d, status: newStatus } : d)))

@@ -25,33 +25,6 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
   const { addToCart } = useCart()
   const { toast } = useToast()
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
-  }
-
-  const handleAddToCart = () => {
-    if (!selectedVariation) {
-      toast({
-        title: "Please select a variant",
-        description: "Choose a size and color before adding to cart.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    addToCart(product, quantity, selectedVariation)
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
-    })
-    onClose()
-  }
-
-  const currentPrice = selectedVariation?.price ?? product.salePrice ?? product.price
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="w-[96vw] max-w-7xl max-h-[90vh] p-0 overflow-hidden">

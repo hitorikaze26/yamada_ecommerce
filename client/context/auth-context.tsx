@@ -15,7 +15,6 @@ import type { User, UserRole } from "@/lib/types"
 import {
   ROLE_STORAGE_KEY,
   buildUserFromSession,
-  checkSessionStatus,
   dashboardRoutes,
   fetchRoleProfile,
   getLoginErrorMessage,
@@ -70,33 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const sessionStatus = await checkSessionStatus()
-
-      if (sessionStatus === "invalid") {
-        clearClientAuth()
-        setUser(null)
-        setIsLoading(false)
-        return
-      }
-
-      if (sessionStatus === "unknown") {
-        try {
-          const cached = localStorage.getItem(USER_STORAGE_KEY)
-          if (cached) {
-            setUser(JSON.parse(cached) as User)
-          }
-        } catch {
-          /* ignore corrupt cache */
-        }
-        setIsLoading(false)
-        return
-      }
-
       try {
         const sessionRes = await authApi.checkSession()
         if (process.env.NODE_ENV !== 'production') {
           try {
-            // Helpful developer debug: show raw session payload
             // eslint-disable-next-line no-console
             console.debug('[Auth] checkSession response:', sessionRes.status, sessionRes.data)
           } catch {}
@@ -133,13 +109,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(ROLE_STORAGE_KEY, hydrated.role)
         setUser(hydrated)
       } catch (error: unknown) {
-        console.error("Auth hydration failed:", error)
-        try {
-          const cached = localStorage.getItem(USER_STORAGE_KEY)
-          if (cached) setUser(JSON.parse(cached) as User)
-        } catch {
+        const status = (error as { response?: { status?: number } })?.response?.status
+        if (status === 401 || status === 403) {
           clearClientAuth()
           setUser(null)
+        } else {
+          try {
+            const cached = localStorage.getItem(USER_STORAGE_KEY)
+            if (cached) setUser(JSON.parse(cached) as User)
+          } catch {
+            clearClientAuth()
+            setUser(null)
+          }
         }
       } finally {
         setIsLoading(false)

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { ProductModal } from "@/components/product/product-modal"
 import { useAuth } from "@/context/auth-context"
 import { useWishlist } from "@/context/wishlist-context"
+import { formatPrice } from "@/lib/format"
 import { useToast } from "@/hooks/use-toast"
 
 interface ProductCardProps {
@@ -48,22 +49,6 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       setWishlistBusy(false)
     }
   }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-      minimumFractionDigits: 0,
-    }).format(price)
-  }
-
-  const discount = product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0
-
-  const plainDescription = product.description
-    ? product.description.replace(/<[^>]+>/g, "").trim().slice(0, 60)
-    : ""
-
-  const hasValidImage = product.images[0] && !imageError
 
   return (
     <>

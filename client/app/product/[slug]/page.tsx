@@ -20,6 +20,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useChatOpen } from "@/hooks/use-chat-open"
 import { setBuyNowCheckout } from "@/lib/buy-now"
 import { fetchSellerStoreGate } from "@/lib/seller-store-guard"
+import { formatPrice } from "@/lib/format"
 import { EditProductDialog } from "@/components/seller/edit-product-dialog"
 import type { Product, ProductVariation, SizeChartMatrix, LegacySizeChart } from "@/lib/types"
 import { CATEGORY_NAME_TO_ID } from "@/lib/types"
@@ -302,13 +303,6 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
     } finally {
       setFollowLoading(false)
     }
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(price)
   }
 
   const handleAddToCart = () => {
