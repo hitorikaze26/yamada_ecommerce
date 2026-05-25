@@ -6,7 +6,7 @@ import os
 if __name__ == "__main__":
     app = create_app()
     port = int(os.environ.get("PORT", 5000))
-    is_dev = os.environ.get("FLASK_ENV", "development") != "production"
+    is_dev = not app.config.get("TESTING", False) and app.config.get("DEBUG", False)
     socketio.run(
         app,
         host="0.0.0.0",

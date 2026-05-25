@@ -1,5 +1,5 @@
 import { io, type Socket } from "socket.io-client"
-import { API_BASE_ORIGIN } from "@/lib/api"
+import { Env } from "@/lib/env"
 
 const TOKEN_STORAGE_KEY = "yamada-access-token"
 
@@ -44,7 +44,7 @@ class ChatSocketService {
     this.onRead = handlers.onRead ?? null
     this.onPresence = handlers.onPresence ?? null
 
-    const url = API_BASE_ORIGIN.replace(/\/static$/, "")
+    const url = Env.API_BASE_ORIGIN.replace(/\/static$/, "")
 
     this.socket = io(url, {
       transports: ["websocket", "polling"],

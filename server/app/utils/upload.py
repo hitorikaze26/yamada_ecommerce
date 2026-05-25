@@ -5,7 +5,7 @@ PRINCIPLES
 1. All stored DB paths use the same relative format:
    ``{folder}/{uuid}_{timestamp}.{ext}``  (e.g. ``avatars/a1b2c3_1712345678.jpg``)
 
-2. URL resolution (relative → absolute HTTPS) happens at serve-time only,
+2. URL resolution (relative to absolute HTTPS) happens at serve-time only,
    in ``public_url_for_stored_path()`` or via the frontend's ``resolveImageUrl()``.
 
 3. Development (local filesystem) stores files under ``app/static/{folder}/``
@@ -27,27 +27,16 @@ from werkzeug.utils import secure_filename
 from app.utils.supabase_storage import storage, path_is_private
 
 
-# ── Supabase detection ───────────────────────────────────────────────────
-
-
 def use_supabase_storage() -> bool:
     """Use Supabase when configured (keys present, or explicit force)."""
-    force = os.environ.get("FORCE_SUPABASE_UPLOADS", "").lower() in (
-        "1",
-        "true",
-        "yes",
-    )
-    has_keys = bool(
-        os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY")
-    )
+    cfg = current_app.config
+    supabase_enabled = cfg.get("SUPABASE_ENABLED", False)
+    force = cfg.get("FORCE_SUPABASE_UPLOADS", False)
     if force:
-        return has_keys
-    if not has_keys:
+        return supabase_enabled
+    if not supabase_enabled:
         return False
     return True
-
-
-# ── Save ──────────────────────────────────────────────────────────────────
 
 
 def save_upload(
@@ -71,7 +60,6 @@ def save_upload(
     if use_supabase_storage():
         return storage.save(file, folder, filename=filename)
 
-    # ── Local filesystem (development) ────────────────────────────────
     upload_root = current_app.static_folder or os.path.join(
         current_app.root_path, "static"
     )
@@ -91,9 +79,6 @@ def save_upload(
     return os.path.join(folder, stored_name).replace("\\", "/")
 
 
-# ── URL resolution ────────────────────────────────────────────────────────
-
-
 def public_url_for_stored_path(
     stored: str | None,
     *,
@@ -107,12 +92,12 @@ def public_url_for_stored_path(
                        If False, return empty string for private files.
 
     Resolution order:
-        1. Empty / None → empty string
-        2. Already an HTTPS URL → pass through
-        3. Supabase Storage (public) → ``get_public_url()``
-        4. Supabase Storage (private, allowed) → ``get_signed_url()``
-        5. Supabase Storage (private, not allowed) → empty string
-        6. Local filesystem → ``/static/{path}`` via Flask
+        1. Empty / None to empty string
+        2. Already an HTTPS URL to pass through
+        3. Supabase Storage (public) to ``get_public_url()``
+        4. Supabase Storage (private, allowed) to ``get_signed_url()``
+        5. Supabase Storage (private, not allowed) to empty string
+        6. Local filesystem to ``/static/{path}`` via Flask
     """
     if not stored:
         return ""

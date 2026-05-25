@@ -12,24 +12,17 @@ to Flask ``url_for("static", ...)`` for local development.
 
 from __future__ import annotations
 
-import os
-
 from flask import current_app, url_for
 
 
 def _supabase_configured() -> bool:
-    """Check if Supabase Storage env vars are present (no imports needed)."""
-    force = os.environ.get("FORCE_SUPABASE_UPLOADS", "").lower() in (
-        "1",
-        "true",
-        "yes",
-    )
-    has_keys = bool(
-        os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY")
-    )
+    """Check if Supabase Storage is active via Flask app config."""
+    cfg = current_app.config
+    supabase_enabled = cfg.get("SUPABASE_ENABLED", False)
+    force = cfg.get("FORCE_SUPABASE_UPLOADS", False)
     if force:
-        return has_keys
-    if not has_keys:
+        return supabase_enabled
+    if not supabase_enabled:
         return False
     return True
 
@@ -69,5 +62,5 @@ def _normalize_static_relative_path(rel_path: str) -> str:
     if rel.startswith("http://") or rel.startswith("https://"):
         return rel
     if rel.startswith("/orders/product_images/"):
-        rel = rel[len("/orders/") :]
+        rel = rel[len("/orders/"):]
     return rel.lstrip("/")

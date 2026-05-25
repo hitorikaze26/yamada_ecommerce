@@ -1,95 +1,28 @@
 import axios, { type AxiosInstance, type AxiosError, type CancelTokenSource } from "axios"
+import { Env } from "@/lib/env"
 
-const DEFAULT_DEV_API = "http://127.0.0.1:5000/api"
+/**
+ * Centralized API configuration.
+ *
+ * All environment-aware settings flow through `Env` (lib/env.ts).
+ * - `API_BASE_URL` — always ends in /api
+ * - `API_BASE_ORIGIN` — origin (scheme + host) extracted from API_BASE_URL
+ * - `resolveImageUrl` — centralized image URL resolution (local + production)
+ */
 
-function resolveApiBaseUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_API_BASE_URL?.trim()
-  if (configured) {
-    return configured.endsWith("/api")
-      ? configured.replace(/\/$/, "")
-      : `${configured.replace(/\/$/, "")}/api`
-  }
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "[Yamada] NEXT_PUBLIC_API_BASE_URL is required in production. " +
-        "Set it in Vercel to your Railway URL ending in /api.",
-    )
-  }
-  return DEFAULT_DEV_API
-}
-
-export const API_BASE_URL = resolveApiBaseUrl()
-export const API_BASE_ORIGIN = API_BASE_URL.replace(/\/api(?:\/)?$/, "")
+export const API_BASE_URL = Env.API_BASE_URL
+export const API_BASE_ORIGIN = Env.API_BASE_ORIGIN
 
 export const isApiConfiguredForProduction =
   Boolean(process.env.NEXT_PUBLIC_API_BASE_URL?.trim()) ||
   process.env.NODE_ENV !== "production"
 
-// Create axios instance with default config
-export const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
-})
-
-/**
- * Resolve a stored file path to a usable image URL.
- *
- * RESOLUTION ORDER
- * ---------------
- * 1. null/undefined/empty → null
- * 2. Full HTTPS URL      → pass through unchanged (Supabase, signed URLs)
- * 3. `/static/...` path  → prepend Flask origin (local dev)
- * 4. Relative path       → prepend Flask origin as best-effort (local dev fallback)
- *
- * IMPORTANT
- * ---------
- * In production with Supabase, the backend resolves all public URLs to
- * absolute HTTPS via ``public_url_for_stored_path()`` before returning
- * them.  This function is the safety net for local development where
- * Flask serves files from ``app/static/``.
- *
- * For private documents (verification docs, reports), use
- * ``resolvePrivateDocUrl()`` which obtains a signed URL from the backend.
- */
-export const resolveImageUrl = (url?: string | null): string | null => {
-  if (!url) return null
-
-  const value = String(url).replace(/\\/g, "/").trim()
-  if (!value) return null
-
-  if (value.startsWith("http://") || value.startsWith("https://")) {
-    return value
-  }
-
-  const origin = API_BASE_ORIGIN.replace(/\/static$/, "")
-
-  if (value.startsWith("/static/")) {
-    return `${origin}${value}`
-  }
-
-  const trimmed = value.replace(/^\/+/, "")
-  if (trimmed.startsWith("static/")) {
-    return `${origin}/${trimmed}`
-  }
-
-  // Best-effort fallback for local dev (Flask static serving)
-  return `${origin}/static/${trimmed}`
-}
+/** Resolve a stored file path to a usable image URL. Delegates to Env for env-aware resolution. */
+export const resolveImageUrl = (url?: string | null): string | null =>
+  Env.resolveImageUrl(url)
 
 /**
  * Resolve a private document path (verification docs, etc.) to a signed URL.
- *
- * The stored path is a relative path like ``seller_dti/a1b2c3_1712345678.pdf``.
- * This function sends the full path to the backend, which resolves the
- * bucket mapping and returns a short-lived signed URL.
- *
- * NOTE: The backend endpoint requires admin authentication. For non-admin
- * users viewing their own documents, a separate user-facing endpoint should
- * be added (future work).
  */
 export async function resolvePrivateDocUrl(
   path?: string | null,
@@ -108,9 +41,19 @@ export async function resolvePrivateDocUrl(
     const url = (res.data as { url?: string })?.url
     return url ?? null
   } catch {
-    return resolveImageUrl(path)
+    return Env.resolveImageUrl(path)
   }
 }
+
+// Create axios instance with default config
+export const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+})
 
 // Helper to read a cookie by name (used for CSRF token with JWT-in-cookies setup)
 const getCookie = (name: string): string | null => {
@@ -125,7 +68,7 @@ const getStoredToken = (): string | null => {
   return localStorage.getItem("yamada-access-token")
 }
 
-// CSRF token is stored in localStorage (returned in login/refresh response body)
+// CSRF token storage
 const CSRF_STORAGE_KEY = "yamada-csrf-token"
 
 const getStoredCsrfToken = (): string | null => {
@@ -133,7 +76,6 @@ const getStoredCsrfToken = (): string | null => {
   return localStorage.getItem(CSRF_STORAGE_KEY)
 }
 
-// Exported so auth-context can store the token on login
 export const setStoredCsrfToken = (token: string | null): void => {
   if (typeof window === "undefined") return
   if (token) {
@@ -148,22 +90,17 @@ export const clearStoredCsrfToken = (): void => {
   localStorage.removeItem(CSRF_STORAGE_KEY)
 }
 
-// Request interceptor to add CSRF token for state-changing requests
+// Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // Add Authorization header as fallback when cookies don't work
     const token = getStoredToken()
     if (token) {
       config.headers = config.headers ?? {}
       ;(config.headers as any)["Authorization"] = `Bearer ${token}`
     }
 
-    // For POST/PUT/PATCH/DELETE we also need to send the CSRF token header.
     const method = (config.method || "get").toLowerCase()
     if (["post", "put", "patch", "delete"].includes(method)) {
-      // Cross-origin (Vercel → Railway): the csrf_access_token cookie is on the backend
-      // domain, so document.cookie won't see it. Fall back to localStorage CSRF token
-      // returned in the login/refresh JSON body.
       const csrfToken =
         getCookie("csrf_access_token") ||
         getCookie("access_csrf") ||
@@ -174,7 +111,6 @@ apiClient.interceptors.request.use(
       }
     }
 
-    // Let the browser set multipart boundary — manual Content-Type breaks file uploads.
     if (typeof FormData !== "undefined" && config.data instanceof FormData) {
       config.headers = config.headers ?? {}
       const headers = config.headers as Record<string, unknown>
@@ -187,10 +123,9 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 )
 
-// Response interceptor — capture CSRF token from response body + error handling
+// Response interceptor
 apiClient.interceptors.response.use(
   (response) => {
-    // Capture CSRF token from any API response (login, refresh, etc.)
     const body = response.data as Record<string, unknown> | undefined
     if (body?.csrf_token && typeof body.csrf_token === "string") {
       setStoredCsrfToken(body.csrf_token)
@@ -208,8 +143,6 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       const requestUrl = error.config?.url || ""
 
-      // Let AuthProvider handle 401s from /accounts/protected (session check)
-      // and let the login page handle 401s from /accounts/login (wrong credentials)
       if (
         requestUrl.includes("/accounts/protected") ||
         requestUrl.includes("/accounts/login") ||
@@ -222,12 +155,10 @@ apiClient.interceptors.response.use(
         return Promise.reject(error)
       }
 
-      // For admin endpoints, let the admin pages handle 401 explicitly
       if (requestUrl.startsWith("/admin/") || requestUrl.includes("/admin/")) {
         return Promise.reject(error)
       }
 
-      // For other 401s, clear client snapshot and go to home
       if (typeof window !== "undefined") {
         localStorage.removeItem("yamada-user")
         localStorage.removeItem("yamada-access-token")
@@ -239,14 +170,10 @@ apiClient.interceptors.response.use(
   },
 )
 
-// Create cancel token for request cancellation
 export const createCancelToken = (): CancelTokenSource => axios.CancelToken.source()
 
 // Auth API
 export const authApi = {
-  // Maps to Flask route: POST /api/accounts/login
-  // Backend expects username and password; we use email as username for now
-  // NOTE: Role is passed for potential server-side validation but not required
   login: (email: string, password: string, role?: string) =>
     apiClient.post("/accounts/login", { username: email, password, role }),
 
@@ -256,9 +183,6 @@ export const authApi = {
 
   checkSession: () => apiClient.get("/accounts/protected"),
 
-  // Maps buyer registration to generic Flask registration: POST /api/accounts/register
-  // New dedicated buyer registration endpoint: POST /api/accounts/register-buyer
-  // Sends full buyer profile + address; backend keeps email_verified=False until admin approval
   registerBuyer: (data: BuyerRegistrationData) => {
     const formData = new FormData()
     formData.append("givenName", data.givenName)
@@ -365,14 +289,8 @@ export const authApi = {
 
 // Products API
 export const productsApi = {
-  // NOTE: Backend currently exposes more granular product endpoints; generic list endpoint is not implemented
   getAll: (params?: ProductQueryParams) => apiClient.get("/products", { params }),
-
-  // Maps to Flask route: GET /api/products/product/<int:product_id>
   getById: (id: string) => apiClient.get(`/products/product/${id}`),
-
-  // Maps to Flask route: GET /api/products/product/<string:product_name>
-  // Backend expects the product name as part of the path
   search: (query: string, params?: ProductQueryParams) =>
     apiClient.get(`/products/product/${encodeURIComponent(query)}`, { params }),
   getReviews: (productId: string) => apiClient.get(`/products/${productId}/reviews`),
@@ -380,7 +298,6 @@ export const productsApi = {
 
 // Cart API
 export const cartApi = {
-  // Maps to Flask routes under /api/cart
   get: () => apiClient.get("/cart/get-cart"),
   add: (productId: number, variationId: number, quantity: number) =>
     apiClient.post("/cart/add-to-cart", { productId, variationId, quantity }),
@@ -445,7 +362,6 @@ export const riderApi = {
     if (data.photo instanceof File) {
       formData.append("photo", data.photo)
     }
-
     return apiClient.post(`/rider/deliveries/${deliveryId}/proof`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     })
@@ -486,8 +402,6 @@ export const sellerApi = {
     apiClient.get(`/seller/${sellerId}/products`, { params }),
   getMyProducts: (params?: ProductQueryParams) =>
     apiClient.get("/seller/products", { params }),
-  // For creation & updates, use the existing products endpoints that infer
-  // the store from the authenticated seller (Option 1)
   addProduct: (data: ProductFormData | FormData) => {
     return apiClient.post("/products/create", data)
   },
@@ -516,7 +430,7 @@ export const sellerApi = {
     }),
 }
 
-// Seller shop settings API (reuses accounts /seller/profile routes)
+// Seller shop settings API
 export const sellerShopApi = {
   getProfile: () => apiClient.get("/accounts/seller/profile"),
   updateProfile: (data: {
@@ -543,11 +457,7 @@ export const sellerShopApi = {
       headers: { "Content-Type": "multipart/form-data" },
     })
   },
-
-  // Shop Settings APIs
   getAllSettings: () => apiClient.get("/seller/settings/all"),
-
-  // Shipping Settings
   getShippingSettings: () => apiClient.get("/seller/settings/shipping"),
   createShippingSetting: (data: {
     regionCode?: string
@@ -568,13 +478,9 @@ export const sellerShopApi = {
   }) => apiClient.put(`/seller/settings/shipping/${settingId}`, data),
   deleteShippingSetting: (settingId: number) =>
     apiClient.delete(`/seller/settings/shipping/${settingId}`),
-
-  // Payment Settings
   getPaymentSettings: () => apiClient.get("/seller/settings/payment"),
   updatePaymentSettings: (data: { codEnabled: boolean }) =>
     apiClient.put("/seller/settings/payment", data),
-
-  // Order Settings
   getOrderSettings: () => apiClient.get("/seller/settings/order"),
   updateOrderSettings: (data: {
     allowCancellation?: boolean
@@ -582,16 +488,12 @@ export const sellerShopApi = {
     allowReturns?: boolean
     returnPeriodDays?: number
   }) => apiClient.put("/seller/settings/order", data),
-
-  // Shop Customization
   getShopCustomization: () => apiClient.get("/seller/settings/customization"),
   updateShopCustomization: (data: {
     announcement?: string
     primaryColor?: string
     themeMode?: string
   }) => apiClient.put("/seller/settings/customization", data),
-
-  // Chat Settings
   getChatSettings: () => apiClient.get("/seller/settings/chat"),
   updateChatSettings: (data: {
     autoReplyEnabled?: boolean
@@ -1001,29 +903,21 @@ export const notificationsApi = {
 }
 
 // Philippine Geographic API (proxied through Next.js API routes to avoid CORS)
-// Uses relative URLs to hit Next.js API routes (not the Flask backend)
-// Uses PSGC API (psgc.gitlab.io) for accurate Philippine location data
 export const phGeoApi = {
   getRegions: () => axios.get("/api/geo/regions"),
   getProvinces: (regionCode: string) => axios.get(`/api/geo/regions/${regionCode}/provinces`),
-  // For NCR (region 13/130000000), skip province and get cities directly from region
   getMunicipalities: (regionCode: string, provinceCode?: string) => {
-    // NCR has no provinces - get cities directly from region
     if (isNCRRegion(regionCode)) {
       return axios.get(`/api/geo/regions/${regionCode}/cities-municipalities`)
     }
-    // Normal flow: get cities from province
     return axios.get(`/api/geo/provinces/${provinceCode}/cities-municipalities`)
   },
   getBarangays: (municipalityCode: string) =>
     axios.get(`/api/geo/cities-municipalities/${municipalityCode}/barangays`),
 }
 
-// NCR region codes - NCR has no provinces, cities are directly under region
-// PSGC code for NCR is 130000000 (9 digits)
 export const NCR_REGION_CODES = ["13", "130000000", "1300000000", "NCR", "Metro Manila", "National Capital Region"]
 
-// Check if region is NCR (National Capital Region)
 export function isNCRRegion(regionCode: string): boolean {
   if (!regionCode) return false
   const normalized = regionCode.toString().trim()
@@ -1087,12 +981,10 @@ export interface AddressData {
   postalCode?: string
 }
 
-// Check if address is complete (handles NCR case where province is optional)
 export function isAddressComplete(address: Partial<AddressData>): boolean {
   const hasRegion = !!address.regionCode
   const hasMunicipality = !!address.municipalityCode
   const hasBarangay = !!address.barangayCode
-  // Province is required only for non-NCR regions
   const needsProvince = !isNCRRegion(address.regionCode || "")
   const hasProvince = !!address.provinceCode
   
@@ -1160,10 +1052,8 @@ export interface ProductFormData {
   visibility: boolean
 }
 
-// --- Reports API ---
-
+// Reports API
 export const reportsApi = {
-  /** Load report reasons for the role being reported (buyer | seller | rider). */
   getReportTypes: (targetRole: string) =>
     apiClient.get<{ types: Record<string, unknown>[] }>("/reports/types", {
       params: { targetRole },

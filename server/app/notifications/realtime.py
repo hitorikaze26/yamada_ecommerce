@@ -11,27 +11,21 @@ from socketio.exceptions import ConnectionRefusedError
 
 from app.models import db
 
-import os
 
-
-def _socketio_cors_origins():
-    explicit = os.environ.get("SOCKETIO_CORS", "").strip()
+def _socketio_cors_origins(app) -> list[str] | str:
+    """Resolve SocketIO CORS origins from Flask app config."""
+    explicit = app.config.get("SOCKETIO_CORS", "").strip()
     if explicit:
         if explicit == "*":
             return "*"
         return [o.strip() for o in explicit.replace(";", ",").split(",") if o.strip()]
-    if os.environ.get("FLASK_ENV", "development") == "production":
-        raw = os.environ.get("CORS_ORIGINS", "")
-        origins = [o.strip() for o in raw.replace(";", ",").split(",") if o.strip()]
-        if origins:
-            return origins
+    cors_origins = app.config.get("CORS_ORIGINS", [])
+    if cors_origins:
+        return cors_origins
     return "*"
 
 
-socketio = SocketIO(
-    cors_allowed_origins=_socketio_cors_origins(),
-    async_mode="threading",
-)
+socketio = SocketIO()
 
 
 def user_room(user_id: int) -> str:
@@ -46,7 +40,7 @@ def init_socketio(app) -> SocketIO:
     """Attach SocketIO to the Flask app and register connection handlers."""
     socketio.init_app(
         app,
-        cors_allowed_origins=_socketio_cors_origins(),
+        cors_allowed_origins=_socketio_cors_origins(app),
         async_mode="threading",
         logger=False,
         engineio_logger=False,

@@ -17,36 +17,6 @@ from .extensions import (
 )
 from config import config
 
-# Match production + preview Vercel deployments + custom domain
-_VERCEL_ORIGIN_PATTERN = r"^https://[\w-]+\.vercel\.app$"
-
-
-def _expand_origins(raw: str) -> list[str]:
-    """Split comma/semicolon-separated origins, strip whitespace/quotes."""
-    out: list[str] = []
-    seen: set[str] = set()
-    for part in raw.replace(";", ",").split(","):
-        origin = part.strip().strip('"').strip("'")
-        if origin and origin not in seen:
-            seen.add(origin)
-            out.append(origin)
-    return out
-
-
-def _cors_allowed_origins() -> list[str]:
-    """Parse CORS_ORIGINS and add safe production defaults."""
-    raw = os.environ.get(
-        "CORS_ORIGINS",
-        "http://127.0.0.1:3000,http://localhost:3000",
-    )
-    origins = _expand_origins(raw)
-
-    # In production, always allow the Vercel origin wildcard
-    if os.environ.get("FLASK_ENV", "development") == "production":
-        origins.append(_VERCEL_ORIGIN_PATTERN)
-
-    return origins
-
 
 PLACEHOLDER_SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" '
@@ -85,9 +55,7 @@ def create_app(test_config=None):
                 raise RuntimeError(
                     f"Missing required env vars in production: {', '.join(missing)}"
                 )
-            if not os.environ.get("SUPABASE_URL") or not os.environ.get(
-                "SUPABASE_SERVICE_KEY"
-            ):
+            if not app.config.get("SUPABASE_ENABLED"):
                 app.logger.warning(
                     "SUPABASE_URL / SUPABASE_SERVICE_KEY not set — uploads use "
                     "ephemeral local disk on Railway."
@@ -116,7 +84,7 @@ def create_app(test_config=None):
 
     CORS(
         app,
-        resources={r"/api/*": {"origins": _cors_allowed_origins()}},
+        resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
         supports_credentials=True,
     )
 
@@ -144,7 +112,7 @@ def create_app(test_config=None):
         except Exception as exc:
             checks["database"] = "error"
             checks["database_error"] = str(exc)[:200]
-        if os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY"):
+        if current_app.config.get("SUPABASE_ENABLED"):
             from app.utils.supabase_storage import probe_storage_connection
 
             probe = probe_storage_connection()

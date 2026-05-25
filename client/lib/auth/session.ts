@@ -1,10 +1,10 @@
 import {
-  API_BASE_URL,
   authApi,
   buyerApi,
   riderAccountApi,
   sellerAccountApi,
 } from "@/lib/api"
+import { Env } from "@/lib/env"
 import type { User, UserRole } from "@/lib/types"
 
 export interface AuthSessionDto {
@@ -169,10 +169,10 @@ export function getLoginErrorMessage(error: unknown): string {
       (window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1")
     if (onLocalhost) {
-      return `Cannot reach the API at ${API_BASE_URL}. Start the Flask server (python run.py) and check NEXT_PUBLIC_API_BASE_URL in client/.env.local.`
+      return `Cannot reach the API at ${Env.API_BASE_URL}. Start the Flask server (python run.py) and check NEXT_PUBLIC_API_BASE_URL in client/.env.local.`
     }
     return (
-      `Cannot reach the API at ${API_BASE_URL}. ` +
+      `Cannot reach the API at ${Env.API_BASE_URL}. ` +
       "On Railway, set CORS_ORIGINS to your exact Vercel URL (e.g. https://yamada-ecommerce.vercel.app) and redeploy. " +
       "On Vercel, set NEXT_PUBLIC_API_BASE_URL to your Railway URL ending in /api and redeploy."
     )
