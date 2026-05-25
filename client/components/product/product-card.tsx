@@ -29,6 +29,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const [imageError, setImageError] = useState(false)
   const [wishlistBusy, setWishlistBusy] = useState(false)
 
+  const hasValidImage = !!(product.images?.length) && !imageError
+  const discount = product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0
+
   const liked = isWishlisted(product.id)
 
   const handleWishlistClick = async (e: React.MouseEvent) => {
