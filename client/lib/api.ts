@@ -173,6 +173,7 @@ apiClient.interceptors.response.use(
       if (
         requestUrl.includes("/accounts/protected") ||
         requestUrl.includes("/accounts/login") ||
+        requestUrl.includes("/accounts/logout") ||
         requestUrl.includes("/accounts/refresh") ||
         requestUrl.includes("/accounts/seller/profile") ||
         requestUrl.includes("/accounts/buyer/profile") ||
@@ -186,12 +187,12 @@ apiClient.interceptors.response.use(
         return Promise.reject(error)
       }
 
-      // For other 401s, clear client snapshot and go to landing
+      // For other 401s, clear client snapshot and go to home
       if (typeof window !== "undefined") {
         localStorage.removeItem("yamada-user")
         localStorage.removeItem("yamada-access-token")
         localStorage.removeItem("yamada-role")
-        window.location.href = "/landing"
+        window.location.href = "/"
       }
     }
     return Promise.reject(error)

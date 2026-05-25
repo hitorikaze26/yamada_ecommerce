@@ -27,7 +27,7 @@ function roleForPath(pathname: string): "buyer" | "seller" | "rider" | null {
   return null
 }
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Admin pages are guarded in-app by ProtectedRoute + backend @admin_required().

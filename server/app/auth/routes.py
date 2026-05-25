@@ -357,11 +357,9 @@ def login():
     return response
 
 @auth_bp.post('/logout')
-@jwt_required()
 def logout():
-    response=jsonify(msg="Successfully logged out!") 
+    response = jsonify(msg="Successfully logged out!")
     unset_jwt_cookies(response)
-
     return response
 
 

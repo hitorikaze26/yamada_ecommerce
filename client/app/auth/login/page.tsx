@@ -60,6 +60,7 @@ function inferRoleFromRedirectPath(pathname: string | null): UserRole {
 }
 
 function LoginContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect") ?? undefined
   const requestedRole = searchParams.get("role")
@@ -84,11 +85,14 @@ function LoginContent() {
   useEffect(() => {
     if (isLoading || !isAuthenticated || !user) return
     const destination =
-      redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+      redirectTo &&
+        redirectTo.startsWith("/") &&
+        !redirectTo.startsWith("//") &&
+        !redirectTo.startsWith("/auth/")
         ? redirectTo
         : dashboardRoutes[user.role]
-    window.location.assign(destination)
-  }, [isLoading, isAuthenticated, user, redirectTo])
+    router.replace(destination)
+  }, [isLoading, isAuthenticated, user, redirectTo, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -236,40 +236,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshBuyerProfile = useCallback(async () => {
     const current = userRef.current
     if (!current || current.role !== "buyer") return
+    let session: AuthSessionDto
     try {
       const sessionRes = await authApi.checkSession()
-      const session = parseSessionPayload(sessionRes.data as Record<string, unknown>)
-      const profile = await fetchRoleProfile("buyer")
-      const updated = buildUserFromSession(session, "buyer", profile, session.is_verified)
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated))
-      setUser(updated)
+      session = parseSessionPayload(sessionRes.data as Record<string, unknown>)
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } })?.response?.status
       if (status === 401 || status === 403) {
         clearClientAuth()
         setUser(null)
       }
+      return
     }
+    const profile = await fetchRoleProfile("buyer")
+    const updated = buildUserFromSession(session, "buyer", profile, session.is_verified)
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated))
+    setUser(updated)
   }, [])
 
   const refreshSellerProfile = useCallback(async () => {
     const current = userRef.current
     if (!current || current.role !== "seller") return
+    let session: AuthSessionDto
     try {
       const sessionRes = await authApi.checkSession()
-      const session = parseSessionPayload(sessionRes.data as Record<string, unknown>)
-      const profile = await fetchRoleProfile("seller")
-      const updated = buildUserFromSession(session, "seller", profile, session.is_verified)
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated))
-      localStorage.setItem(ROLE_STORAGE_KEY, "seller")
-      setUser(updated)
+      session = parseSessionPayload(sessionRes.data as Record<string, unknown>)
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } })?.response?.status
       if (status === 401 || status === 403) {
         clearClientAuth()
         setUser(null)
       }
+      return
     }
+    const profile = await fetchRoleProfile("seller")
+    const updated = buildUserFromSession(session, "seller", profile, session.is_verified)
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated))
+    localStorage.setItem(ROLE_STORAGE_KEY, "seller")
+    setUser(updated)
   }, [])
 
   return (
