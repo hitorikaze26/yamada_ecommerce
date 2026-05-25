@@ -17,6 +17,7 @@ export default function WishlistPage() {
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const [alertVariant, setAlertVariant] = useState<"success" | "error" | "info" | "warning">("info")
+  const [wishlistImageErrors, setWishlistImageErrors] = useState<Record<string, boolean>>({})
 
   const showAlert = (message: string, variant: "success" | "error" | "info" | "warning" = "info") => {
     setAlertMessage(message)
@@ -113,12 +114,19 @@ export default function WishlistPage() {
                 className="bg-card border rounded-2xl overflow-hidden group"
               >
                 <div className="relative aspect-square">
-                  <Image
-                    src={resolveImageUrl(product.image_url || product.images?.[0]) || "/placeholder.svg"}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
+                  {wishlistImageErrors[product.id] ? (
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                      <Icon name="image" className="text-muted-foreground/50" />
+                    </div>
+                  ) : (
+                    <Image
+                      src={resolveImageUrl(product.image_url || product.images?.[0]) || "/placeholder.svg"}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                      onError={() => setWishlistImageErrors((prev) => ({ ...prev, [product.id]: true }))}
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={() => void handleRemove(product.id)}

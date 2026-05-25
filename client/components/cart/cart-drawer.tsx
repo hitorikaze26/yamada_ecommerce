@@ -26,6 +26,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const router = useRouter()
 
   const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [cartImageErrors, setCartImageErrors] = useState<Record<string, boolean>>({})
   const [buyerProfile, setBuyerProfile] = useState<any>(null)
   const [shippingBySeller, setShippingBySeller] = useState<Record<string, ShippingCalculation>>({})
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false)
@@ -298,12 +299,19 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                             />
                           </div>
                           <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                            <Image
-                              src={item.product?.images?.[0] || item.product?.imageUrl || "/placeholder.svg?height=80&width=80&query=fashion"}
-                              alt={item.product?.name || "Product"}
-                              fill
-                              className="object-cover"
-                            />
+                            {cartImageErrors[item.id] ? (
+                              <div className="w-full h-full flex items-center justify-center bg-muted">
+                                <Icon name="image" className="text-muted-foreground/50" />
+                              </div>
+                            ) : (
+                              <Image
+                                src={item.product?.images?.[0] || item.product?.imageUrl || "/placeholder.svg?height=80&width=80&query=fashion"}
+                                alt={item.product?.name || "Product"}
+                                fill
+                                className="object-cover"
+                                onError={() => setCartImageErrors((prev) => ({ ...prev, [item.id]: true }))}
+                              />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-sm truncate">{item.product.name}</h4>

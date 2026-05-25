@@ -46,6 +46,7 @@ function BuyerOrdersContent() {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [orderImageErrors, setOrderImageErrors] = useState<Record<string, boolean>>({})
   const { getRole, isVerified } = useAuth()
   const role = getRole()
   const buyerUnverified = role === "buyer" && !isVerified()
@@ -253,12 +254,19 @@ function BuyerOrdersContent() {
                     return (
                       <div key={index} className="flex gap-4">
                         <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-muted flex-shrink-0">
-                          <Image
-                            src={img}
-                            alt={item.product.name}
-                            fill
-                            className="object-cover"
-                          />
+                          {orderImageErrors[`${order.id}-${index}`] ? (
+                            <div className="w-full h-full flex items-center justify-center bg-muted">
+                              <Icon name="image" className="text-muted-foreground/50" />
+                            </div>
+                          ) : (
+                            <Image
+                              src={img}
+                              alt={item.product.name}
+                              fill
+                              className="object-cover"
+                              onError={() => setOrderImageErrors((prev) => ({ ...prev, [`${order.id}-${index}`]: true }))}
+                            />
+                          )}
                         </div>
                       <div className="flex-1 min-w-0">
                         <Link

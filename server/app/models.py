@@ -1483,18 +1483,13 @@ class CartItem(Base):
     variation: Mapped["ProductVariation"] = relationship()
 
     def to_json(self):
-        # Format image URLs with /static/ prefix
+        # Return raw paths — URL resolution happens at route level
         image_url = self.product.image_url if self.product else None
-        if image_url and not image_url.startswith(("http://", "https://", "/static/")):
-            image_url = f"/static/{image_url}"
 
         images = []
         if self.product and self.product.media:
             for media in self.product.media:
-                path = media.path
-                if not path.startswith(("http://", "https://", "/static/")):
-                    path = f"/static/{path}"
-                images.append(path)
+                images.append(media.path)
 
         # If no media images but has image_url, use that
         if not images and image_url:

@@ -5,10 +5,12 @@ import Image from "next/image"
 import Link from "next/link"
 import { buyerApi, resolveImageUrl } from "@/lib/api"
 import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
+import { Icon } from "@/components/ui/icon"
 import type { Product } from "@/lib/types"
 
 export default function RecentlyViewedPage() {
   const [products, setProducts] = useState<Product[]>([])
+  const [recentImageErrors, setRecentImageErrors] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -73,7 +75,19 @@ export default function RecentlyViewedPage() {
               className="bg-card border rounded-2xl overflow-hidden hover:shadow-md transition-shadow"
             >
               <div className="aspect-square relative bg-muted">
-                <Image src={img || "/placeholder.svg"} alt={p.name} fill className="object-cover" />
+                {recentImageErrors[p.id] ? (
+                  <div className="w-full h-full flex items-center justify-center bg-muted">
+                    <Icon name="image" className="text-muted-foreground/50" />
+                  </div>
+                ) : (
+                  <Image
+                    src={img || "/placeholder.svg"}
+                    alt={p.name}
+                    fill
+                    className="object-cover"
+                    onError={() => setRecentImageErrors((prev) => ({ ...prev, [p.id]: true }))}
+                  />
+                )}
               </div>
               <div className="p-3">
                 <p className="text-sm font-medium line-clamp-2">{p.name}</p>

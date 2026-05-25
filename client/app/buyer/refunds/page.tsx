@@ -106,6 +106,7 @@ export default function BuyerRefundsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [refundImageErrors, setRefundImageErrors] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     const fetchRefunds = async () => {
@@ -231,12 +232,19 @@ export default function BuyerRefundsPage() {
                     <div className="mt-4 flex items-center gap-3 text-sm">
                       {firstItem.imageUrl && (
                         <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted shrink-0">
-                          <Image
-                            src={resolveImageUrl(firstItem.imageUrl) || "/placeholder.svg"}
-                            alt={firstItem.productName}
-                            fill
-                            className="object-cover"
-                          />
+                          {refundImageErrors[`first-${r.id}`] ? (
+                            <div className="w-full h-full flex items-center justify-center bg-muted">
+                              <Icon name="image" className="text-muted-foreground/50" />
+                            </div>
+                          ) : (
+                            <Image
+                              src={resolveImageUrl(firstItem.imageUrl) || "/placeholder.svg"}
+                              alt={firstItem.productName}
+                              fill
+                              className="object-cover"
+                              onError={() => setRefundImageErrors((prev) => ({ ...prev, [`first-${r.id}`]: true }))}
+                            />
+                          )}
                         </div>
                       )}
                       <div className="min-w-0">
@@ -312,8 +320,20 @@ export default function BuyerRefundsPage() {
                               return (
                                 <li key={idx} className="flex gap-3 text-sm">
                                   <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-muted shrink-0">
-                                    <Image src={img} alt={item.productName} fill className="object-cover" />
-                                  </div>
+                                  {refundImageErrors[`item-${r.id}-${idx}`] ? (
+                                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                                      <Icon name="image" className="text-muted-foreground/50" />
+                                    </div>
+                                  ) : (
+                                    <Image
+                                      src={img}
+                                      alt={item.productName}
+                                      fill
+                                      className="object-cover"
+                                      onError={() => setRefundImageErrors((prev) => ({ ...prev, [`item-${r.id}-${idx}`]: true }))}
+                                    />
+                                  )}
+                                </div>
                                   <div className="flex-1 min-w-0 flex justify-between gap-2">
                                     <div>
                                       <span className="font-medium">{item.productName}</span>

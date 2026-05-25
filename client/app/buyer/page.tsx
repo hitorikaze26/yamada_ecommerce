@@ -24,6 +24,7 @@ export default function BuyerDashboard() {
   const [reports, setReports] = useState<ProblemReportDto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     const fetchData = async () => {
@@ -239,12 +240,19 @@ export default function BuyerDashboard() {
               return (
                 <Link key={product.id} href={`/product/${product.slug}`} className="group">
                   <div className="relative aspect-square rounded-xl overflow-hidden bg-muted mb-3">
-                    <Image
-                      src={img}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {imageErrors[product.id] ? (
+                      <div className="w-full h-full flex items-center justify-center bg-muted">
+                        <Icon name="image" className="text-muted-foreground/50" />
+                      </div>
+                    ) : (
+                      <Image
+                        src={img}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={() => setImageErrors((prev) => ({ ...prev, [product.id]: true }))}
+                      />
+                    )}
                   </div>
                   <p className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">
                     {product.name}

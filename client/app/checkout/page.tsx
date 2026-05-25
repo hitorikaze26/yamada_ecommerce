@@ -95,6 +95,7 @@ function CheckoutContent() {
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const [alertVariant, setAlertVariant] = useState<"success" | "error" | "info" | "warning">("info")
+  const [checkoutImageErrors, setCheckoutImageErrors] = useState<Record<string, boolean>>({})
 
   // Sync contact number from auth user when it becomes available (e.g. after localStorage hydration)
   useEffect(() => {
@@ -572,12 +573,19 @@ function CheckoutContent() {
                           {sellerGroup.items.map((item) => (
                             <div key={item.id} className="flex gap-3 p-3">
                               <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                                <Image
-                                  src={item.product?.images?.[0] || item.product?.imageUrl || "/placeholder.svg"}
-                                  alt={item.product?.name || "Product"}
-                                  fill
-                                  className="object-cover"
-                                />
+                                {checkoutImageErrors[item.id] ? (
+                                  <div className="w-full h-full flex items-center justify-center bg-muted">
+                                    <Icon name="image" className="text-muted-foreground/50" />
+                                  </div>
+                                ) : (
+                                  <Image
+                                    src={item.product?.images?.[0] || item.product?.imageUrl || "/placeholder.svg"}
+                                    alt={item.product?.name || "Product"}
+                                    fill
+                                    className="object-cover"
+                                    onError={() => setCheckoutImageErrors((prev) => ({ ...prev, [item.id]: true }))}
+                                  />
+                                )}
                                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
                                   {item.quantity}
                                 </span>

@@ -232,7 +232,7 @@ def getProduct(product_id):
                 {
                     "id": m.id,
                     "media_type": m.media_type,
-                    "path": m.path,
+                    "path": _public_image_url(m.path),
                     "created_at": m.created_at.isoformat() if m.created_at else None,
                 }
                 for m in product.media

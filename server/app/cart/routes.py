@@ -23,6 +23,25 @@ from app.models import (
 
 from app.utils.static_urls import public_static_url as _public_image_url
 
+
+def _resolve_cart_json(cart_dict: dict) -> dict:
+    """Resolve raw image paths to full URLs in cart response."""
+    items = cart_dict.get("items", [])
+    for item in items:
+        product = item.get("product")
+        if product:
+            raw_url = product.get("imageUrl")
+            if raw_url and not raw_url.startswith(("http://", "https://")):
+                product["imageUrl"] = _public_image_url(raw_url) or raw_url
+            raw_images = product.get("images", [])
+            product["images"] = [
+                _public_image_url(img) or img if img and not img.startswith(("http://", "https://")) else img
+                for img in raw_images
+            ]
+    cart_dict["items"] = items
+    return cart_dict
+
+
 @cart_bp.get('/get-cart')
 @jwt_required()
 def getCart():
@@ -40,7 +59,7 @@ def getCart():
         
         return jsonify({
             'success': True,
-            'cart': cart.to_json()
+            'cart': _resolve_cart_json(cart.to_json())
         }), 200
     except Exception as e:
         current_app.logger.error("Error in getCart: %s", str(e))
@@ -140,7 +159,7 @@ def addToCart():
         return jsonify({
             'success': True,
             'message': 'Item added to cart',
-            'cart': cart.to_json()
+            'cart': _resolve_cart_json(cart.to_json())
         }), 200
     except Exception as e:
         db.session.rollback()
@@ -198,7 +217,7 @@ def updateCartItem(item_id):
         return jsonify({
             'success': True,
             'message': 'Cart item updated',
-            'cart': cart_item.cart.to_json()
+            'cart': _resolve_cart_json(cart_item.cart.to_json())
         }), 200
     except Exception as e:
         db.session.rollback()
@@ -239,7 +258,7 @@ def removeFromCart(item_id):
         return jsonify({
             'success': True,
             'message': 'Item removed from cart',
-            'cart': cart.to_json()
+            'cart': _resolve_cart_json(cart.to_json())
         }), 200
     except Exception as e:
         db.session.rollback()
@@ -278,7 +297,7 @@ def clearCart():
         return jsonify({
             'success': True,
             'message': 'Cart cleared',
-            'cart': cart.to_json()
+            'cart': _resolve_cart_json(cart.to_json())
         }), 200
     except Exception as e:
         db.session.rollback()

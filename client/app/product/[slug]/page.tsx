@@ -115,6 +115,8 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [mainImageError, setMainImageError] = useState(false)
+  const [galleryImageErrors, setGalleryImageErrors] = useState<Record<number, boolean>>({})
   const { addToCart } = useCart()
   const { toast } = useToast()
   const router = useRouter()
@@ -494,13 +496,20 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
                     exit={{ opacity: 0 }}
                     className="absolute inset-0"
                   >
-                    <Image
-                      src={product.images[currentImageIndex] || "/placeholder.svg"}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                      priority
-                    />
+                    {mainImageError ? (
+                      <div className="w-full h-full flex items-center justify-center bg-muted">
+                        <Icon name="image" className="text-muted-foreground/50" size="xl" />
+                      </div>
+                    ) : (
+                      <Image
+                        src={product.images[currentImageIndex] || "/placeholder.svg"}
+                        alt={product.name}
+                        fill
+                        className="object-cover"
+                        priority
+                        onError={() => setMainImageError(true)}
+                      />
+                    )}
                   </motion.div>
                 </AnimatePresence>
 
@@ -558,12 +567,19 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
                         index === currentImageIndex ? "border-primary" : "border-transparent hover:border-primary/50"
                       }`}
                     >
-                      <Image
-                        src={image || "/placeholder.svg"}
-                        alt={`${product.name} ${index + 1}`}
-                        fill
-                        className="object-cover"
-                      />
+                      {galleryImageErrors[index] ? (
+                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                          <Icon name="image" className="text-muted-foreground/50" />
+                        </div>
+                      ) : (
+                        <Image
+                          src={image || "/placeholder.svg"}
+                          alt={`${product.name} ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          onError={() => setGalleryImageErrors((prev) => ({ ...prev, [index]: true }))}
+                        />
+                      )}
                     </button>
                   ))}
                 </div>

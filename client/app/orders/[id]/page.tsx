@@ -130,6 +130,7 @@ function OrderContent({ orderId }: { orderId: string }) {
   const [reviewableItems, setReviewableItems] = useState<ReviewableItem[]>([])
   const [submittedReviewItemIds, setSubmittedReviewItemIds] = useState<Set<number>>(new Set())
   const [deliveryPillOptions, setDeliveryPillOptions] = useState<string[]>([])
+  const [orderDetailImageErrors, setOrderDetailImageErrors] = useState<Record<string, boolean>>({})
 
   const loadOrder = React.useCallback(async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) {
@@ -636,12 +637,19 @@ function OrderContent({ orderId }: { orderId: string }) {
                         return (
                           <div key={item.id ?? index} className="flex gap-4 items-center">
                             <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-muted flex-shrink-0">
-                              <Image
-                                src={img}
-                                alt={item.product?.name ?? ""}
-                                fill
-                                className="object-cover"
-                              />
+                              {orderDetailImageErrors[`${item.id}-${index}`] ? (
+                                <div className="w-full h-full flex items-center justify-center bg-muted">
+                                  <Icon name="image" className="text-muted-foreground/50" />
+                                </div>
+                              ) : (
+                                <Image
+                                  src={img}
+                                  alt={item.product?.name ?? ""}
+                                  fill
+                                  className="object-cover"
+                                  onError={() => setOrderDetailImageErrors((prev) => ({ ...prev, [`${item.id}-${index}`]: true }))}
+                                />
+                              )}
                             </div>
                           <div className="flex-1 min-w-0">
                             {item.product && (
