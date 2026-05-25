@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { Icon } from "@/components/ui/icon"
+import { ShopLogo } from "@/components/store/shop-logo"
 import type { StoreProfile } from "@/lib/stores/types"
 
 interface StoreProfileHeaderProps {
@@ -31,20 +32,14 @@ export function StoreProfileHeader({ store }: StoreProfileHeaderProps) {
       <div className="relative px-4 sm:px-6 -mt-12 sm:-mt-14 pb-4">
         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-background bg-card overflow-hidden shadow-lg flex-shrink-0">
-            {store.logoUrl ? (
-              <Image
-                src={store.logoUrl}
-                alt={store.name}
-                width={96}
-                height={96}
-                className="w-full h-full object-cover"
-                unoptimized
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-muted">
-                <Icon name="store" size="xl" className="text-muted-foreground" />
-              </div>
-            )}
+            <ShopLogo
+              src={store.logoUrl}
+              alt={store.name}
+              width={96}
+              height={96}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
           </div>
 
           <div className="flex-1 min-w-0 pb-1">

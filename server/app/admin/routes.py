@@ -167,7 +167,8 @@ def _serialize_store_registration_for_admin(registration: StoreRegistration) -> 
     def doc_url(path: str | None) -> str | None:
         if not path:
             return None
-        return public_url_for_stored_path(path, allow_private=True) or path
+        url = public_url_for_stored_path(path, allow_private=True)
+        return url or None
 
     user = registration.user
     status = registration.request_status.name if registration.request_status else "PENDING"

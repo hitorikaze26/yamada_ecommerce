@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { buyerApi, resolveImageUrl } from "@/lib/api"
+import { buyerApi } from "@/lib/api"
 import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import { Icon } from "@/components/ui/icon"
+import { ShopLogo } from "@/components/store/shop-logo"
 
 interface FollowedStore {
   storeId: number
@@ -113,7 +114,6 @@ export default function FollowingStoresPage() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         {stores.map((store) => {
-          const logo = store.logoUrl ? resolveImageUrl(store.logoUrl) : null
           const followedLabel = formatFollowedAt(store.followedAt)
 
           return (
@@ -125,14 +125,13 @@ export default function FollowingStoresPage() {
                 href={`/store/${store.storeId}`}
                 className="w-16 h-16 rounded-xl bg-muted overflow-hidden flex-shrink-0 border"
               >
-                {logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logo} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Icon name="store" className="text-muted-foreground" size="lg" />
-                  </div>
-                )}
+                <ShopLogo
+                  src={store.logoUrl}
+                  alt={store.name}
+                  width={64}
+                  height={64}
+                  containerClassName="w-16 h-16"
+                />
               </Link>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start gap-2 flex-wrap">
