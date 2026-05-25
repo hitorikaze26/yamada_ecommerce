@@ -7,6 +7,7 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { sellerApi, sellerAccountApi } from "@/lib/api"
+import { toast } from "@/hooks/use-toast"
 import {
   CATEGORIES,
   SUBCATEGORIES,
@@ -578,6 +579,14 @@ function NewProductPageContent() {
       router.push("/seller/products?created=1")
     } catch (error) {
       console.error("Failed to create product", error)
+      const msg =
+        (error as any)?.response?.data?.msg ||
+        "Failed to create product. Please try again."
+      toast({
+        title: "Error",
+        description: msg,
+        variant: "destructive",
+      })
     }
   }
 

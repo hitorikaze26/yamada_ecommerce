@@ -447,12 +447,6 @@ export const sellerApi = {
   // For creation & updates, use the existing products endpoints that infer
   // the store from the authenticated seller (Option 1)
   addProduct: (data: ProductFormData | FormData) => {
-    if (typeof FormData !== "undefined" && data instanceof FormData) {
-      return apiClient.post("/products/create", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-    }
-
     return apiClient.post("/products/create", data)
   },
   updateProduct: (productId: string, data: any) =>

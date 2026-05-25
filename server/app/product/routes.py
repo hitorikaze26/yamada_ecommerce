@@ -248,20 +248,25 @@ def listProducts():
 @seller_required()
 @is_store_accepted
 def createProduct():
-    from app.services.punishment_service import PunishmentService, ACTION_PRODUCT_LISTING
-
-    blocked = PunishmentService.enforce(current_user.id, ACTION_PRODUCT_LISTING)
-    if blocked:
-        return blocked
-
-    store=db.session.execute(select(Store).where(Store.user_id==current_user.id)).scalar_one_or_none()
-
     try:
+        if current_user is None:
+            return jsonify(msg="Authentication required"), 401
+
+        from app.services.punishment_service import PunishmentService, ACTION_PRODUCT_LISTING
+
+        blocked = PunishmentService.enforce(current_user.id, ACTION_PRODUCT_LISTING)
+        if blocked:
+            return blocked
+
+        store=db.session.execute(select(Store).where(Store.user_id==current_user.id)).scalar_one_or_none()
+        if store is None:
+            return jsonify(msg="Store not found"), 404
+
         category_ids: list[str] = []
         allowed_category_ids: list[str] = []
 
         # Load allowed categories from the seller's original store registration
-        if store and store.seller and store.seller.registration and store.seller.registration.categories_json:
+        if store.seller and store.seller.registration and store.seller.registration.categories_json:
             try:
                 parsed = json.loads(store.seller.registration.categories_json)
                 if isinstance(parsed, list):
@@ -327,7 +332,7 @@ def createProduct():
             category_ids = [cid for cid in category_ids if cid in allowed_category_ids]
 
         if not name:
-            abort(400)
+            return jsonify(msg="Product name is required"), 400
 
         try:
             # Handle both integer and decimal string inputs from the frontend (e.g. "1999" or "1999.00")
@@ -527,7 +532,7 @@ def createProduct():
     except Exception:
         db.session.rollback()
         current_app.logger.exception("createProduct failed")
-        return jsonify(msg="Error occurred!"), 500
+        return jsonify(msg="Error occurred! Please try again or contact support."), 500
     
 @products_bp.post('/deactivate/<int:product_id>')
 @jwt_required()
