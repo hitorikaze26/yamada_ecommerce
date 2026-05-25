@@ -62,9 +62,13 @@ function LoginContent() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect") ?? undefined
   const requestedRole = searchParams.get("role")
-  const roleParam = isUserRole(requestedRole)
-    ? requestedRole
-    : inferRoleFromRedirectPath(redirectTo ?? null)
+  const hasExplicitRole = isUserRole(requestedRole)
+  const inferredFromRedirect = inferRoleFromRedirectPath(redirectTo ?? null)
+  const needsPortalPicker = !hasExplicitRole && !redirectTo
+  const [pickedRole, setPickedRole] = useState<UserRole | null>(
+    hasExplicitRole ? requestedRole : redirectTo ? inferredFromRedirect : null,
+  )
+  const roleParam = pickedRole ?? (hasExplicitRole ? requestedRole : inferredFromRedirect)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -77,6 +81,10 @@ function LoginContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!roleParam) {
+      setError("Choose a portal to sign in.")
+      return
+    }
     setError("")
     setIsLoading(true)
 
@@ -127,7 +135,21 @@ function LoginContent() {
               <p className="text-muted-foreground">Enter your credentials to access your account</p>
             </div>
 
-            {/* Role selector removed: role is controlled externally via link destination. */}
+            {needsPortalPicker && (
+              <div className="grid grid-cols-2 gap-3">
+                {(["buyer", "seller", "rider", "admin"] as UserRole[]).map((portal) => (
+                  <Button
+                    key={portal}
+                    type="button"
+                    variant={pickedRole === portal ? "default" : "outline"}
+                    onClick={() => setPickedRole(portal)}
+                    className="capitalize"
+                  >
+                    {portal}
+                  </Button>
+                ))}
+              </div>
+            )}
 
             {passwordResetSuccess && (
               <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 text-sm flex items-center gap-2">
@@ -189,7 +211,7 @@ function LoginContent() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+              <Button type="submit" className="w-full" size="lg" disabled={isLoading || !roleParam}>
                 {isLoading ? (
                   <>
                     <Icon name="spinner" className="mr-2 animate-spin" />

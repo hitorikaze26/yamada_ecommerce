@@ -168,6 +168,10 @@ def create_app(test_config=None):
     from .reports import reports as reports_bp
     app.register_blueprint(reports_bp, url_prefix='/api/reports')
 
+    from .security import register_security_hooks
+
+    register_security_hooks(app)
+
     # Register CLI commands
     app.cli.add_command(seed_admin_command)
     app.cli.add_command(seed_report_types_command)

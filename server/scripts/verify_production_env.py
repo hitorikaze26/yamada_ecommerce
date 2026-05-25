@@ -8,7 +8,7 @@ Usage:
 
 Optional:
   set API_BASE_URL=https://your-api.up.railway.app
-  set CORS_ORIGIN=https://your-app.vercel.app
+  set CORS_ORIGINS=https://your-app.vercel.app
   python scripts/verify_production_env.py
 """
 
@@ -123,7 +123,7 @@ def _check_health(api_base: str) -> list[str]:
 
 def _check_cors_preflight(api_base: str, origin: str) -> list[str]:
     if not origin:
-        print("Skip CORS preflight (set CORS_ORIGIN=https://your-app.vercel.app)")
+        print("Skip CORS preflight (set CORS_ORIGINS=https://your-app.vercel.app)")
         return []
 
     try:
@@ -164,11 +164,11 @@ def main() -> int:
             if normalized != api_base.rstrip("/"):
                 print(f"API base (normalized): {normalized}\n")
             errors.extend(_check_health(normalized))
-            errors.extend(
-                _check_cors_preflight(
-                    normalized, os.environ.get("CORS_ORIGIN", "").strip()
-                )
+            cors_origin = (
+                os.environ.get("CORS_ORIGINS", "").strip().split(",")[0].strip()
+                or os.environ.get("CORS_ORIGIN", "").strip()
             )
+            errors.extend(_check_cors_preflight(normalized, cors_origin))
         except ValueError as exc:
             errors.append(str(exc))
     else:

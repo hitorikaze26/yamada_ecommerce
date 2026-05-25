@@ -17,7 +17,7 @@ export interface AuthSessionDto {
   is_verified: boolean
 }
 
-const ROLE_PRIORITY: UserRole[] = ["buyer", "seller", "rider", "admin"]
+const ROLE_PRIORITY: UserRole[] = ["admin", "seller", "rider", "buyer"]
 
 export const ROLE_STORAGE_KEY = "yamada-role"
 
@@ -197,13 +197,36 @@ export function getLoginErrorMessage(error: unknown): string {
   return "Sign-in failed. Please try again."
 }
 
+/** Resolve role from URL path when restoring session on a portal route. */
+export function resolveRoleFromPathname(pathname: string): UserRole | null {
+  if (pathname === "/seller" || pathname.startsWith("/seller/")) return "seller"
+  if (pathname === "/rider" || pathname.startsWith("/rider/")) return "rider"
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return "admin"
+  if (
+    pathname === "/buyer" ||
+    pathname.startsWith("/buyer/") ||
+    pathname === "/checkout" ||
+    pathname.startsWith("/checkout/")
+  ) {
+    return "buyer"
+  }
+  return null
+}
+
 /** Resolve role for session restore or login (login may pass roles=[] before server returns roles). */
 export function resolveHydrationRole(
   preferredRole: UserRole | null,
   serverRoles: string[],
+  pathname?: string | null,
 ): UserRole | null {
-  if (preferredRole && (serverRoles.length === 0 || serverRoles.includes(preferredRole))) {
-    return preferredRole
+  const pathRole = pathname ? resolveRoleFromPathname(pathname) : null
+  const effectivePreferred = preferredRole ?? pathRole
+
+  if (
+    effectivePreferred &&
+    (serverRoles.length === 0 || serverRoles.includes(effectivePreferred))
+  ) {
+    return effectivePreferred
   }
-  return resolveActiveRole(preferredRole, serverRoles)
+  return resolveActiveRole(effectivePreferred, serverRoles)
 }

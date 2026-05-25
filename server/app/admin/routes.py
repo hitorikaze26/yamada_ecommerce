@@ -192,6 +192,39 @@ def _serialize_store_registration_for_admin(registration: StoreRegistration) -> 
     }
 
 
+@admin_bp.get('/files/signed-url')
+@jwt_required()
+@admin_required()
+def admin_signed_storage_url():
+    """Return a short-lived signed URL for a private storage object (docs bucket)."""
+    from flask import current_app
+    from app.utils.supabase_storage import (
+        PRIVATE_BUCKETS,
+        PUBLIC_BUCKETS,
+        is_private_bucket,
+        storage,
+    )
+
+    bucket = (request.args.get('bucket') or 'docs').strip()
+    path = (request.args.get('path') or '').strip().lstrip('/')
+    if not path:
+        return jsonify(msg='path is required'), 400
+    if bucket not in PUBLIC_BUCKETS and bucket not in PRIVATE_BUCKETS:
+        return jsonify(msg='Invalid bucket'), 400
+
+    try:
+        if is_private_bucket(bucket):
+            signed = storage.create_signed_url(bucket, path, expires_in=300)
+            if not signed:
+                return jsonify(msg='Could not sign URL'), 404
+            return jsonify(url=signed), 200
+        public = storage.client.storage.from_(bucket).get_public_url(path)
+        return jsonify(url=public), 200
+    except Exception as exc:
+        current_app.logger.exception('signed-url failed: %s', exc)
+        return jsonify(msg='Could not resolve file URL'), 500
+
+
 @admin_bp.get('/get-users')
 @admin_bp.get('/users')
 @jwt_required()
@@ -875,14 +908,13 @@ def get_rider_detail(user_id):
     if rider_profile is None:
         return jsonify(msg='Rider profile not found'), 404
 
-    # Build document URLs using Flask's static helper when paths are present
-    def build_static_url(path: str | None) -> str | None:
+    from app.utils.upload import public_url_for_stored_path
+
+    def build_doc_url(path: str | None) -> str | None:
         if not path:
             return None
-        try:
-            return url_for('static', filename=path, _external=True)
-        except Exception:
-            return path
+        url = public_url_for_stored_path(path, allow_private=True)
+        return url or None
 
     data = {
         "user": user.to_json(),
@@ -903,9 +935,9 @@ def get_rider_detail(user_id):
             },
             "documents": {
                 "licensePath": rider_profile.license_path,
-                "licenseUrl": build_static_url(rider_profile.license_path),
+                "licenseUrl": build_doc_url(rider_profile.license_path),
                 "orcrPath": rider_profile.orcr_path,
-                "orcrUrl": build_static_url(rider_profile.orcr_path),
+                "orcrUrl": build_doc_url(rider_profile.orcr_path),
             },
         },
     }

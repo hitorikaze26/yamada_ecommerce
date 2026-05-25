@@ -10,8 +10,9 @@ function resolveApiBaseUrl(): string {
       : `${configured.replace(/\/$/, "")}/api`
   }
   if (process.env.NODE_ENV === "production") {
-    console.error(
-      "[Yamada] NEXT_PUBLIC_API_BASE_URL is not set. Set it in Vercel to your Railway URL ending in /api.",
+    throw new Error(
+      "[Yamada] NEXT_PUBLIC_API_BASE_URL is required in production. " +
+        "Set it in Vercel to your Railway URL ending in /api.",
     )
   }
   return DEFAULT_DEV_API
@@ -80,6 +81,37 @@ export const resolveImageUrl = (url?: string | null): string | null => {
   }
 
   return value
+}
+
+/** Resolve private doc paths via admin signed-url API (admin UI only). */
+export async function resolvePrivateDocUrl(
+  path?: string | null,
+  bucket = "docs",
+): Promise<string | null> {
+  if (!path) return null
+  const value = String(path).replace(/\\/g, "/")
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value
+  }
+
+  let storageBucket = bucket
+  let storagePath = value.replace(/^\/+/, "")
+  const knownBuckets = ["docs", "product-images", "avatars", "chat", "misc"]
+  const first = storagePath.split("/")[0]
+  if (knownBuckets.includes(first)) {
+    storageBucket = first
+    storagePath = storagePath.slice(first.length + 1)
+  }
+
+  try {
+    const res = await apiClient.get("/admin/files/signed-url", {
+      params: { bucket: storageBucket, path: storagePath },
+    })
+    const url = (res.data as { url?: string })?.url
+    return url ?? null
+  } catch {
+    return resolveImageUrl(path)
+  }
 }
 
 // Helper to read a cookie by name (used for CSRF token with JWT-in-cookies setup)
@@ -612,6 +644,8 @@ export const sellerAccountApi = {
 
 // Admin API
 export const adminApi = {
+  getSignedFileUrl: (bucket: string, path: string) =>
+    apiClient.get("/admin/files/signed-url", { params: { bucket, path } }),
   getApprovals: () => apiClient.get("/admin/get-store-registrations"),
   approveUser: (registrationId: string) =>
     apiClient.post(`/admin/accept-store-registration/${registrationId}`),

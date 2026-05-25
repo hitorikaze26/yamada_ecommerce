@@ -45,6 +45,8 @@ export function proxy(request: NextRequest) {
     request.cookies.has("access_token_cookie") ||
     request.cookies.has("csrf_access_token")
 
+  // Cross-origin deploy (Vercel + Railway): JWT often lives in localStorage only.
+  // Middleware cannot read it; ProtectedRoute enforces role on the client.
   if (!hasSessionCookie) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = "/auth/login"

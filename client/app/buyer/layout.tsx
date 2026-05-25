@@ -8,6 +8,7 @@ import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Icon } from "@/components/ui/icon"
 import { useAuth } from "@/context/auth-context"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 import { buyerApi } from "@/lib/api"
 
 function readBuyerProfile(data: unknown): { givenName?: string; surname?: string } | null {
@@ -36,7 +37,7 @@ const sidebarLinks = [
   { href: "/buyer/help", label: "Help Center", icon: "interrogation" },
 ]
 
-export default function BuyerLayout({ children }: { children: React.ReactNode }) {
+function BuyerLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { user } = useAuth()
   const [displayName, setDisplayName] = useState<string | null>(null)
@@ -114,5 +115,13 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
 
       <Footer />
     </div>
+  )
+}
+
+export default function BuyerLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute allowedRoles={["buyer", "seller"]} redirectTo="/auth/login?role=buyer">
+      <BuyerLayoutContent>{children}</BuyerLayoutContent>
+    </ProtectedRoute>
   )
 }

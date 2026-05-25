@@ -41,6 +41,7 @@ from app.notifications.service import (
 from flask import jsonify, abort, request, current_app
 from app.utils.static_urls import public_static_url as _public_image_url
 from flask_jwt_extended import jwt_required, current_user
+from app.decorators import buyer_required, seller_required, rider_required
 from sqlalchemy import select, func, exists
 from sqlalchemy.orm import selectinload
 from app.models import Order
@@ -154,13 +155,13 @@ def _delivery_status_value(status) -> str:
 
 
 def _proof_photo_url(rel_path: str | None) -> str | None:
-    """Build a public URL for a stored proof-of-delivery image path."""
+    """Build a URL for a stored proof-of-delivery image (signed if private bucket)."""
     if not rel_path:
         return None
-    rel = str(rel_path).replace("\\", "/").lstrip("/")
-    if rel.startswith("http://") or rel.startswith("https://"):
-        return rel
-    return _public_image_url(rel)
+    from app.utils.upload import public_url_for_stored_path
+
+    url = public_url_for_stored_path(rel_path, allow_private=True)
+    return url or None
 
 
 def _has_proof_photo(rel_path: str | None) -> bool:
@@ -579,6 +580,7 @@ def _serialize_available_order_for_rider(order: Order) -> dict:
 
 @orders_bp.post("/orders/checkout")
 @jwt_required()
+@buyer_required()
 def checkout():
     """Create a new order from the provided cart-like payload.
 
@@ -1479,6 +1481,7 @@ def _serialize_buyer_refund_request(r: RefundRequest) -> dict:
 
 @orders_bp.get("/buyer/refund-requests")
 @jwt_required()
+@buyer_required()
 def list_buyer_refund_requests():
     """List refund requests created by the current buyer.
 
@@ -1511,6 +1514,7 @@ def list_buyer_refund_requests():
 
 @orders_bp.post("/buyer/refund-requests/<int:refund_id>/dispute")
 @jwt_required()
+@buyer_required()
 def dispute_refund_request(refund_id: int):
     """Buyer escalates a seller-rejected refund to admin review."""
 
@@ -1765,6 +1769,7 @@ def get_product_reviews(product_id: int):
 
 @orders_bp.get("/seller/<int:seller_id>/orders")
 @jwt_required()
+@seller_required()
 def list_seller_orders(seller_id: int):
     """List orders for a given seller's store.
 
@@ -1798,6 +1803,7 @@ def list_seller_orders(seller_id: int):
 
 @orders_bp.put("/orders/<int:order_id>/status")
 @jwt_required()
+@seller_required()
 def update_order_status(order_id: int):
     """Update the status of an order.
 
@@ -1875,6 +1881,7 @@ def update_order_status(order_id: int):
 
 @orders_bp.post("/orders/<int:order_id>/assign-rider")
 @jwt_required()
+@seller_required()
 def assign_rider(order_id: int):
     """Assign a rider to an order and create a RiderDelivery record.
 
@@ -1939,6 +1946,7 @@ def assign_rider(order_id: int):
 
 @orders_bp.post("/rider/orders/<int:order_id>/accept")
 @jwt_required()
+@rider_required()
 def rider_accept_order(order_id: int):
     """Allow the current rider to accept an available (auto-matched) order.
 
@@ -2011,6 +2019,7 @@ def rider_accept_order(order_id: int):
 
 @orders_bp.put("/rider/deliveries/<int:delivery_id>/status")
 @jwt_required()
+@rider_required()
 def update_rider_delivery_status(delivery_id: int):
     """Allow a rider to update the status of an assigned delivery.
 
@@ -2136,6 +2145,7 @@ def update_rider_delivery_status(delivery_id: int):
 
 @orders_bp.get("/rider/deliveries")
 @jwt_required()
+@rider_required()
 def list_rider_deliveries():
     """List deliveries relevant to the current rider.
 
@@ -2189,6 +2199,7 @@ def list_rider_deliveries():
 
 @orders_bp.post("/rider/deliveries/<int:delivery_id>/proof")
 @jwt_required()
+@rider_required()
 def upload_rider_delivery_proof(delivery_id: int):
     """Upload proof of delivery (photo required, note optional) for a rider delivery.
 
@@ -2223,21 +2234,17 @@ def upload_rider_delivery_proof(delivery_id: int):
 
         note = request.form.get("note")
 
-        # Save file under static/rider_docs with a safe filename
-        static_root = current_app.static_folder or os.path.join(current_app.root_path, "static")
-        upload_dir = os.path.join(static_root, "rider_docs")
-        os.makedirs(upload_dir, exist_ok=True)
+        from app.utils.upload import save_upload
 
-        filename = secure_filename(photo.filename)
-        # Prefix with delivery id and timestamp to avoid clashes
         timestamp = dt.datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        filename = secure_filename(photo.filename)
         stored_name = f"delivery_{delivery_id}_{timestamp}_{filename}"
-        file_path = os.path.join(upload_dir, stored_name)
-        photo.save(file_path)
+        try:
+            stored_path = save_upload(photo, "rider_docs", filename=stored_name)
+        except ValueError as exc:
+            return jsonify(msg=str(exc)), 400
 
-        # Persist relative path and note on RiderDelivery so it can be surfaced in UIs.
-        # Store path relative to the static root so _public_image_url can resolve it.
-        delivery.proof_photo_path = f"rider_docs/{stored_name}"
+        delivery.proof_photo_path = stored_path
         if note:
             delivery.proof_note = note
 
@@ -2285,6 +2292,7 @@ def upload_rider_delivery_proof(delivery_id: int):
 
 @orders_bp.get("/rider/dashboard")
 @jwt_required()
+@rider_required()
 def rider_dashboard():
     """Return simple dashboard stats for the current rider.
 

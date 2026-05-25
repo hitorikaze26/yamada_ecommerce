@@ -10,6 +10,7 @@ import { Icon } from "@/components/ui/icon"
 import { DarkModeToggle } from "@/components/ui/dark-mode-toggle"
 import { ChatInboxButton } from "@/components/chat/chat-inbox-button"
 import { useAuth } from "@/context/auth-context"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 
 const sidebarLinks = [
   { href: "/rider", label: "Dashboard", icon: "home" },
@@ -23,7 +24,7 @@ const sidebarLinks = [
 
 const pendingOnlyHrefs = new Set(["/rider", "/rider/profile", "/rider/settings"])
 
-export default function RiderLayout({ children }: { children: React.ReactNode }) {
+function RiderLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout, isVerified } = useAuth()
@@ -141,5 +142,13 @@ export default function RiderLayout({ children }: { children: React.ReactNode })
         <main className="flex-1 p-6 overflow-auto">{children}</main>
       </div>
     </div>
+  )
+}
+
+export default function RiderLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute allowedRoles={["rider"]} redirectTo="/auth/login?role=rider">
+      <RiderLayoutContent>{children}</RiderLayoutContent>
+    </ProtectedRoute>
   )
 }

@@ -36,7 +36,10 @@ In Railway → your service → **Variables**:
 |-----|--------|
 | `FLASK_APP` | `app:create_app` |
 | `FLASK_ENV` | `production` |
-| `DATABASE_URL` | postgresql://postgres:UcNUN6mSQKVAdVOq@db.ejbrslppplbraljaifaz.supabase.co:5432/postgres |
+| `DATABASE_URL` | Supabase **transaction pooler** on port **6543** (not direct `:5432`) |
+| `SUPABASE_URL` | `https://YOUR_PROJECT.supabase.co` |
+| `SUPABASE_SERVICE_KEY` | Service role key from Supabase → Settings → API |
+| `SOCKETIO_CORS` | `https://yamada-ecommerce.vercel.app` |
 | `SECRET_KEY` | random string (`python -c "import secrets; print(secrets.token_urlsafe(32))"`) |
 | `JWT_SECRET_KEY` | random string |
 | `WTF_CSRF_SECRET_KEY` | random string |
@@ -125,6 +128,8 @@ Then `flutter build apk`.
 | CORS on login | Add exact Vercel URL to `CORS_ORIGINS` on Railway |
 | Build can't find gunicorn | Ensure `pip install -r requirements.txt` runs; check `requirements.txt` |
 | Emails not sent | Set `MAIL_*` variables on Railway |
+| Images 404 / uploads lost | Set `SUPABASE_URL` + `SUPABASE_SERVICE_KEY`; create buckets `product-images`, `avatars`, `docs` (private), `chat`, `misc` |
+| Socket.IO disconnects | Set `SOCKETIO_CORS` to your exact Vercel URL |
 
 ## Railway CLI (optional)
 

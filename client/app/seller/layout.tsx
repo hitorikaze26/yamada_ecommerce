@@ -9,6 +9,7 @@ import { Icon } from "@/components/ui/icon"
 import { DarkModeToggle } from "@/components/ui/dark-mode-toggle"
 import { ChatInboxButton } from "@/components/chat/chat-inbox-button"
 import { useAuth } from "@/context/auth-context"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 import { NotificationModal, type NotificationItem } from "@/components/notifications/notification-modal"
 import { notificationsApi, type NotificationDto, sellerAccountApi } from "@/lib/api"
 import {
@@ -333,8 +334,10 @@ function SellerLayoutInner({ children }: { children: React.ReactNode }) {
 
 export default function SellerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <SellerLayoutInner>{children}</SellerLayoutInner>
-    </Suspense>
+    <ProtectedRoute allowedRoles={["seller"]} redirectTo="/auth/login?role=seller">
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+        <SellerLayoutInner>{children}</SellerLayoutInner>
+      </Suspense>
+    </ProtectedRoute>
   )
 }

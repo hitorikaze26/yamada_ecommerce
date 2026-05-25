@@ -1,6 +1,13 @@
 import { io, type Socket } from "socket.io-client"
 import { API_BASE_ORIGIN } from "@/lib/api"
 
+const TOKEN_STORAGE_KEY = "yamada-access-token"
+
+function getStoredToken(): string | null {
+  if (typeof window === "undefined") return null
+  return localStorage.getItem(TOKEN_STORAGE_KEY)
+}
+
 export type ChatMessageCallback = (payload: Record<string, unknown>) => void
 export type ChatReadCallback = (payload: Record<string, unknown>) => void
 export type ChatPresenceCallback = (payload: Record<string, unknown>) => void
@@ -42,8 +49,18 @@ class ChatSocketService {
     this.socket = io(url, {
       transports: ["websocket", "polling"],
       autoConnect: true,
-      reconnection: false,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
       auth: { token },
+    })
+
+    this.socket.on("connect_error", () => {
+      const fresh = getStoredToken()
+      if (fresh && this.socket) {
+        this.socket.auth = { token: fresh }
+      }
     })
 
     this.socket.on("chat_message", (data: unknown) => {

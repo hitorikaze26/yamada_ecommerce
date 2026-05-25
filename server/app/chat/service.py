@@ -170,12 +170,6 @@ def _peer_display(user: User, kind: ConversationKind, store: Optional[Store]) ->
         verified = bool(store.seller and store.seller.registration and
                         store.seller.registration.request_status.name == "ACCEPTED")
         avatar = _store_logo_url(store)
-    elif user_has_role(user, "buyer"):
-        role = "buyer"
-        name = _user_display_name(user)
-    elif user_has_role(user, "rider"):
-        role = "rider"
-        name = _user_display_name(user)
     elif user_has_role(user, "seller"):
         role = "seller"
         if user.store:
@@ -183,6 +177,14 @@ def _peer_display(user: User, kind: ConversationKind, store: Optional[Store]) ->
             logo = _store_logo_url(user.store)
             if logo:
                 avatar = logo
+        else:
+            name = _user_display_name(user)
+    elif user_has_role(user, "rider"):
+        role = "rider"
+        name = _user_display_name(user)
+    elif user_has_role(user, "buyer"):
+        role = "buyer"
+        name = _user_display_name(user)
     elif user_has_role(user, "admin"):
         role = "admin"
         name = "Yamada Support"

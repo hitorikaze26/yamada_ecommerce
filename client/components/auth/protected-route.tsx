@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, type ReactNode } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/context/auth-context"
 import type { UserRole } from "@/lib/types"
 import { dashboardRoutes } from "@/lib/auth/session"
+import { canAccessRoute, loginPathForRole, roleForPathname } from "@/lib/auth/rbac"
 import { Icon } from "@/components/ui/icon"
 
 interface ProtectedRouteProps {
@@ -16,19 +17,29 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, allowedRoles, redirectTo = "/auth/login" }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push(redirectTo)
+      const pathRole = roleForPathname(pathname)
+      const loginTarget =
+        pathRole != null
+          ? loginPathForRole(pathRole) + (pathname ? `&redirect=${encodeURIComponent(pathname)}` : "")
+          : redirectTo
+      router.push(loginTarget)
+      return
     }
 
-    if (!isLoading && isAuthenticated && allowedRoles && user) {
-      if (!allowedRoles.includes(user.role)) {
-        // Redirect to appropriate dashboard based on role
+    if (!isLoading && isAuthenticated && user) {
+      if (allowedRoles && !allowedRoles.includes(user.role)) {
+        router.push(dashboardRoutes[user.role])
+        return
+      }
+      if (!canAccessRoute(user.role, pathname)) {
         router.push(dashboardRoutes[user.role])
       }
     }
-  }, [isLoading, isAuthenticated, user, allowedRoles, router, redirectTo])
+  }, [isLoading, isAuthenticated, user, allowedRoles, router, redirectTo, pathname])
 
   if (isLoading) {
     return (

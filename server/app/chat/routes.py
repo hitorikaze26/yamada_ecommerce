@@ -12,6 +12,7 @@ from werkzeug.utils import secure_filename
 
 from . import chat
 from . import service as chat_svc
+from app.extensions import limiter
 from app.models import (
     db,
     Conversation,
@@ -366,6 +367,7 @@ def unread_count():
 
 @chat.post("/upload")
 @jwt_required()
+@limiter.limit("20 per minute")
 def upload_attachment():
     if "file" not in request.files:
         return jsonify(msg="No file provided"), 400
@@ -380,7 +382,10 @@ def upload_attachment():
     from app.utils.upload import public_url_for_stored_path, save_upload
 
     stored_name = f"{uuid.uuid4().hex}_{secure_filename(f.filename)}"
-    stored_path = save_upload(f, "chat_uploads", filename=stored_name)
+    try:
+        stored_path = save_upload(f, "chat_uploads", filename=stored_name)
+    except ValueError as exc:
+        return jsonify(msg=str(exc)), 400
     url = public_url_for_stored_path(stored_path)
     if not url.startswith("http") and not url.startswith("/"):
         url = f"/static/{stored_path.lstrip('/')}"

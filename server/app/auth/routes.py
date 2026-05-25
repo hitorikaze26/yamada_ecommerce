@@ -70,7 +70,19 @@ def refresh_expiring_jwts(response):
         now = datetime.now(timezone.utc)
         target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
         if target_timestamp > exp_timestamp:
-            access_token = create_access_token(identity=get_jwt_identity())
+            identity = get_jwt_identity()
+            claims = {}
+            try:
+                user_id = int(identity)
+                user = db.session.get(User, user_id)
+                if user is not None:
+                    claims = _build_jwt_claims(user)
+            except (TypeError, ValueError):
+                pass
+            access_token = create_access_token(
+                identity=identity,
+                additional_claims=claims,
+            )
             set_access_cookies(response, access_token)
         return response
     except (RuntimeError, KeyError):
@@ -119,10 +131,22 @@ def _user_role_ids(user_id: int) -> list:
 
 def _user_role_names(role_ids: list) -> list:
     names: list[str] = []
+    missing_ids: list[int] = []
     for role_id in role_ids:
         name = ROLE_NAME_BY_ID.get(role_id)
-        if name and name not in names:
-            names.append(name)
+        if name:
+            if name not in names:
+                names.append(name)
+        else:
+            missing_ids.append(role_id)
+    if missing_ids:
+        db_roles = db.session.execute(
+            select(Role).where(Role.id.in_(missing_ids))
+        ).scalars().all()
+        for role_row in db_roles:
+            db_name = (role_row.name or "").strip().lower()
+            if db_name and db_name not in names:
+                names.append(db_name)
     return names
 
 
@@ -142,20 +166,18 @@ def _user_is_verified(user: User, role_ids: list) -> bool:
 
 def _build_jwt_claims(user: User) -> dict:
     user_roles = _user_role_ids(user.id)
+    role_names = _user_role_names(user_roles)
     claims = {
-        "is_buyer": True,
-        "is_seller": False,
-        "is_rider": False,
-        "is_admin": False,
+        "is_buyer": RoleTypes.BUYER.value in user_roles,
+        "is_seller": RoleTypes.SELLER.value in user_roles,
+        "is_rider": RoleTypes.RIDER.value in user_roles,
+        "is_admin": RoleTypes.ADMIN.value in user_roles,
+        "roles": role_names,
     }
-    if RoleTypes.SELLER.value in user_roles:
-        claims["is_seller"] = True
-    if RoleTypes.RIDER.value in user_roles:
-        claims["is_rider"] = True
-    if RoleTypes.ADMIN.value in user_roles:
+    if claims["is_admin"]:
         claims["is_rider"] = False
         claims["is_seller"] = False
-        claims["is_admin"] = True
+        claims["is_buyer"] = False
     return claims
 
 

@@ -196,12 +196,12 @@ def _get_user_role_from_claims() -> str:
     claims = get_jwt()
     if claims.get('is_admin'):
         return 'admin'
-    if claims.get('is_buyer'):
-        return 'buyer'
     if claims.get('is_seller'):
         return 'seller'
     if claims.get('is_rider'):
         return 'rider'
+    if claims.get('is_buyer'):
+        return 'buyer'
     return 'buyer'
 
 

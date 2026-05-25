@@ -52,8 +52,9 @@ async function hydrateUser(
   session: AuthSessionDto,
   preferredRole: UserRole | null,
   loginVerified?: boolean,
+  pathname?: string | null,
 ): Promise<User | null> {
-  const role = resolveHydrationRole(preferredRole, session.roles)
+  const role = resolveHydrationRole(preferredRole, session.roles, pathname)
   if (!role) return null
 
   const profile = await fetchRoleProfile(role)
@@ -102,7 +103,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const storedRole = localStorage.getItem(ROLE_STORAGE_KEY) as UserRole | null
-        const hydrated = await hydrateUser(session, storedRole, session.is_verified)
+        const pathname =
+          typeof window !== "undefined" ? window.location.pathname : null
+        const hydrated = await hydrateUser(
+          session,
+          storedRole,
+          session.is_verified,
+          pathname,
+        )
 
         if (!hydrated) {
           clearClientAuth()
@@ -163,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(
         serverRoles.length === 0
           ? "Account has no roles assigned. Contact support."
-          : "This account cannot use the buyer portal.",
+          : `This account cannot use the ${role} portal. Try a different sign-in link.`,
       )
     }
 
@@ -174,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const destination =
       redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
         ? redirectTo
-        : dashboardRoutes[role]
+        : dashboardRoutes[userData.role]
 
     router.push(destination)
   }
