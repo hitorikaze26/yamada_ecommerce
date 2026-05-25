@@ -84,6 +84,53 @@ def _normalize_category_token(value) -> str | None:
     return CATEGORY_ALIASES_TO_ID.get(token.lower())
 
 
+def _extract_category_tokens(raw) -> list[str]:
+    """Extract category tokens from mixed payload shapes.
+
+    Supports:
+    - single string ID/name
+    - comma-separated string
+    - JSON string array
+    - list/tuple/set values
+    - objects like {id: ..., name: ...}
+    """
+    if raw is None:
+        return []
+
+    # JSON string array / object
+    if isinstance(raw, str):
+        token = raw.strip()
+        if not token:
+            return []
+
+        if token.startswith('[') or token.startswith('{'):
+            try:
+                parsed = json.loads(token)
+                return _extract_category_tokens(parsed)
+            except Exception:
+                pass
+
+        # comma-separated fallback
+        if ',' in token:
+            return [part.strip() for part in token.split(',') if part.strip()]
+
+        return [token]
+
+    if isinstance(raw, dict):
+        for key in ("id", "category_id", "slug", "name", "label", "value"):
+            if key in raw and raw.get(key):
+                return [str(raw.get(key)).strip()]
+        return []
+
+    if isinstance(raw, (list, tuple, set)):
+        tokens: list[str] = []
+        for item in raw:
+            tokens.extend(_extract_category_tokens(item))
+        return [t for t in tokens if t]
+
+    return [str(raw).strip()]
+
+
 from app.utils.static_urls import public_static_url as _public_image_url
 
 @products_bp.get('/product/<int:product_id>')
@@ -359,18 +406,8 @@ def createProduct():
             size_chart_raw = form.get('size_chart')
             low_stock_threshold_raw = form.get('low_stock_threshold')
 
-        if categories_raw:
-            if isinstance(categories_raw, str) and categories_raw.strip().startswith('['):
-                try:
-                    parsed = json.loads(categories_raw)
-                    if isinstance(parsed, list):
-                        category_ids = [str(c) for c in parsed]
-                    else:
-                        category_ids = [str(parsed)]
-                except Exception:
-                    category_ids = []
-            else:
-                category_ids = [str(categories_raw)]
+        category_ids = _extract_category_tokens(categories_raw)
+        allowed_category_ids = _extract_category_tokens(allowed_category_ids)
 
         # Normalize selected categories and seller-allowed categories to canonical IDs
         normalized_selected = [
@@ -388,11 +425,23 @@ def createProduct():
         category_ids = list(dict.fromkeys(normalized_selected))
         allowed_category_ids = list(dict.fromkeys(normalized_allowed))
 
+        current_app.logger.info(
+            "[createProduct] category normalization seller_id=%s selected=%s allowed=%s",
+            current_user.id if current_user else None,
+            category_ids,
+            allowed_category_ids,
+        )
+
         # Enforce that selected categories are restricted to those registered for this seller
         if allowed_category_ids:
             category_ids = [cid for cid in category_ids if cid in allowed_category_ids]
 
         if categories_raw and not category_ids:
+            current_app.logger.warning(
+                "[createProduct] rejected category seller_id=%s raw=%s",
+                current_user.id if current_user else None,
+                categories_raw,
+            )
             raise ValueError("Selected category is not allowed for this seller")
 
         if not name:
