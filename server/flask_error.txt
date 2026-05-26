@@ -1,0 +1,1443 @@
+C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_limiter\_extension.py:364: UserWarning: Using the in-memory storage for tracking rate limits as no storage was explicitly specified. This is not recommended for production use. See: https://flask-limiter.readthedocs.io#configuring-a-storage-backend for documentation about configuring the storage backend.
+  warnings.warn(
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.11:5000
+Press CTRL+C to quit
+ * Restarting with stat
+C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_limiter\_extension.py:364: UserWarning: Using the in-memory storage for tracking rate limits as no storage was explicitly specified. This is not recommended for production use. See: https://flask-limiter.readthedocs.io#configuring-a-storage-backend for documentation about configuring the storage backend.
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 142-396-491
+127.0.0.1 - - [26/May/2026 08:00:08] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:00:15] "POST /api/accounts/login HTTP/1.1" 400 -
+127.0.0.1 - - [26/May/2026 08:01:26] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:01:59] "GET /api/accounts/protected HTTP/1.1" 401 -
+127.0.0.1 - - [26/May/2026 08:02:21] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:02:47] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:02:48] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:02:54] "GET /api/accounts/protected HTTP/1.1" 401 -
+127.0.0.1 - - [26/May/2026 08:03:03] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:15] "GET /api/accounts/protected HTTP/1.1" 401 -
+127.0.0.1 - - [26/May/2026 08:03:23] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:45] "OPTIONS /api/accounts/protected HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:47] "GET /api/accounts/protected HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:47] "OPTIONS /api/cart/get-cart HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:47] "OPTIONS /api/accounts/buyer/profile HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:47] "OPTIONS /api/chat/unread-count HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:47] "OPTIONS /api/notifications HTTP/1.1" 200 -
+message handler error
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\server.py", line 451, in run_handler
+    return self.handlers[event](*args)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\socketio\server.py", line 656, in _handle_eio_message
+    self._handle_connect(eio_sid, pkt.namespace, pkt.data)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\socketio\server.py", line 535, in _handle_connect
+    success = self._trigger_event(
+        'connect', namespace, sid, self.environ[eio_sid], data)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\socketio\server.py", line 621, in _trigger_event
+    return handler(*args)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 306, in _handler
+    return self._handle_event(handler, message, real_ns, sid,
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              *args)
+                              ^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 854, in _handle_event
+    ret = handler(auth)
+  File "D:\yamada_e-comerce_part2\server\app\notifications\realtime.py", line 61, in on_connect
+    decoded = decode_token(token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:47] "GET /api/chat/unread-count HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:47] "GET /api/cart/get-cart HTTP/1.1" 500 -
+127.0.0.1 - - [26/May/2026 08:03:47] "OPTIONS /api/chat/conversations HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:47] "GET /api/accounts/buyer/profile HTTP/1.1" 500 -
+127.0.0.1 - - [26/May/2026 08:03:47] "Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+GET /api/notifications HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:47] "GET /api/chat/conversations HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:53] "OPTIONS /api/accounts/seller/profile HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:53] "OPTIONS /api/accounts/protected HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:53] "OPTIONS /api/notifications?role=seller HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:53] "OPTIONS /api/accounts/seller/profile HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:53] "OPTIONS /api/accounts/protected HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:53] "OPTIONS /api/notifications?role=seller HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/accounts/protected HTTP/1.1" 500 -
+127.0.0.1 - - [26/May/2026 08:03:53] "Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+GET /api/accounts/seller/profile HTTP/1.1" 500 -
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/notifications?role=seller HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/accounts/seller/profile HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/accounts/seller/profile HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/accounts/protected HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/notifications?role=seller HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/accounts/seller/profile HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/accounts/protected HTTP/1.1" 500 -
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/notifications?role=seller HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/accounts/seller/profile HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/accounts/seller/profile HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:03:53] "GET /api/accounts/seller/profile HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 167, in decorator
+    verify_jwt_in_request(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\jwt_manager.py", line 541, in _decode_jwt_from_config
+    secret = self._decode_key_callback(unverified_headers, unverified_claims)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\default_callbacks.py", line 153, in default_decode_key_callback
+    return config.decode_key
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 40, in decode_key
+    return self._public_key if self.is_asymmetric else self._secret_key
+                                                       ^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_jwt_extended\config.py", line 238, in _secret_key
+    raise RuntimeError(
+    ^
+RuntimeError: JWT_SECRET_KEY or flask SECRET_KEY must be set when using symmetric algorithm "HS256"
+127.0.0.1 - - [26/May/2026 08:04:02] "OPTIONS /api/accounts/logout HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:04:02] "POST /api/accounts/logout HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:04:02] "GET /socket.io/?EIO=4&transport=websocket HTTP/1.1" 500 -
+Error on request:
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\werkzeug\serving.py", line 371, in run_wsgi
+    execute(self.server.app)
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\werkzeug\serving.py", line 337, in execute
+    write(b"")
+    ~~~~~^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\werkzeug\serving.py", line 262, in write
+    assert status_set is not None, "write() before start_response"
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: write() before start_response
+127.0.0.1 - - [26/May/2026 08:04:14] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+[2026-05-26 08:04:14,874] INFO in routes: Login attempt with data keys: ['username', 'password', 'role']
+[2026-05-26 08:04:14,875] INFO in routes: Login attempt for username/email: l87014977@gmail.com, requested role: buyer
+127.0.0.1 - - [26/May/2026 08:04:15] "POST /api/accounts/login HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 365, in __init__
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 681, in connect
+    self._request_authentication()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 972, in _request_authentication
+    auth_packet = self._process_auth(plugin_name, auth_packet)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 1063, in _process_auth
+    pkt = self._read_packet()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 782, in _read_packet
+    packet.raise_for_error()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1045, "Access denied for user 'root'@'localhost' (using password: YES)")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_limiter\_limits.py", line 326, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\yamada_e-comerce_part2\server\app\auth\routes.py", line 275, in login
+    user = db.session.execute(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\scoping.py", line 765, in execute
+    return self._proxied.execute(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 365, in __init__
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 681, in connect
+    self._request_authentication()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 972, in _request_authentication
+    auth_packet = self._process_auth(plugin_name, auth_packet)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 1063, in _process_auth
+    pkt = self._read_packet()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 782, in _read_packet
+    packet.raise_for_error()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1045, "Access denied for user 'root'@'localhost' (using password: YES)")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+127.0.0.1 - - [26/May/2026 08:04:26] "GET /api/products?limit=8&sort=popular HTTP/1.1" 500 -
+127.0.0.1 - - [26/May/2026 08:04:26] "GET /api/products?limit=8&sort=newest HTTP/1.1" 500 -
+127.0.0.1 - - [26/May/2026 08:04:26] "GET /api/products?limit=8&sort=popular HTTP/1.1" 500 -
+127.0.0.1 - - [26/May/2026 08:04:26] "GET /api/products?limit=8&sort=newest HTTP/1.1" 500 -
+127.0.0.1 - - [26/May/2026 08:04:53] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+[2026-05-26 08:04:53,551] INFO in routes: Login attempt with data keys: ['username', 'password', 'role']
+[2026-05-26 08:04:53,552] INFO in routes: Login attempt for username/email: sofia.reyes@fitfab.ph, requested role: seller
+127.0.0.1 - - [26/May/2026 08:04:53] "POST /api/accounts/login HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 365, in __init__
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 681, in connect
+    self._request_authentication()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 972, in _request_authentication
+    auth_packet = self._process_auth(plugin_name, auth_packet)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 1063, in _process_auth
+    pkt = self._read_packet()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 782, in _read_packet
+    packet.raise_for_error()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1045, "Access denied for user 'root'@'localhost' (using password: YES)")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\engineio\middleware.py", line 74, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\flask_limiter\_limits.py", line 326, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\yamada_e-comerce_part2\server\app\auth\routes.py", line 275, in login
+    user = db.session.execute(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\scoping.py", line 765, in execute
+    return self._proxied.execute(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+    
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\orm\session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 365, in __init__
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 681, in connect
+    self._request_authentication()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 972, in _request_authentication
+    auth_packet = self._process_auth(plugin_name, auth_packet)
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 1063, in _process_auth
+    pkt = self._read_packet()
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 782, in _read_packet
+    packet.raise_for_error()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\ThinkPad\AppData\Roaming\Python\Python314\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1045, "Access denied for user 'root'@'localhost' (using password: YES)")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+127.0.0.1 - - [26/May/2026 08:05:09] "GET /api/accounts/protected HTTP/1.1" 401 -
+127.0.0.1 - - [26/May/2026 08:06:21] "GET /api/accounts/protected HTTP/1.1" 401 -
+127.0.0.1 - - [26/May/2026 08:06:32] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+127.0.0.1 - - [26/May/2026 08:07:34] "OPTIONS /api/accounts/login HTTP/1.1" 200 -
+ * Detected change in 'D:\\yamada_e-comerce_part2\\server\\config.py', reloading
+ * Restarting with stat
+Traceback (most recent call last):
+  File "D:\yamada_e-comerce_part2\server\run.py", line 2, in <module>
+    from app import create_app
+  File "D:\yamada_e-comerce_part2\server\app\__init__.py", line 18, in <module>
+    from config import config, apply_env_overrides
+  File "D:\yamada_e-comerce_part2\server\config.py", line 3, in <module>
+    from lib.env_config import EnvFlags
+ModuleNotFoundError: No module named 'lib.env_config'

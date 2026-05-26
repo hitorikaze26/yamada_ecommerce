@@ -1,7 +1,14 @@
 """Development entry point — DO NOT use in production (gunicorn via wsgi.py)."""
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# MUST load .env before importing app — EnvFlags evaluates at module-import time
+dotenv_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path)
+
 from app import create_app
 from app.notifications.realtime import socketio
-import os
 
 if __name__ == "__main__":
     app = create_app()

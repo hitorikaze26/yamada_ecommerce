@@ -25,10 +25,16 @@ from flask import current_app
 from werkzeug.utils import secure_filename
 
 from app.utils.supabase_storage import storage, path_is_private
+from lib.env_config import EnvFlags
 
 
 def use_supabase_storage() -> bool:
     """Use Supabase when configured (keys present, or explicit force)."""
+    # Respect environment flags for localhost mode
+    if EnvFlags.USE_LOCAL_STORAGE:
+        return False
+    
+    # Original logic for production mode
     cfg = current_app.config
     supabase_enabled = cfg.get("SUPABASE_ENABLED", False)
     force = cfg.get("FORCE_SUPABASE_UPLOADS", False)
@@ -121,14 +127,6 @@ def public_url_for_stored_path(
                     "Failed to sign private storage URL: %s", value
                 )
                 return ""
-
-        try:
-            return storage.get_public_url(value)
-        except Exception:
-            current_app.logger.exception(
-                "Failed to resolve public storage URL: %s", value
-            )
-            pass
 
     from app.utils.static_urls import public_static_url as _fallback_url
 

@@ -13,10 +13,16 @@ to Flask ``url_for("static", ...)`` for local development.
 from __future__ import annotations
 
 from flask import current_app, url_for
+from lib.env_config import EnvFlags
 
 
 def _supabase_configured() -> bool:
     """Check if Supabase Storage is active via Flask app config."""
+    # Respect environment flags for localhost mode
+    if EnvFlags.USE_LOCAL_STORAGE:
+        return False
+    
+    # Original logic for production mode
     cfg = current_app.config
     supabase_enabled = cfg.get("SUPABASE_ENABLED", False)
     force = cfg.get("FORCE_SUPABASE_UPLOADS", False)

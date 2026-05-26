@@ -13,7 +13,15 @@
  * - When unset in dev, defaults to http://127.0.0.1:5000/api.
  * - In production (Vercel), it MUST be set to the Railway API URL.
  * - All consumers read from this module, never directly from process.env.
+ * 
+ * NOTE: Environment flags from @/lib/env-config are used for deployment-specific behavior.
  */
+
+import { getApiBaseUrl, getApiOrigin } from "@/lib/env-config"
+
+// Compute these once at module load time
+const apiBaseUrl = getApiBaseUrl()
+const apiBaseOrigin = getApiOrigin()
 
 function isLocalUrl(url: string): boolean {
   const host = url.replace(/^https?:\/\//, "").split(/[/:]/)[0].toLowerCase()
@@ -31,20 +39,6 @@ function detectEnvironment(): "local" | "production" | "test" {
   return "local"
 }
 
-function resolveApiBaseUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_API_BASE_URL?.trim()
-  if (configured) {
-    return configured.endsWith("/api")
-      ? configured.replace(/\/$/, "")
-      : `${configured.replace(/\/$/, "")}/api`
-  }
-  return "http://127.0.0.1:5000/api"
-}
-
-function resolveApiOrigin(): string {
-  return resolveApiBaseUrl().replace(/\/api(?:\/)?$/, "")
-}
-
 export const Env = {
   /** The current runtime environment. */
   current: detectEnvironment(),
@@ -56,10 +50,10 @@ export const Env = {
   isProduction: detectEnvironment() === "production",
 
   /** Full API base URL (always ends with /api, no trailing slash). */
-  API_BASE_URL: resolveApiBaseUrl(),
+  API_BASE_URL: apiBaseUrl,
 
   /** API origin (base URL without /api suffix) — used for image resolution. */
-  API_BASE_ORIGIN: resolveApiOrigin(),
+  API_BASE_ORIGIN: apiBaseOrigin,
 
   /**
    * Resolve a stored file path to a usable absolute URL.
@@ -83,7 +77,8 @@ export const Env = {
       return value
     }
 
-    const origin = this.API_BASE_ORIGIN.replace(/\/static$/, "")
+    // Use the precomputed apiBaseOrigin
+    const origin = apiBaseOrigin.replace(/\/static$/, "")
 
     if (value.startsWith("/static/")) {
       return `${origin}${value}`

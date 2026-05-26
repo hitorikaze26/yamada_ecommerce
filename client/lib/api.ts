@@ -1,17 +1,19 @@
 import axios, { type AxiosInstance, type AxiosError, type CancelTokenSource } from "axios"
 import { Env } from "@/lib/env"
+import { EnvFlags, getApiBaseUrl, getApiOrigin } from "@/lib/env-config"
 
 /**
  * Centralized API configuration.
  *
- * All environment-aware settings flow through `Env` (lib/env.ts).
- * - `API_BASE_URL` — always ends in /api
- * - `API_BASE_ORIGIN` — origin (scheme + host) extracted from API_BASE_URL
- * - `resolveImageUrl` — centralized image URL resolution (local + production)
+ * All environment-aware settings flow through `Env` (lib/env.ts) for detection
+ * and `EnvFlags` (lib/env-config.ts) for behavior control.
+ * - `API_BASE_URL` �?" always ends in /api
+ * - `API_BASE_ORIGIN` �?" origin (scheme + host) extracted from API_BASE_URL
+ * - `resolveImageUrl` �?" centralized image URL resolution (local + production)
  */
 
-export const API_BASE_URL = Env.API_BASE_URL
-export const API_BASE_ORIGIN = Env.API_BASE_ORIGIN
+export const API_BASE_URL = getApiBaseUrl()
+export const API_BASE_ORIGIN = getApiOrigin()
 
 export const isApiConfiguredForProduction =
   Boolean(process.env.NEXT_PUBLIC_API_BASE_URL?.trim()) ||

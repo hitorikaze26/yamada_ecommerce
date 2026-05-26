@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from lib.env_config import EnvFlags
 
 
 def _normalize_database_url(url: str) -> str:
@@ -35,62 +36,21 @@ def _engine_options_for_uri(uri: str | None) -> dict:
 
 
 def _resolve_frontend_url() -> str:
-    """Derive canonical frontend URL from env or build from Railway."""
-    explicit = os.environ.get("FRONTEND_URL", "").strip()
-    if explicit:
-        return explicit.rstrip("/")
-    vercel = os.environ.get("VERCEL_URL", "").strip()
-    if vercel:
-        return f"https://{vercel}"
-    vercel_branch = os.environ.get("VERCEL_BRANCH_URL", "").strip()
-    if vercel_branch:
-        return f"https://{vercel_branch}"
-    return "http://localhost:3000"
+    """Derive canonical frontend URL from env or build from Railway/Vercel."""
+    # Use centralized environment configuration
+    return EnvFlags.get_frontend_url()
 
 
 def _resolve_api_base_url() -> str:
     """Derive canonical backend API base URL from env or build from Railway."""
-    explicit = os.environ.get("API_BASE_URL", "").strip()
-    if explicit:
-        return explicit.rstrip("/")
-    railway = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip()
-    if railway:
-        return f"https://{railway}/api"
-    return "http://127.0.0.1:5000/api"
+    # Use centralized environment configuration
+    return EnvFlags.get_api_base_url()
 
 
 def _resolve_cors_origins(frontend_url: str) -> list[str]:
     """Build allowed CORS origins from FRONTEND_URL, CORS_ORIGINS env, and defaults."""
-    LOCAL_FALLBACKS = ("http://localhost:3000", "http://127.0.0.1:3000")
-
-    raw = os.environ.get("CORS_ORIGINS", "").strip()
-    origins: list[str] = []
-    seen: set[str] = set()
-
-    for part in raw.replace(";", ",").split(","):
-        origin = part.strip().strip('"').strip("'")
-        if origin and origin not in seen:
-            seen.add(origin)
-            origins.append(origin)
-
-    if frontend_url and frontend_url not in seen:
-        seen.add(frontend_url)
-        origins.append(frontend_url)
-
-    if frontend_url == "http://localhost:3000":
-        for fallback in LOCAL_FALLBACKS:
-            if fallback not in seen:
-                seen.add(fallback)
-                origins.append(fallback)
-
-    railwy_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip()
-    if railwy_domain:
-        railwy_origin = f"https://{railwy_domain}"
-        if railwy_origin not in seen:
-            seen.add(railwy_origin)
-            origins.append(railwy_origin)
-
-    return origins
+    # Use centralized environment configuration
+    return EnvFlags.get_cors_origins(frontend_url)
 
 
 class Config:
@@ -144,24 +104,26 @@ class DevelopmentConfig(Config):
 
     DB_SERVER = os.environ.get("DB_SERVER", "127.0.0.1")
 
+    # Development runs on HTTP localhost — cookies must NOT be Secure
     JWT_COOKIE_SECURE = False
     JWT_COOKIE_SAMESITE = "Lax"
 
     _dev_uri = _database_url(
         os.environ.get(
             "DEV_DATABASE_URL",
-            "mysql+pymysql://root:changeme@localhost:3306/yamada_db",
+            "mysql+pymysql://root:hitorikaze%401226@localhost:3306/yamada_db",
         )
     )
     SQLALCHEMY_DATABASE_URI = _dev_uri
     SQLALCHEMY_ENGINE_OPTIONS = _engine_options_for_uri(_dev_uri)
 
-    SUPPORTS_LOCAL_STORAGE = True
+    SUPPORTS_LOCAL_STORAGE = EnvFlags.USE_LOCAL_STORAGE
 
 
 class ProductionConfig(Config):
     DEBUG = False
 
+    # Production uses HTTPS — Secure + SameSite=None for cross-origin cookies
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_SAMESITE = "None"
 
@@ -173,7 +135,7 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = _prod_uri
     SQLALCHEMY_ENGINE_OPTIONS = _engine_options_for_uri(_prod_uri)
 
-    SUPPORTS_LOCAL_STORAGE = False
+    SUPPORTS_LOCAL_STORAGE = EnvFlags.USE_LOCAL_STORAGE
 
 
 class TestingConfig(Config):
@@ -182,7 +144,7 @@ class TestingConfig(Config):
 
     DB_SERVER = "127.0.0.1"
 
-    JWT_COOKIE_SECURE = False
+    JWT_COOKIE_SECURE = False  # Always false in testing
     JWT_COOKIE_SAMESITE = "Lax"
 
     _test_uri = _database_url(
@@ -201,7 +163,7 @@ class TestingConfig(Config):
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_DEFAULT_SENDER = "Yamada Test <test@example.com>"
 
-    SUPPORTS_LOCAL_STORAGE = True
+    SUPPORTS_LOCAL_STORAGE = True  # Always true in testing
 
 
 config = {
@@ -231,6 +193,9 @@ def apply_env_overrides(app) -> None:
     ).lower() in ("1", "true", "yes")
     app.config["CORS_ORIGINS"] = _resolve_cors_origins(frontend_url)
 
+    # Override SUPPORTS_LOCAL_STORAGE based on environment flags
+    app.config["SUPPORTS_LOCAL_STORAGE"] = EnvFlags.USE_LOCAL_STORAGE
+
     if env == "production":
         uri = _database_url()
     elif env == "testing":
@@ -244,7 +209,7 @@ def apply_env_overrides(app) -> None:
         uri = _database_url(
             os.environ.get(
                 "DEV_DATABASE_URL",
-                "mysql+pymysql://root:changeme@localhost:3306/yamada_db",
+                "mysql+pymysql://root:hitorikaze%401226@localhost:3306/yamada_db",
             )
         )
     if uri:
