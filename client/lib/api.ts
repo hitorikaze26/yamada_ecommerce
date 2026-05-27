@@ -47,15 +47,23 @@ export async function resolvePrivateDocUrl(
   }
 }
 
-// Create axios instance with default config
-export const apiClient: AxiosInstance = axios.create({
+const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 })
+
+// ✅ interceptor AFTER creation
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 429) {
+      console.warn("Rate limited:", error.config?.url)
+    }
+    return Promise.reject(error)
+  }
+)
+
+export { apiClient }
 
 // Helper to read a cookie by name (used for CSRF token with JWT-in-cookies setup)
 const getCookie = (name: string): string | null => {
@@ -904,7 +912,7 @@ export const notificationsApi = {
     apiClient.post("/notifications/mark-all-read", data ?? {}),
 }
 
-// Philippine Geographic API (proxied through Next.js API routes to avoid CORS)
+// Philippine Geographic API (proxied through Next.js /api/geo/ rewrite to psgc.gitlab.io)
 export const phGeoApi = {
   getRegions: () => axios.get("/api/geo/regions"),
   getProvinces: (regionCode: string) => axios.get(`/api/geo/regions/${regionCode}/provinces`),

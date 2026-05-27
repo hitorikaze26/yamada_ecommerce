@@ -15,7 +15,8 @@
  */
 
 // Read environment variables with defaults for development
-const APP_ENV = process.env.APP_ENV || "development";
+// NEXT_PUBLIC_APP_ENV is available on both client and server; APP_ENV is server-only
+const APP_ENV = process.env.NEXT_PUBLIC_APP_ENV || process.env.APP_ENV || "development";
 const USE_LOCAL_STORAGE = 
   process.env.USE_LOCAL_STORAGE?.toLowerCase() === "true" || 
   APP_ENV === "development";
