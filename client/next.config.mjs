@@ -30,31 +30,32 @@ const nextConfig = {
         port: "5000",
         pathname: "/static/**",
       },
-      // Production patterns (conditionally included based on env)
-      ...(process.env.USE_PRODUCTION_URLS?.toLowerCase() === "true" ? [
-        {
-          protocol: "https",
-          hostname: "**.vercel.app",
-        },
-        {
-          protocol: "https",
-          hostname: "**.railway.app",
-        },
-        {
-          protocol: "https",
-          hostname: "*.supabase.co",
-          pathname: "/storage/v1/object/public/**",
-        },
-        {
-          protocol: "https",
-          hostname: "*.supabase.co",
-          pathname: "/storage/v1/object/sign/**",
-        },
-        {
-          protocol: "https",
-          hostname: "placehold.co",
-        },
-      ] : []),
+      // Railway (production backend)
+      {
+        protocol: "https",
+        hostname: "**.railway.app",
+      },
+      // Supabase Storage (production image server)
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/storage/v1/object/sign/**",
+      },
+      // Vercel (deployment URL)
+      {
+        protocol: "https",
+        hostname: "**.vercel.app",
+      },
+      // Placeholder images
+      {
+        protocol: "https",
+        hostname: "placehold.co",
+      },
     ],
   },
   compiler: {
