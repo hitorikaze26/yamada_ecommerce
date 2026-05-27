@@ -326,11 +326,11 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
 
   useEffect(() => {
     const loadReviews = async () => {
-      if (!productId) return
+      if (!productId || productId === "") return  // ✅ add this guard
+      setIsLoadingReviews(true)                   // ✅ also set loading to true here
       try {
         const reviewsRes = await productsApi.getReviews(productId)
         const reviewsData = (reviewsRes.data as any)?.reviews ?? []
-
         setReviews(reviewsData as SerializedReview[])
       } catch (error) {
         console.error("Failed to load product reviews", error)
