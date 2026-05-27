@@ -89,6 +89,23 @@ export default function RiderMobileSettings() {
     }
   }
 
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: "Logout",
+      text: "Are you sure you want to logout?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, logout",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#ef4444",
+    })
+
+    if (result.isConfirmed) {
+      await logout()
+      router.push("/landing")
+    }
+  }
+
   return (
     <div className="p-4 space-y-6">
       <div>
@@ -147,6 +164,26 @@ export default function RiderMobileSettings() {
           <div className="flex-1">
             <p className="font-medium text-sm text-red-600">Delete Account</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Permanently remove your account</p>
+          </div>
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-2xl divide-y divide-gray-100 dark:divide-gray-700 shadow-sm">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-4 px-4 py-4 text-left"
+        >
+          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-sm dark:text-white">Logout</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Sign out of your account</p>
           </div>
           <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

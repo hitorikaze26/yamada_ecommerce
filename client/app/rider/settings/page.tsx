@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Swal from "sweetalert2"
 import { Icon } from "@/components/ui/icon"
 import { GlassAlert } from "@/components/ui/glass-alert"
 import { useAuth } from "@/context/auth-context"
@@ -136,6 +137,23 @@ export default function RiderSettingsPage() {
     }
   }
 
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: "Logout",
+      text: "Are you sure you want to logout?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, logout",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#ef4444",
+    })
+
+    if (result.isConfirmed) {
+      await logout()
+      router.push("/landing")
+    }
+  }
+
   return (
     <div className="space-y-6">
       <GlassAlert
@@ -175,6 +193,15 @@ export default function RiderSettingsPage() {
           subtitle="Permanently remove your account and all data"
           danger
           onClick={() => setDeleteOpen(true)}
+        />
+      </div>
+
+      <div className="bg-card border rounded-2xl divide-y">
+        <SettingsRow
+          icon="sign-out"
+          title="Logout"
+          subtitle="Sign out of your account"
+          onClick={handleLogout}
         />
       </div>
 
