@@ -367,7 +367,11 @@ def _serialize_order(order: Order) -> dict:
         rider_delivery = None
 
     # Calculate financial breakdown
-    financials = CommissionService.calculate_order_financials(order)
+    financials = {}
+    try:
+        financials = CommissionService.calculate_order_financials(order)
+    except Exception:
+        financials = {}
     
     # Calculate grand total for client compatibility
     subtotal = float(order.total_amount or 0.0)

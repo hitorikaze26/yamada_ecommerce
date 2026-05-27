@@ -94,7 +94,7 @@ function ProductMessageStoreButton({ storeId }: { storeId: number }) {
 export default function ProductPage(props: { params: Promise<{ slug: string }> }) {
   const params = use(props.params)
   const productSlug = params.slug
-  const productId = extractProductIdFromSlug(productSlug)
+  const productId = extractProductIdFromSlug(productSlug || "")
   const [product, setProduct] = useState<Product | null>(null)
   const [media, setMedia] = useState<ProductMediaItem[]>([])
   const [similarProducts, setSimilarProducts] = useState<SimilarProductItem[]>([])
@@ -326,6 +326,7 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
 
   useEffect(() => {
     const loadReviews = async () => {
+      if (!productId) return
       try {
         const reviewsRes = await productsApi.getReviews(productId)
         const reviewsData = (reviewsRes.data as any)?.reviews ?? []
