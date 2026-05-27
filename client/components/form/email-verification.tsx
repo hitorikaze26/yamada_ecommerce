@@ -14,18 +14,18 @@ interface EmailVerificationProps {
 }
 
 export function EmailVerification({ email, onVerified }: EmailVerificationProps) {
-  const [step, setStep] = useState<"send" | "input" | "verified">("send")
   const [isSending, setIsSending] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [error, setError] = useState("")
   const [resetKey, setResetKey] = useState(0)
+  const [sent, setSent] = useState(false)
 
   const handleSendCode = useCallback(async () => {
     setError("")
     setIsSending(true)
     try {
       await authApi.sendVerificationCode(email)
-      setStep("input")
+      setSent(true)
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { msg?: string } } })?.response?.data?.msg ??
@@ -41,7 +41,6 @@ export function EmailVerification({ email, onVerified }: EmailVerificationProps)
     setIsVerifying(true)
     try {
       await authApi.verifyEmailCode(email, code)
-      setStep("verified")
       onVerified()
     } catch (err: unknown) {
       const msg =
@@ -54,35 +53,9 @@ export function EmailVerification({ email, onVerified }: EmailVerificationProps)
     }
   }, [email, onVerified])
 
-  if (step === "verified") {
-    return (
-      <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
-        <Icon name="check-circle" />
-        <span>Email verified</span>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-3">
-      {step === "send" ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleSendCode}
-          disabled={isSending}
-        >
-          {isSending ? (
-            <>
-              <Icon name="spinner" className="mr-2 animate-spin" />
-              Sending...
-            </>
-          ) : (
-            "Verify email"
-          )}
-        </Button>
-      ) : (
+      {sent ? (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             Enter the 6-digit code sent to <strong>{email}</strong>
@@ -117,6 +90,30 @@ export function EmailVerification({ email, onVerified }: EmailVerificationProps)
               {isSending ? "Sending..." : "Resend code"}
             </Button>
           </div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSendCode}
+            disabled={isSending}
+          >
+            {isSending ? (
+              <>
+                <Icon name="spinner" className="mr-2 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              "Send verification code"
+            )}
+          </Button>
+          {error && (
+            <div className="p-2 rounded-lg bg-destructive/10 text-destructive text-xs flex items-center gap-2">
+              <Icon name="exclamation-circle" />
+              {error}
+            </div>
+          )}
         </div>
       )}
     </div>
