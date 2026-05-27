@@ -50,6 +50,7 @@ export async function resolvePrivateDocUrl(
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: 30_000,
 })
 
 // ✅ interceptor AFTER creation

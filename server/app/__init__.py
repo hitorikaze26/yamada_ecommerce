@@ -96,10 +96,12 @@ def create_app(test_config=None):
     # Catch 404s under /static/ and return placeholder instead
     @app.errorhandler(404)
     def not_found(e):
-        from flask import request, Response
+        from flask import request, Response, jsonify
         if request.path.startswith("/static/"):
             return Response(PLACEHOLDER_SVG, mimetype="image/svg+xml")
-        return {"error": str(e)}, 404
+        resp = jsonify({"error": "Not found"})
+        resp.status_code = 404
+        return resp
 
     @app.route("/api/health")
     def health_check():
