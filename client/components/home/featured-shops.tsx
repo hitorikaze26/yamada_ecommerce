@@ -53,7 +53,7 @@ export function FeaturedShops({ shops }: FeaturedShopsProps) {
           <span className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 block">
             Trusted Partners
           </span>
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Featured Shops</h2>
+          <h2 className="text-2xl md:text-3xl font-semibold mb-2">Featured Shops</h2>
           <p className="text-muted-foreground text-sm md:text-base">
             Discover our curated selection of trusted sellers
           </p>
@@ -70,7 +70,7 @@ export function FeaturedShops({ shops }: FeaturedShopsProps) {
             <motion.div key={shop.id} variants={itemVariants} className="h-full">
               <Link
                 href={`/seller/${shop.id}`}
-                className="group block h-full bg-card rounded-2xl border p-5 md:p-6 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                className="group block h-full bg-card rounded-xl border p-5 md:p-6 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
               >
                 <div className="flex items-center gap-4 mb-4">
                   <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden bg-muted ring-2 ring-transparent group-hover:ring-primary/20 transition-all">

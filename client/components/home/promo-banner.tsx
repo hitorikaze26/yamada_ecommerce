@@ -26,7 +26,7 @@ export function PromoBanner() {
               <p className="text-muted-foreground text-sm mb-4">
                 Enjoy complimentary delivery to your doorstep for qualifying orders.
               </p>
-              <Button variant="outline" size="sm" asChild className="rounded-full">
+              <Button variant="outline" size="sm" asChild>
                 <Link href="/search">
                   Shop Now
                   <Icon name="arrow-right" className="ml-2" size="sm" />
@@ -52,7 +52,7 @@ export function PromoBanner() {
               <p className="text-muted-foreground text-sm mb-4">
                 Discover the latest trends and fresh styles for the new season.
               </p>
-              <Button size="sm" asChild className="rounded-full">
+              <Button size="sm" asChild>
                 <Link href="/search?sort=newest">
                   Explore
                   <Icon name="arrow-right" className="ml-2" size="sm" />

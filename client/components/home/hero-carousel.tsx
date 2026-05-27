@@ -83,7 +83,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
                 className="max-w-xl"
               >
                 <span className="text-primary font-medium text-sm md:text-base">{slides[currentIndex].subtitle}</span>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mt-2 mb-4 text-foreground text-balance">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold mt-2 mb-4 text-foreground text-balance">
                   {slides[currentIndex].title}
                 </h1>
                 <p className="text-muted-foreground text-base md:text-lg mb-6 text-pretty">

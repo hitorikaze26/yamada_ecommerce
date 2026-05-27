@@ -21,9 +21,9 @@ export function ProductSection({ title, subtitle, products, viewAllHref }: Produ
         <div className="flex items-end justify-between mb-8 md:mb-10">
           <div className="space-y-1">
             <span className="text-xs font-semibold text-primary uppercase tracking-wider">{subtitle}</span>
-            <h2 className="text-2xl md:text-3xl font-bold">{title}</h2>
+            <h2 className="text-2xl md:text-3xl font-semibold">{title}</h2>
           </div>
-          <Button variant="outline" asChild className="hidden sm:flex rounded-full group">
+          <Button variant="outline" asChild className="hidden sm:flex group">
             <Link href={viewAllHref}>
               View All
               <Icon name="arrow-right" className="ml-2 group-hover:translate-x-1 transition-transform" />

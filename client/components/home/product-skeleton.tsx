@@ -15,7 +15,7 @@ export function ProductSkeleton({ count = 8 }: ProductSkeletonProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: index * 0.05 }}
-          className="bg-card rounded-2xl border overflow-hidden"
+          className="bg-card rounded-xl border overflow-hidden"
         >
           {/* Image Skeleton */}
           <div className="relative aspect-[4/3] bg-muted animate-pulse" />

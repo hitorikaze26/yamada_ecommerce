@@ -41,7 +41,7 @@ export function CategorySection() {
           <span className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 block">
             Browse Collection
           </span>
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Shop by Category</h2>
+          <h2 className="text-2xl md:text-3xl font-semibold mb-2">Shop by Category</h2>
           <p className="text-muted-foreground text-sm md:text-base">
             Find exactly what you&apos;re looking for
           </p>
@@ -58,7 +58,7 @@ export function CategorySection() {
             <motion.div key={category.id} variants={itemVariants} className="h-full">
               <Link
                 href={`/search?category=${category.id}`}
-                className="group flex h-full flex-col items-center p-4 md:p-6 bg-card rounded-2xl border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                className="group flex h-full flex-col items-center p-4 md:p-6 bg-card rounded-xl border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
               >
                 <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Icon name={category.icon} size="lg" className="text-primary" />

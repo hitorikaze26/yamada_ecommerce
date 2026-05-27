@@ -44,7 +44,7 @@ export function NewsletterSection() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center justify-center gap-2 text-green-600 bg-green-50 rounded-xl p-4"
+              className="flex items-center justify-center gap-2 text-primary bg-primary/10 rounded-xl p-4"
             >
               <Icon name="check-circle" />
               <span className="font-medium">Thanks for subscribing! Check your inbox soon.</span>
@@ -56,12 +56,12 @@ export function NewsletterSection() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 rounded-full px-5"
+                className="flex-1 px-5"
                 required
               />
               <Button
                 type="submit"
-                className="rounded-full px-6"
+                className="px-6"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
