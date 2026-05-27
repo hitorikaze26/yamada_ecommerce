@@ -245,6 +245,7 @@ export default function SellerRegistrationPage() {
 
   const handleEmailVerified = () => {
     setEmailVerified(true)
+    showAlert("Email verified successfully", "success")
   }
 
   const handleGoToLogin = () => {

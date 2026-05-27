@@ -216,6 +216,7 @@ export default function RiderRegistrationPage() {
 
   const handleEmailVerified = () => {
     setEmailVerified(true)
+    showAlert("Email verified successfully", "success")
   }
 
   const handleGoToLogin = () => {
