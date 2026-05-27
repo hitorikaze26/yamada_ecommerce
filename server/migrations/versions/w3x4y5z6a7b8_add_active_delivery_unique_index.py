@@ -21,7 +21,7 @@ def upgrade():
         "rider_deliveries",
         ["order_id"],
         unique=True,
-        postgresql_where=sa.text("status != 'cancelled'"),
+        postgresql_where=sa.text("status != 'CANCELLED'"),
     )
 
 
