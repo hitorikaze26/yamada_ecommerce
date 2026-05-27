@@ -961,7 +961,7 @@ class RefundRequest(Base):
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
     reason: Mapped[str] = mapped_column(TEXT, nullable=True)
     status: Mapped[RefundStatus] = mapped_column(
-        Enum(RefundStatus),
+        Enum(RefundStatus, values_callable=lambda x: [e.value for e in x]),
         default=RefundStatus.REQUESTED,
     )
     created_at: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
@@ -1302,7 +1302,7 @@ class Conversation(Base):
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
     kind: Mapped[ConversationKind] = mapped_column(
-        Enum(ConversationKind),
+        Enum(ConversationKind, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
     )
     store_id: Mapped[int] = mapped_column(
@@ -1367,7 +1367,7 @@ class ChatMessage(Base):
     )
     body: Mapped[str] = mapped_column(TEXT, default="")
     message_type: Mapped[ChatMessageType] = mapped_column(
-        Enum(ChatMessageType),
+        Enum(ChatMessageType, values_callable=lambda x: [e.value for e in x]),
         default=ChatMessageType.TEXT,
     )
     metadata_json: Mapped[dict] = mapped_column(JSON, nullable=True)
