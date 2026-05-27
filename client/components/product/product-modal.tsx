@@ -8,6 +8,7 @@ import type { Product, ProductVariation } from "@/lib/types"
 import { useCart } from "@/context/cart-context"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { formatPrice } from "@/lib/format"
 import { VariantPicker } from "@/components/product/variant-picker"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
@@ -44,7 +45,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[90vh] p-0 overflow-hidden rounded-2xl">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[90vh] p-0 overflow-hidden rounded-lg">
         <DialogTitle className="sr-only">{product.name}</DialogTitle>
 
         <div className="flex flex-col md:flex-row md:h-[80vh]">
@@ -83,11 +84,12 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                   <button
                     key={index}
                     onClick={() => setCurrentImageIndex(index)}
-                    className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
+                    className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                       index === currentImageIndex
                         ? "border-white shadow-lg ring-1 ring-black/10 scale-105"
                         : "border-white/60 opacity-70 hover:opacity-100"
                     }`}
+                    aria-label={`View image ${index + 1}`}
                   >
                     <Image src={img || "/placeholder.svg"} alt="" fill className="object-cover" />
                   </button>
@@ -109,7 +111,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
               </Link>
 
               {/* Name */}
-              <h2 className="text-xl md:text-2xl font-bold mt-1.5 mb-2 leading-tight">{product.name}</h2>
+              <h2 className="text-xl md:text-2xl font-semibold mt-1.5 mb-2 leading-tight">{product.name}</h2>
 
               {/* Rating row */}
               <div className="flex items-center gap-2 text-sm mb-4">
@@ -121,8 +123,8 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                       size="sm"
                       className={
                         star <= Math.round(product.rating || 0)
-                          ? "text-amber-400 fill-amber-400"
-                          : "text-gray-300"
+                          ? "text-yellow-500 fill-yellow-500"
+                          : "text-muted-foreground"
                       }
                     />
                   ))}
@@ -142,9 +144,9 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                   </span>
                 )}
                 {product.salePrice && (
-                  <span className="text-xs font-semibold text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-400 px-2 py-0.5 rounded-full">
+                  <Badge variant="destructive" className="rounded-full">
                     -{Math.round((1 - product.salePrice / product.price) * 100)}%
-                  </span>
+                  </Badge>
                 )}
               </div>
 
@@ -172,7 +174,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 rounded-xl border flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
+                    className="w-10 h-10 rounded-md border flex items-center justify-center hover:bg-muted transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label="Decrease quantity"
                   >
                     <Icon name="minus" />
@@ -180,7 +182,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                   <span className="w-12 text-center font-semibold text-lg">{quantity}</span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 rounded-xl border flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
+                    className="w-10 h-10 rounded-md border flex items-center justify-center hover:bg-muted transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label="Increase quantity"
                   >
                     <Icon name="plus" />
