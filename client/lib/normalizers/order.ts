@@ -1,5 +1,6 @@
 import type { Order, OrderItem, OrderStatus } from "@/lib/types"
 import { resolveImageUrl } from "@/lib/api"
+import { orderStatusColors } from "@/lib/order-status"
 import { normalizeProduct } from "./product"
 
 function str(raw: Record<string, unknown>, ...keys: string[]): string {
@@ -203,6 +204,18 @@ export function orderStatusBadgeClass(status: string): string {
   return orderStatusColors[status] ?? "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
 }
 
-export function isOrderDelivered(status: string): boolean {
-  return status === "delivered" || status === "completed"
+export function riderHasProofOfDelivery(
+  riderDelivery?: { status?: string; proofPhotoUrl?: string | null; hasProofPhoto?: boolean | null } | null,
+): boolean {
+  if (!riderDelivery) return false
+  return Boolean(riderDelivery.hasProofPhoto) || Boolean(riderDelivery.proofPhotoUrl?.trim())
+}
+
+export function isOrderDelivered(
+  orderStatus: string,
+  riderDeliveryStatus?: string | null,
+  riderProofPhotoUrl?: string | null,
+): boolean {
+  const effective = getEffectiveOrderStatus(orderStatus, riderDeliveryStatus, riderProofPhotoUrl)
+  return effective === "delivered" || effective === "completed"
 }
