@@ -15,14 +15,25 @@ class EnvConfig {
 
   static String? _dartDefineUrl;
   static String? _dotEnvUrl;
+  static String? _dartDefineStorageUrl;
+  static String? _dotEnvStorageUrl;
 
   /// Must be called once at app startup (from main).
   static void init({
     String? dartDefineUrl,
     String? dotEnvUrl,
+    String? dotEnvSupabaseUrl,
   }) {
     _dartDefineUrl = dartDefineUrl;
     _dotEnvUrl = dotEnvUrl;
+    _dotEnvStorageUrl = dotEnvSupabaseUrl?.nullIfEmpty;
+
+    // Read SUPABASE_STORAGE_URL from --dart-define (takes priority)
+    _dartDefineStorageUrl = const String.fromEnvironment(
+      'SUPABASE_STORAGE_URL',
+      defaultValue: '',
+    ).nullIfEmpty;
+
     developer.log(
       'EnvConfig initialized — API_BASE_URL: $apiBaseUrl${_inProd ? " (PROD)" : ""}',
       name: 'EnvConfig',
@@ -47,12 +58,14 @@ class EnvConfig {
   static bool get _inProd =>
       const bool.fromEnvironment('dart.vm.product');
 
-  /// Supabase Storage public URL pattern (for direct image access).
+  /// Supabase Storage public URL pattern (for direct image CDN access).
+  ///
+  /// Resolution order: --dart-define > .env (injected via [init]) > null.
   static String? get supabaseStorageUrl {
-    return const String.fromEnvironment(
-      'SUPABASE_STORAGE_URL',
-      defaultValue: '',
-    ).nullIfEmpty;
+    if (_dartDefineStorageUrl != null && _dartDefineStorageUrl!.isNotEmpty) {
+      return _dartDefineStorageUrl;
+    }
+    return _dotEnvStorageUrl?.nullIfEmpty;
   }
 
   /// PSGC geographic API base URL.

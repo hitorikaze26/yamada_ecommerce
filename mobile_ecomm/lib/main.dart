@@ -23,12 +23,14 @@ void main() async {
   EnvConfig.init(
     dartDefineUrl: dartDefineUrl.isNotEmpty ? dartDefineUrl : null,
     dotEnvUrl: dotenv.env['API_BASE_URL'],
+    dotEnvSupabaseUrl: dotenv.env['SUPABASE_STORAGE_URL'],
   );
 
   // Log configuration for debugging
   developer.log('═══════════════════════════════════════', name: 'YAMADA');
   developer.log('ENV: ${EnvConfig.label}', name: 'YAMADA');
   developer.log('API_BASE_URL: ${EnvConfig.apiBaseUrl}', name: 'YAMADA');
+  developer.log('SUPABASE_STORAGE_URL: ${EnvConfig.supabaseStorageUrl}', name: 'YAMADA');
   developer.log('PH_SGG_BASE_URL: ${EnvConfig.phSggBaseUrl}', name: 'YAMADA');
   developer.log('═══════════════════════════════════════', name: 'YAMADA');
 

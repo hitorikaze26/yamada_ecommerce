@@ -932,6 +932,16 @@ function AdminUsersContent() {
                                   <span>Order total: {formatPrice(d.orderTotal)}</span>
                                 )}
                               </div>
+                              {d.rate != null && (
+                                <p className="text-[11px] text-muted-foreground">
+                                  Rate: {"★".repeat(Math.round(d.rate))}{"☆".repeat(5 - Math.round(d.rate))} ({d.rate}/5)
+                                </p>
+                              )}
+                              {d.feedback && (
+                                <p className="text-[11px] text-muted-foreground">
+                                  Feedback: {d.feedback}
+                                </p>
+                              )}
                               {d.createdAt && (
                                 <p className="text-[10px] text-muted-foreground">
                                   {new Date(d.createdAt).toLocaleString()}
