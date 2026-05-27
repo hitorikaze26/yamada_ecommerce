@@ -423,7 +423,19 @@ def _serialize_order(order: Order) -> dict:
             }
             for item in order.items
         ],
+        "hasReviewed": _order_has_reviews(order),
     }
+
+
+def _order_has_reviews(order: Order) -> bool:
+    from app.models import Review
+    if not order.items:
+        return False
+    item_ids = [item.id for item in order.items]
+    reviewed = db.session.query(Review.order_item_id).filter(
+        Review.order_item_id.in_(item_ids)
+    ).all()
+    return len(reviewed) == len(item_ids)
 
 
 def _serialize_rider_delivery(delivery: RiderDelivery) -> dict:

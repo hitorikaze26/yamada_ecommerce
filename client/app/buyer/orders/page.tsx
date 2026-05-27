@@ -457,6 +457,19 @@ function BuyerOrdersContent() {
                         Report rider
                       </ReportLinkButton>
                     )}
+                    {isOrderDelivered(
+                      order.status,
+                      orderRider(order)?.status,
+                      orderRider(order)?.proofPhotoUrl,
+                    ) && (
+                      <Link
+                        href={`/orders/${order.id}?rate=1`}
+                        className="px-4 py-2 border border-amber-300 text-amber-700 dark:text-amber-400 rounded-xl text-sm font-medium hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors flex items-center gap-2"
+                      >
+                        <Icon name="star" size="sm" />
+                        Rate & Feedback
+                      </Link>
+                    )}
                     <Link
                       href={`/orders/${order.id}`}
                       className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"

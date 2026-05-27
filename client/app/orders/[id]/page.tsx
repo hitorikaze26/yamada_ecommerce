@@ -15,7 +15,7 @@ import { canMessageSellerForBuyerOrder } from "@/lib/chat/navigation"
 import { useChatOpen } from "@/hooks/use-chat-open"
 import Swal from "sweetalert2"
 import "sweetalert2/dist/sweetalert2.min.css"
-import { OrderReviewSection } from "@/components/order/order-review-section"
+
 import { StoreNameLink } from "@/components/store/store-name-link"
 import type { ReviewableItem, ProductReviewPayload } from "@/lib/review-types"
 import { ReportLinkButton } from "@/components/report/report-link-button"
@@ -85,6 +85,7 @@ interface OrderDetail {
   storeName?: string | null
   items: OrderItemDetail[]
   riderDelivery?: RiderDeliveryDetail | null
+  hasReviewed: boolean
 }
 
 function formatRiderStatus(status: string): string {
@@ -124,7 +125,7 @@ function OrderContent({ orderId }: { orderId: string }) {
   const { isBusy, openBuyerOrder } = useChatOpen()
   const searchParams = useSearchParams()
   const isSuccess = searchParams.get("success") === "true"
-  const openReview = searchParams.get("review") === "1"
+  const autoRate = searchParams.get("rate") === "1"
 
   const [order, setOrder] = useState<OrderDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -265,6 +266,7 @@ function OrderContent({ orderId }: { orderId: string }) {
               proofNote: rd.proofNote ?? rd.proof_note ?? null,
             }
           })(),
+          hasReviewed: Boolean(raw.hasReviewed),
         }
 
         setOrder(mapped)
@@ -285,6 +287,17 @@ function OrderContent({ orderId }: { orderId: string }) {
   useEffect(() => {
     void loadOrder()
   }, [loadOrder])
+
+  useEffect(() => {
+    if (autoRate && order && !order.hasReviewed) {
+      setRatingValue(0)
+      setRatingFeedback("")
+      setShowRatingModal(true)
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete("rate")
+      router.replace(`/orders/${order.id}${params.toString() ? `?${params.toString()}` : ""}`, { scroll: false })
+    }
+  }, [autoRate, order, router])
 
   useEffect(() => {
     if (
@@ -698,16 +711,15 @@ function OrderContent({ orderId }: { orderId: string }) {
                       })}
                     </div>
 
-                    {String(order.status).toLowerCase() === "completed" &&
-                      (reviewableItems.length > 0 || submittedReviewItemIds.size > 0) && (
-                      <OrderReviewSection
-                        orderId={Number(order.id)}
-                        reviewableItems={reviewableItems}
-                        submittedReviewItemIds={submittedReviewItemIds}
-                        deliveryPillOptions={deliveryPillOptions}
-                        onSubmit={handleSubmitReview}
-                        highlight={openReview}
-                      />
+                    {String(order.status).toLowerCase() === "completed" && !order.hasReviewed && (
+                      <button
+                        type="button"
+                        onClick={() => { setRatingValue(0); setRatingFeedback(""); setShowRatingModal(true) }}
+                        className="mt-4 w-full sm:w-auto px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2"
+                      >
+                        <Icon name="star" />
+                        Rate & Feedback
+                      </button>
                     )}
                   </div>
                 </div>
@@ -1047,6 +1059,8 @@ function OrderContent({ orderId }: { orderId: string }) {
                     }
                     await Promise.all(promises)
                     setShowRatingModal(false)
+                    setOrder({ ...order, hasReviewed: true })
+                    setSubmittedReviewItemIds(new Set(order.items.map((i) => i.id)))
                     await Swal.fire({
                       icon: "success",
                       title: "Review submitted!",
