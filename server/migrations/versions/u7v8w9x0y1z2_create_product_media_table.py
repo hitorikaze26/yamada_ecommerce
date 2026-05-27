@@ -28,7 +28,7 @@ def upgrade():
         ),
         sa.Column(
             "sort_order",
-            sa.INT().with_variant(sa.VARCHAR(length=500), "mysql"),
+            sa.Integer(),
             default=0,
         ),
         sa.Column("created_at", sa.DateTime(), nullable=False),

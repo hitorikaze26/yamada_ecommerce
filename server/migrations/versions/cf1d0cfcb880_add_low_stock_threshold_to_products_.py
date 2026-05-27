@@ -7,7 +7,7 @@ from dialect_helpers import column_names
 from alembic import op
 import sqlalchemy as sa
 
-revision = "<new_id>"
+revision = "cf1d0cfcb880"
 down_revision = "cb68bf686f21"
 branch_labels = None
 depends_on = None

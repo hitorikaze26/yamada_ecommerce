@@ -185,7 +185,7 @@ export default function BuyerDashboard() {
                     {order.items?.length ?? 0} items
                   </td>
                   <td className="py-4 px-4 text-right font-medium">
-                    {formatPrice(order.total ?? order.grandTotal ?? 0)}
+                    {formatPrice(order.total ?? 0)}
                   </td>
                   <td className="py-4 px-4 text-right">
                     <Link href={`/orders/${order.id}`} className="text-primary hover:underline text-sm">

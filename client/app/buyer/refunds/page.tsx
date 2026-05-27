@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Icon } from "@/components/ui/icon"
@@ -124,6 +124,26 @@ export default function BuyerRefundsPage() {
     }
 
     void fetchRefunds()
+  }, [])
+
+  const handleDispute = useCallback(async (refund: BuyerRefundDto) => {
+    const result = await Swal.fire({
+      title: "Dispute this decision?",
+      text: "An admin will review the dispute.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, dispute",
+      cancelButtonText: "Cancel",
+    })
+    if (!result.isConfirmed) return
+    try {
+      await ordersApi.disputeRefund(refund.id)
+      void Swal.fire({ title: "Disputed", text: "Your dispute has been submitted.", icon: "success", timer: 2000, showConfirmButton: false })
+      const res = await ordersApi.getRefundRequests()
+      setRefunds(unwrapBuyerList<BuyerRefundDto>(res.data, ["refunds"]))
+    } catch {
+      void Swal.fire({ title: "Error", text: "Failed to submit dispute.", icon: "error" })
+    }
   }, [])
 
   return (
