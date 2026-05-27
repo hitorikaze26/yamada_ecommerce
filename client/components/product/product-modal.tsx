@@ -44,11 +44,12 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[96vw] max-w-4xl max-h-[90vh] p-0">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[90vh] p-0 overflow-hidden rounded-2xl">
         <DialogTitle className="sr-only">{product.name}</DialogTitle>
-        <div className="grid md:grid-cols-2 max-h-[90vh] overflow-y-auto md:overflow-hidden md:h-[80vh]">
-          {/* Image Section */}
-          <div className="relative bg-muted md:h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
+
+        <div className="flex flex-col md:flex-row md:h-[80vh]">
+          {/* ── Image Column ── */}
+          <div className="relative bg-muted md:w-1/2 md:h-full overflow-hidden">
             <div className="relative aspect-square md:aspect-auto md:h-full min-w-0">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -75,51 +76,88 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
               </AnimatePresence>
             </div>
 
-            {/* Thumbnail navigation */}
+            {/* Thumbnails strip */}
             {product.images.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                {product.images.map((_, index) => (
+              <div className="absolute bottom-3 left-3 right-3 flex gap-2 overflow-x-auto no-scrollbar">
+                {product.images.map((img, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentImageIndex(index)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      index === currentImageIndex ? "bg-primary w-6" : "bg-foreground/30"
+                    className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
+                      index === currentImageIndex
+                        ? "border-white shadow-lg ring-1 ring-black/10 scale-105"
+                        : "border-white/60 opacity-70 hover:opacity-100"
                     }`}
-                    aria-label={`View image ${index + 1}`}
-                  />
+                  >
+                    <Image src={img || "/placeholder.svg"} alt="" fill className="object-cover" />
+                  </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Content Section */}
-          <div className="p-6 md:pl-0 flex flex-col overflow-y-auto min-w-0">
-            <div className="flex-1">
-              <Link href={`/seller/${product.sellerId}`} className="text-sm text-primary hover:underline">
+          {/* ── Details Column ── */}
+          <div className="flex flex-col flex-1 min-w-0 md:w-1/2">
+            <div className="flex-1 overflow-y-auto p-6 pb-4">
+              {/* Seller */}
+              <Link
+                href={`/seller/${product.sellerId}`}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider hover:underline"
+              >
+                <Icon name="store" size="sm" />
                 {product.sellerName}
               </Link>
 
-              <h2 className="text-2xl font-bold mt-1 mb-2">{product.name}</h2>
+              {/* Name */}
+              <h2 className="text-xl md:text-2xl font-bold mt-1.5 mb-2 leading-tight">{product.name}</h2>
 
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center gap-1">
-                  <Icon name="star" className="text-yellow-500" />
-                  <span className="font-medium">{product.rating}</span>
+              {/* Rating row */}
+              <div className="flex items-center gap-2 text-sm mb-4">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Icon
+                      key={star}
+                      name="star"
+                      size="sm"
+                      className={
+                        star <= Math.round(product.rating || 0)
+                          ? "text-amber-400 fill-amber-400"
+                          : "text-gray-300"
+                      }
+                    />
+                  ))}
                 </div>
+                <span className="font-medium">{product.rating}</span>
                 <span className="text-muted-foreground">({product.reviewCount} reviews)</span>
               </div>
 
-              <div className="flex items-baseline gap-3 mb-6">
-                <span className="text-3xl font-bold text-primary">{formatPrice(currentPrice)}</span>
+              {/* Price */}
+              <div className="flex items-baseline gap-3 mb-5">
+                <span className="text-2xl md:text-3xl font-bold text-primary">
+                  {formatPrice(currentPrice)}
+                </span>
                 {product.salePrice && (
-                  <span className="text-lg text-muted-foreground line-through">{formatPrice(product.price)}</span>
+                  <span className="text-base text-muted-foreground line-through">
+                    {formatPrice(product.price)}
+                  </span>
+                )}
+                {product.salePrice && (
+                  <span className="text-xs font-semibold text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-400 px-2 py-0.5 rounded-full">
+                    -{Math.round((1 - product.salePrice / product.price) * 100)}%
+                  </span>
                 )}
               </div>
 
-              <div
-                className="text-muted-foreground mb-6 line-clamp-3 prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description || "" }}
-              />
+              {/* Description */}
+              {product.description && (
+                <div
+                  className="text-sm text-muted-foreground leading-relaxed mb-5 line-clamp-3 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+              )}
+
+              {/* Divider */}
+              <hr className="mb-5 border-muted" />
 
               {/* Variant Picker */}
               <VariantPicker
@@ -129,20 +167,20 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
               />
 
               {/* Quantity */}
-              <div className="mt-6">
-                <label className="text-sm font-medium mb-2 block">Quantity</label>
+              <div className="mt-5">
+                <label className="text-sm font-medium mb-2.5 block">Quantity</label>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-muted transition-colors"
+                    className="w-10 h-10 rounded-xl border flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
                     aria-label="Decrease quantity"
                   >
                     <Icon name="minus" />
                   </button>
-                  <span className="w-12 text-center font-medium">{quantity}</span>
+                  <span className="w-12 text-center font-semibold text-lg">{quantity}</span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-muted transition-colors"
+                    className="w-10 h-10 rounded-xl border flex items-center justify-center hover:bg-muted transition-colors active:scale-95"
                     aria-label="Increase quantity"
                   >
                     <Icon name="plus" />
@@ -151,24 +189,25 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-3 mt-6">
-              <Button variant="outline" className="flex-1 bg-transparent" onClick={handleAddToCart}>
-                <Icon name="shopping-cart" className="mr-2" />
-                Add to Cart
-              </Button>
-              <Button className="flex-1" onClick={handleAddToCart}>
-                Buy Now
-              </Button>
+            {/* ── Sticky Actions ── */}
+            <div className="p-6 pt-4 border-t bg-background">
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={handleAddToCart}>
+                  <Icon name="shopping-cart" className="mr-2" />
+                  Add to Cart
+                </Button>
+                <Button className="flex-1" onClick={handleAddToCart}>
+                  Buy Now
+                </Button>
+              </div>
+              <Link
+                href={`/product/${product.slug}`}
+                className="block text-center text-xs text-muted-foreground hover:text-primary hover:underline mt-3"
+                onClick={onClose}
+              >
+                View Full Details &rarr;
+              </Link>
             </div>
-
-            <Link
-              href={`/product/${product.slug}`}
-              className="text-center text-sm text-primary hover:underline mt-4"
-              onClick={onClose}
-            >
-              View Full Details
-            </Link>
           </div>
         </div>
       </DialogContent>
