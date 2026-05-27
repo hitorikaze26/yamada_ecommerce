@@ -108,12 +108,11 @@ class DevelopmentConfig(Config):
     JWT_COOKIE_SECURE = False
     JWT_COOKIE_SAMESITE = "Lax"
 
-    _dev_uri = _database_url(
-        os.environ.get(
-            "DEV_DATABASE_URL",
-            "mysql+pymysql://root:hitorikaze%401226@localhost:3306/yamada_db",
-        )
+    _dev_uri = os.environ.get(
+        "DEV_DATABASE_URL",
+        "mysql+pymysql://root:root@localhost:3306/yamada_db",
     )
+
     SQLALCHEMY_DATABASE_URI = _dev_uri
     SQLALCHEMY_ENGINE_OPTIONS = _engine_options_for_uri(_dev_uri)
 

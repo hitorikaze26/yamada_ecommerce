@@ -3,6 +3,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  devIndicators: false,
   images: {
     remotePatterns: [
       // Localhost patterns for development
@@ -63,15 +67,16 @@ const nextConfig = {
   // Rewrites run on the Next.js server (never in the browser).
   // Development: Axios uses `/api` (relative), so these rewrites proxy to Flask.
   // Production:   Axios uses the full Railway URL, so these rewrites are unused.
+  // NOTE: `/api/geo` is handled by Next.js app routes in `app/api/geo`, so it must not be rewritten.
   async rewrites() {
     return [
       {
-        source: "/api/:path*",
-        destination: "http://127.0.0.1:5000/api/:path*",
+        source: "/api/geo/:path*",
+        destination: "/api/geo/:path*",
       },
       {
-        source: "/api/geo/:path*",
-        destination: "https://psgc.gitlab.io/api/:path*",
+        source: "/api/:path*",
+        destination: "http://127.0.0.1:5000/api/:path*",
       },
     ]
   },

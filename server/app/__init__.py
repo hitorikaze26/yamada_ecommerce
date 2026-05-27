@@ -7,7 +7,7 @@ from .models import (
     db,
     Role
 )
-from .seed_commands import seed_admin_command, seed_report_types_command, seed_categories_command
+from .seed_commands import seed_roles_command, seed_admin_command, seed_report_types_command, seed_categories_command
 from .extensions import (
     csrf, 
     mail, 
@@ -170,6 +170,7 @@ def create_app(test_config=None):
     register_security_hooks(app)
 
     # Register CLI commands
+    app.cli.add_command(seed_roles_command)
     app.cli.add_command(seed_admin_command)
     app.cli.add_command(seed_report_types_command)
     app.cli.add_command(seed_categories_command)

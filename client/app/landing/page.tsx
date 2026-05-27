@@ -58,7 +58,6 @@ export default function LandingPage() {
             </Link>
 
             <nav className="hidden md:flex items-center gap-10 text-sm font-medium text-[--color-charcoal] dark:text-gray-200">
-              <button className="hover:text-black dark:hover:text-white transition-colors">Why us</button>
               <button className="hover:text-black dark:hover:text-white transition-colors">Contact us</button>
               <button className="hover:text-black dark:hover:text-white transition-colors">About</button>
             </nav>

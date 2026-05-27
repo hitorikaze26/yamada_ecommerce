@@ -6,8 +6,6 @@ from sqlalchemy import select
 from .extensions import bcrypt
 from .models import db, User, Role, RoleTypes, UserRole, ReportType, Category
 
-
-# Keys are the role being REPORTED (target). (type_key, display_name, description, category)
 REPORT_TYPES_SEED = {
     'buyer': [
         ('fake_orders', 'Fake Orders', 'Fraudulent or nonexistent orders placed', 'fraud'),
@@ -50,6 +48,20 @@ REPORT_TYPES_SEED = {
     ],
 }
 
+@click.command('seed-roles')
+@with_appcontext
+def seed_roles_command():
+    """Seed the roles table with default roles."""
+    count = 0
+    for role in RoleTypes:
+        existing = db.session.execute(
+            select(Role).where(Role.id == role.value)
+        ).scalar_one_or_none()
+        if existing is None:
+            db.session.add(Role(id=role.value, name=role.name.lower()))
+            count += 1
+    db.session.commit()
+    click.echo(f"Seeded {count} roles.")
 
 @click.command("seed-report-types")
 @with_appcontext
@@ -90,9 +102,9 @@ def seed_report_types_command():
 @with_appcontext
 def seed_admin_command():
     """Create a fixed admin user if it doesn't already exist."""
-    admin_email = "noeasumbra122602@gmail.com"
-    admin_username = "Hitorikaze"
-    admin_password = "admin123" 
+    admin_email = "admin@gmail.com"
+    admin_username = "admin"
+    admin_password = "password" 
 
     # Check if admin user already exists
     existing_user = db.session.execute(

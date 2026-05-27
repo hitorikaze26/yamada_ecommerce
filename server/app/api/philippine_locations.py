@@ -169,47 +169,53 @@ PHILIPPINE_LOCATIONS = {
 def get_regions():
     """Get all Philippine regions with PSGC codes."""
     # Map internal region names to representative PSGC codes
-    REGION_CODES = {
-        "Metro Manila": "130000000",
-        "Luzon": "040000000",  # CALABARZON as representative
-        "Visayas": "070000000",  # Central Visayas as representative
-        "Mindanao": "110000000",  # Davao Region as representative
-    }
+    try:
+        REGION_CODES = {
+            "Metro Manila": "130000000",
+            "Luzon": "040000000",  # CALABARZON as representative
+            "Visayas": "070000000",  # Central Visayas as representative
+            "Mindanao": "110000000",  # Davao Region as representative
+        }
+        
+        regions_list = [
+            {"code": REGION_CODES.get(name, name), "name": name}
+            for name in PHILIPPINE_LOCATIONS.keys()
+        ]
+        
+        return jsonify({
+            "regions": regions_list
+        })
+    except Exception as e:
+        return jsonify({"error": "Failed to retrieve regions", "details": str(e)}), 500
     
-    regions_list = [
-        {"code": REGION_CODES.get(name, name), "name": name}
-        for name in PHILIPPINE_LOCATIONS.keys()
-    ]
-    
-    return jsonify({
-        "regions": regions_list
-    })
-
 @philippine_locations_bp.route('/api/philippine-locations/provinces/<region>', methods=['GET'])
 @cross_origin()
 def get_provinces(region):
     """Get all provinces for a specific region (accepts PSGC code or name).
     Returns empty array for NCR since it has no provinces."""
-    region_name = normalize_region(region)
-    if not region_name or region_name not in PHILIPPINE_LOCATIONS:
-        return jsonify({"error": "Region not found", "received": region}), 404
-    
-    # NCR has no provinces - return empty
-    if "provinces" not in PHILIPPINE_LOCATIONS[region_name]:
+    try:
+        region_name = normalize_region(region)
+        if not region_name or region_name not in PHILIPPINE_LOCATIONS:
+            return jsonify({"error": "Region not found", "received": region}), 404
+        
+        # NCR has no provinces - return empty
+        if "provinces" not in PHILIPPINE_LOCATIONS[region_name]:
+            return jsonify({
+                "region": region_name,
+                "provinces": []
+            })
+        
+        provinces_list = [
+            {"code": name, "name": name}
+            for name in PHILIPPINE_LOCATIONS[region_name]["provinces"].keys()
+        ]
+        
         return jsonify({
             "region": region_name,
-            "provinces": []
+            "provinces": provinces_list
         })
-    
-    provinces_list = [
-        {"code": name, "name": name}
-        for name in PHILIPPINE_LOCATIONS[region_name]["provinces"].keys()
-    ]
-    
-    return jsonify({
-        "region": region_name,
-        "provinces": provinces_list
-    })
+    except Exception as e:
+        return jsonify({"error": "Failed to retrieve provinces", "details": str(e)}), 500
 
 @philippine_locations_bp.route('/api/philippine-locations/cities/<region>/<province>', methods=['GET'])
 @cross_origin()
