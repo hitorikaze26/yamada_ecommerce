@@ -162,9 +162,10 @@ export default function BuyerRegistrationPage() {
       setStep(3)
 
       localStorage.removeItem(STORAGE_KEY)
-    } catch (err) {
-      setError("Registration failed. Please try again.")
-      showAlert("Buyer registration failed. Please try again.", "error")
+    } catch (err: any) {
+      const msg = err?.response?.data?.msg || "Registration failed. Please try again."
+      setError(msg)
+      showAlert(msg, "error")
     } finally {
       setIsLoading(false)
     }

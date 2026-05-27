@@ -238,7 +238,7 @@ export default function SellerRegistrationPage() {
     } catch (err: any) {
       const msg = err?.response?.data?.msg || "Registration failed. Please try again."
       setError(msg)
-      showAlert("Seller registration failed. Please try again.", "error")
+      showAlert(msg, "error")
       setIsLoading(false)
     }
   }
