@@ -45,7 +45,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[100dvh] sm:max-h-[90vh] p-0 overflow-hidden rounded-lg">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-5xl max-h-[100dvh] sm:max-h-[90vh] p-0 overflow-hidden rounded-lg">
 
         <div className="flex flex-col md:flex-row md:h-[80vh]">
           {/* ── Image Column ── */}
