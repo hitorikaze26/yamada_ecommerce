@@ -88,8 +88,28 @@ class Config:
         "MAIL_DEFAULT_SENDER",
         "Yamada Support <noreply@example.com>",
     )
-    MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "console")
+    YAMADA_MAIL_CONSOLE = os.environ.get("YAMADA_MAIL_CONSOLE", "false")
 
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+
+    DB_SERVER = os.environ.get("DB_SERVER", "127.0.0.1")
+
+    JWT_COOKIE_SECURE = False
+    JWT_COOKIE_SAMESITE = "Lax"
+
+    _dev_uri = _database_url(
+        os.environ.get(
+            "DEV_DATABASE_URL",
+            "mysql+pymysql://root:hitorikaze%401226@localhost:3306/yamada_db",
+        )
+    )
+    SQLALCHEMY_DATABASE_URI = _dev_uri
+    SQLALCHEMY_ENGINE_OPTIONS = _engine_options_for_uri(_dev_uri)
+
+    SUPPORTS_LOCAL_STORAGE = EnvFlags.USE_LOCAL_STORAGE
+    YAMADA_MAIL_CONSOLE = os.environ.get("YAMADA_MAIL_CONSOLE", "true")
 
 
 class ProductionConfig(Config):
@@ -100,8 +120,6 @@ class ProductionConfig(Config):
     JWT_COOKIE_SAMESITE = "None"
 
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=2)
-
-    MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "smtp")
 
     _prod_uri = _database_url()
     SQLALCHEMY_DATABASE_URI = _prod_uri

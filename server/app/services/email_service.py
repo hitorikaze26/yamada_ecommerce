@@ -20,10 +20,10 @@ def _mail_password() -> str:
     return str(raw).replace(" ", "")
 
 
-def _mail_backend() -> str:
+def _is_console_mode() -> bool:
     if has_app_context():
-        return str(current_app.config.get("MAIL_BACKEND", "console")).lower()
-    return "console"
+        return str(current_app.config.get("YAMADA_MAIL_CONSOLE", "false")).lower() in ("1", "true", "yes")
+    return True
 
 
 def _log_email(*, to: str, subject: str, body: str) -> None:
@@ -55,9 +55,8 @@ def _send_email(
         return
 
     to_email = to_email.strip()
-    backend = _mail_backend()
 
-    if backend == "console":
+    if _is_console_mode():
         _log_email(to=to_email, subject=subject, body=body)
         return
 
