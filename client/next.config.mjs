@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
@@ -8,6 +9,7 @@ const nextConfig = {
   },
   devIndicators: false,
   images: {
+    unoptimized: process.env.NODE_ENV !== "production",
     remotePatterns: [
       // Localhost patterns for development
       {

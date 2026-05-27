@@ -622,11 +622,13 @@ def checkout():
             if len(idempotency_key) > 64:
                 return jsonify(msg="Invalid idempotency key"), 400
             existing_order = db.session.execute(
-                select(Order).where(
+                select(Order)
+                .where(
                     Order.buyer_id == current_user.id,
                     Order.idempotency_key == idempotency_key,
                 )
-            ).scalar_one_or_none()
+                .limit(1)
+            ).scalars().first()
             if existing_order is not None:
                 return jsonify(order=_serialize_order(existing_order)), 200
 
@@ -721,15 +723,16 @@ def checkout():
             product_id = int(item["productId"])
             quantity = int(item.get("quantity", 1))
 
-            # Use FOR UPDATE to prevent concurrent overselling
             product = db.session.execute(
                 select(Product)
-                .options(selectinload(Product.variations))
                 .where(Product.id == product_id)
                 .with_for_update()
             ).scalar_one_or_none()
+
             if product is None:
                 raise ValueError("Product not found")
+
+            db.session.refresh(product, ["variations"])
 
             # Use sale_price if active, otherwise regular price
             regular_price = float(product.price)
@@ -938,18 +941,23 @@ def checkout():
         if store is not None and store.user_id is not None:
             notify_seller_new_order(user_id=store.user_id, order_id=order.id)
 
+        db.session.flush()
+        order_data = _serialize_order(order)
+
         db.session.commit()
 
-        return jsonify(order=_serialize_order(order)), 201
+        return jsonify(order=order_data), 201
     except IntegrityError as e:
         db.session.rollback()
         if idempotency_key:
             existing_order = db.session.execute(
-                select(Order).where(
+                select(Order)
+                .where(
                     Order.buyer_id == current_user.id,
                     Order.idempotency_key == idempotency_key,
                 )
-            ).scalar_one_or_none()
+                .limit(1)
+            ).scalars().first()
             if existing_order is not None:
                 return jsonify(order=_serialize_order(existing_order)), 200
         current_app.logger.error(f"Order creation IntegrityError: {e}")
@@ -962,7 +970,6 @@ def checkout():
         db.session.rollback()
         current_app.logger.error(f"Order creation error: {e}", exc_info=True)
         return jsonify(msg=f"Error creating order: {str(e)}"), 500
-
 
 @orders_bp.get("/orders")
 @jwt_required()

@@ -98,6 +98,9 @@ function CheckoutContent() {
   const [alertVariant, setAlertVariant] = useState<"success" | "error" | "info" | "warning">("info")
   const [checkoutImageErrors, setCheckoutImageErrors] = useState<Record<string, boolean>>({})
 
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
   // Sync contact number from auth user when it becomes available (e.g. after localStorage hydration)
   useEffect(() => {
     if (user?.contactNumber && !contactNumber) {
@@ -293,6 +296,16 @@ function CheckoutContent() {
       placingRef.current = false
       setIsLoading(false)
     }
+  }
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 bg-muted/30" />
+        <Footer />
+      </div>
+    )
   }
 
   if (isBuyNow && !buyNowPayload) {

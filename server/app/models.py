@@ -489,7 +489,7 @@ class Store(Base):
 class Product(Base):
     __tablename__='products'
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, unique=True)
     store_id: Mapped[int] = mapped_column(ForeignKey('stores.id', ondelete='CASCADE'))
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(TEXT, nullable=True)

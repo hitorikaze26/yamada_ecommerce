@@ -1184,6 +1184,7 @@ def _build_rider_profile_payload(user: User, rider_profile: RiderProfile) -> dic
 
 
 @auth_bp.get('/rider/profile')
+@limiter.limit("30 per minute")
 @jwt_required()
 @rider_required()
 def get_rider_profile():
@@ -1663,6 +1664,7 @@ def upload_seller_banner():
 
 
 @auth_bp.get('/seller/profile')
+@limiter.limit("30 per minute")
 @jwt_required()
 @seller_required()
 def get_seller_profile():

@@ -50,7 +50,7 @@ export async function resolvePrivateDocUrl(
 // Create axios instance with default config
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 120000,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
