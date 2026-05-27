@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
 import { PinInput } from "@/components/form/pin-input"
@@ -35,6 +35,10 @@ export function EmailVerification({ email, onVerified }: EmailVerificationProps)
       setIsSending(false)
     }
   }, [email])
+
+  useEffect(() => {
+    handleSendCode()
+  }, [handleSendCode])
 
   const handleCodeComplete = useCallback(async (code: string) => {
     setError("")
