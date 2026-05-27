@@ -165,25 +165,14 @@ export interface NormalizedAdminUser {
   buyer_profile: Record<string, unknown> | null
 }
 
-export const INACTIVE_ARCHIVE_MS = 90 * 24 * 60 * 60 * 1000
-
 export function userNeedsApproval(user: NormalizedAdminUser): boolean {
   const role = user.primaryRole || user.roles[0] || ""
   return role === "buyer" && user.active && !user.emailVerified && !user.isArchived
 }
 
-export function userLastActiveMs(user: NormalizedAdminUser): number {
-  const raw = user.lastActiveAt || user.updatedAt || user.createdAt
-  if (!raw) return 0
-  const t = new Date(raw).getTime()
-  return Number.isFinite(t) ? t : 0
-}
-
 export function userCanArchive(user: NormalizedAdminUser, isAdmin = false): boolean {
   if (isAdmin || user.isArchived || userNeedsApproval(user)) return false
-  const lastMs = userLastActiveMs(user)
-  if (!lastMs) return false
-  return Date.now() - lastMs >= INACTIVE_ARCHIVE_MS
+  return !user["User active"]
 }
 
 export function adminUserDisplayName(user: NormalizedAdminUser | Record<string, unknown>): string {

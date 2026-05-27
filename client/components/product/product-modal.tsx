@@ -44,9 +44,9 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[96vw] max-w-7xl max-h-[90vh] p-0 overflow-hidden">
+      <DialogContent className="w-[96vw] max-w-7xl max-h-[90vh] p-0">
         <DialogTitle className="sr-only">{product.name}</DialogTitle>
-        <div className="grid md:grid-cols-2 md:h-[80vh]">
+        <div className="grid md:grid-cols-2 max-h-[90vh] overflow-y-auto md:overflow-hidden md:h-[80vh]">
           {/* Image Section */}
           <div className="relative bg-muted md:h-full">
             <div className="relative aspect-square md:aspect-auto md:h-full">

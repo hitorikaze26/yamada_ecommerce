@@ -789,20 +789,159 @@ function AdminUsersContent() {
                       </div>
                     )}
 
-                    {!detailLoading && !detailError &&
-                      activeDetailView !== "profile" &&
-                      activeDetailView !== "orders" && (
-                        <pre className="text-xs bg-background rounded-lg p-3 max-h-64 overflow-auto">
-                          {JSON.stringify(
-                            detailData ?? {
-                              message:
-                                "No additional data available yet. The backend endpoint may not be implemented.",
-                            },
-                            null,
-                            2,
-                          )}
-                        </pre>
-                      )}
+                    {!detailLoading && !detailError && activeDetailView === "activity" && (
+                      <div className="space-y-2 text-xs max-h-64 overflow-auto">
+                        {(() => {
+                          const raw = detailData as any
+                          const logs: any[] = Array.isArray(raw) ? raw : []
+                          if (logs.length === 0) {
+                            return (
+                              <p className="text-muted-foreground">
+                                No activity logs found for this user.
+                              </p>
+                            )
+                          }
+                          return logs.map((log: any) => (
+                            <div
+                              key={log.id}
+                              className="rounded-lg border bg-background/80 px-3 py-2 space-y-1"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="font-medium text-[13px]">
+                                  {log.title || "No title"}
+                                </p>
+                                <span
+                                  className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${
+                                    log.read
+                                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                  }`}
+                                >
+                                  {log.read ? "read" : "unread"}
+                                </span>
+                              </div>
+                              {log.description && (
+                                <p className="text-[11px] text-muted-foreground">
+                                  {log.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                {log.role && (
+                                  <span className="capitalize">{log.role}</span>
+                                )}
+                                {log.createdAt && (
+                                  <span>
+                                    {new Date(log.createdAt).toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        })()}
+                      </div>
+                    )}
+
+                    {!detailLoading && !detailError && activeDetailView === "products" && (
+                      <div className="space-y-2 text-xs max-h-64 overflow-auto">
+                        {(() => {
+                          const raw = detailData as any
+                          const products: any[] = Array.isArray(raw) ? raw : []
+                          if (products.length === 0) {
+                            return (
+                              <p className="text-muted-foreground">
+                                No products found for this seller.
+                              </p>
+                            )
+                          }
+                          return products.map((p: any) => (
+                            <div
+                              key={p.id}
+                              className="flex items-start justify-between gap-3 rounded-lg border bg-background/80 px-3 py-2"
+                            >
+                              <div className="space-y-0.5 min-w-0">
+                                <p className="font-medium text-[13px] truncate">
+                                  {p.name || `Product #${p.id}`}
+                                </p>
+                                {p.storeName && (
+                                  <p className="text-[11px] text-muted-foreground">
+                                    Store: {p.storeName}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right space-y-1 flex-shrink-0">
+                                <p className="text-[13px] font-semibold">
+                                  {formatPrice(p.price ?? 0)}
+                                </p>
+                                <span
+                                  className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${
+                                    p.isLive
+                                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                  }`}
+                                >
+                                  {p.status || (p.isLive ? "live" : "inactive")}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        })()}
+                      </div>
+                    )}
+
+                    {!detailLoading && !detailError && activeDetailView === "deliveries" && (
+                      <div className="space-y-2 text-xs max-h-64 overflow-auto">
+                        {(() => {
+                          const raw = detailData as any
+                          const deliveries: any[] = Array.isArray(raw) ? raw : []
+                          if (deliveries.length === 0) {
+                            return (
+                              <p className="text-muted-foreground">
+                                No delivery history found for this rider.
+                              </p>
+                            )
+                          }
+                          return deliveries.map((d: any) => (
+                            <div
+                              key={d.id}
+                              className="rounded-lg border bg-background/80 px-3 py-2 space-y-1"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="font-medium text-[13px]">
+                                  Order #{d.orderId}
+                                </p>
+                                <span
+                                  className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${
+                                    d.status === "completed" || d.status === "delivered"
+                                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                      : d.status === "pending" || d.status === "assigned"
+                                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                        : d.status === "cancelled" || d.status === "failed"
+                                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                          : "bg-muted text-muted-foreground"
+                                  }`}
+                                >
+                                  {d.status || "unknown"}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                                {d.fee != null && <span>Fee: {formatPrice(d.fee)}</span>}
+                                {d.distanceKm != null && (
+                                  <span>Distance: {d.distanceKm} km</span>
+                                )}
+                                {d.orderTotal != null && (
+                                  <span>Order total: {formatPrice(d.orderTotal)}</span>
+                                )}
+                              </div>
+                              {d.createdAt && (
+                                <p className="text-[10px] text-muted-foreground">
+                                  {new Date(d.createdAt).toLocaleString()}
+                                </p>
+                              )}
+                            </div>
+                          ))
+                        })()}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
