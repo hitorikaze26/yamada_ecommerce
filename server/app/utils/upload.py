@@ -128,6 +128,15 @@ def public_url_for_stored_path(
                 )
                 return ""
 
+        # Public path — resolve via Supabase public URL (step 3 in docstring)
+        try:
+            return storage.get_public_url(value)
+        except Exception:
+            current_app.logger.exception(
+                "Failed to resolve public storage URL: %s", value
+            )
+            return ""
+
     from app.utils.static_urls import public_static_url as _fallback_url
 
     return _fallback_url(value) or ""
