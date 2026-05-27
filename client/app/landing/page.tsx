@@ -3,11 +3,14 @@
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import Lottie from "lottie-react"
 import { Footer } from "@/components/layout/footer"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icon"
 import { HeroButton } from "@/components/ui/hero-button"
 import { useTheme } from "@/components/providers/theme-provider"
+import truckAnimation from "@/public/landing_page_reso/e1f7c594-116b-11ee-8ced-5714a508688b.json"
+import cartAnimation from "@/public/landing_page_reso/8bcc177a-116a-11ee-adca-a3cf94025c10.json"
 
 const fadeInUp = (delay: number) => ({
   hidden: { opacity: 0, y: 24 },
@@ -196,15 +199,14 @@ export default function LandingPage() {
                       Deliver orders, track earnings, and maximize your delivery schedule with flexible work.
                     </p>
                   </div>
-                  <motion.img
-                    src={isDark ? "/landing_page_reso/gif/icons8-truck-white.com-effects.gif" : "/landing_page_reso/gif/icons8-truck.gif"}
-                    alt="Delivery icon"
-                    className="h-16 w-16 object-contain"
+                  <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     whileInView={{ scale: 1, opacity: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                  />
+                  >
+                    <Lottie animationData={truckAnimation} className="h-20 w-20" />
+                  </motion.div>
                 </div>
 
                 <div className="pt-2">
@@ -229,15 +231,14 @@ export default function LandingPage() {
                       Open your shop, upload products, manage inventory, and reach fashion-forward customers.
                     </p>
                   </div>
-                  <motion.img
-                    src={isDark ? "/landing_page_reso/gif/icons8-shop-white.com-effects.gif" : "/landing_page_reso/gif/icons8-shop.gif"}
-                    alt="Shop icon"
-                    className="h-16 w-16 object-contain"
+                  <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     whileInView={{ scale: 1, opacity: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                  />
+                  >
+                    <Lottie animationData={cartAnimation} className="h-20 w-20" />
+                  </motion.div>
                 </div>
 
                 <div className="pt-2">
