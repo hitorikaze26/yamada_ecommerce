@@ -20,6 +20,5 @@ twilio
 gunicorn
 flask-limiter>=3.7
 supabase>=1.2
-# email-validator is used for input validation
 email-validator
 resend
