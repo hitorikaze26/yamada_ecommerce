@@ -486,78 +486,6 @@ export default function SellerRegistrationPage() {
     }
   }
 
-  if (registeredEmail && !emailVerified) {
-    return (
-      <div className="min-h-screen flex">
-        <div className="hidden lg:flex lg:w-1/2 bg-secondary relative overflow-hidden lg:sticky lg:top-0 lg:h-screen">
-          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20" />
-          <div className="relative z-10 flex flex-col justify-between p-12 text-white">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <span className="text-2xl font-bold">Y</span>
-              </div>
-              <span className="text-2xl font-semibold">Yamada</span>
-            </Link>
-            <div>
-              <h1 className="text-4xl font-bold mb-4">Verify Your Email</h1>
-              <p className="text-lg opacity-90">Check your email for the verification code to activate your seller account</p>
-            </div>
-            <div className="text-sm opacity-70">Your shop application will be reviewed by admin after email verification</div>
-          </div>
-        </div>
-        <div className="flex-1 flex flex-col">
-          <div className="flex justify-between items-center p-6">
-            <Link href="/" className="lg:hidden flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xl">Y</span>
-              </div>
-              <span className="text-xl font-semibold">Yamada</span>
-            </Link>
-            <DarkModeToggle />
-          </div>
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="w-full max-w-md space-y-6">
-              <div className="text-center">
-                <h2 className="text-3xl font-bold mb-2">Verify Your Email</h2>
-                <p className="text-muted-foreground">A verification code was sent to your email</p>
-              </div>
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
-                <Icon name="envelope" className="text-primary" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{registeredEmail}</p>
-                </div>
-              </div>
-              <EmailVerification email={registeredEmail} onVerified={handleEmailVerified} />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (registeredEmail && emailVerified) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md text-center space-y-6"
-        >
-          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
-            <Icon name="check-circle" size="xl" className="text-green-600 dark:text-green-400" />
-          </div>
-          <h2 className="text-3xl font-bold">Registration Successful</h2>
-          <p className="text-muted-foreground">
-            Your seller account has been created and your email is verified. Your shop application is now under review.
-          </p>
-          <Button className="w-full" size="lg" onClick={handleGoToLogin}>
-            Go to Login
-          </Button>
-        </motion.div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen flex">
       <GlassAlert
@@ -586,41 +514,51 @@ export default function SellerRegistrationPage() {
             <span className="text-2xl font-semibold">Yamada</span>
           </Link>
 
-          <div>
-            <h1 className="text-4xl font-bold mb-4">Become a Seller</h1>
-            <p className="text-lg opacity-90">Join thousands of sellers and reach millions of customers</p>
-          </div>
+          {registeredEmail ? (
+            <div>
+              <h1 className="text-4xl font-bold mb-4">Verify Your Email</h1>
+              <p className="text-lg opacity-90">Check your email for the verification code to activate your seller account</p>
+              <div className="mt-4 text-sm opacity-70">Your shop application will be reviewed by admin after email verification</div>
+            </div>
+          ) : (
+            <div>
+              <h1 className="text-4xl font-bold mb-4">Become a Seller</h1>
+              <p className="text-lg opacity-90">Join thousands of sellers and reach millions of customers</p>
+            </div>
+          )}
 
           {/* Section Progress */}
-          <div className="space-y-3">
-            {sections.map((section, index) => (
-              <button
-                key={section.id}
-                onClick={() => index <= currentSection && setCurrentSection(index)}
-                disabled={index > currentSection}
-                className={`flex items-center gap-3 w-full text-left transition-all ${
-                  index === currentSection
-                    ? "opacity-100"
-                    : index < currentSection
-                      ? "opacity-70 hover:opacity-100"
-                      : "opacity-40 cursor-not-allowed"
-                }`}
-              >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    index < currentSection
-                      ? "bg-white text-secondary"
-                      : index === currentSection
-                        ? "bg-white/30 ring-2 ring-white"
-                        : "bg-white/20"
+          {!registeredEmail && (
+            <div className="space-y-3">
+              {sections.map((section, index) => (
+                <button
+                  key={section.id}
+                  onClick={() => index <= currentSection && setCurrentSection(index)}
+                  disabled={index > currentSection}
+                  className={`flex items-center gap-3 w-full text-left transition-all ${
+                    index === currentSection
+                      ? "opacity-100"
+                      : index < currentSection
+                        ? "opacity-70 hover:opacity-100"
+                        : "opacity-40 cursor-not-allowed"
                   }`}
                 >
-                  {index < currentSection ? <Icon name="check" /> : <Icon name={section.icon} />}
-                </div>
-                <span className="font-medium">{section.title}</span>
-              </button>
-            ))}
-          </div>
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      index < currentSection
+                        ? "bg-white text-secondary"
+                        : index === currentSection
+                          ? "bg-white/30 ring-2 ring-white"
+                          : "bg-white/20"
+                    }`}
+                  >
+                    {index < currentSection ? <Icon name="check" /> : <Icon name={section.icon} />}
+                  </div>
+                  <span className="font-medium">{section.title}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -637,78 +575,110 @@ export default function SellerRegistrationPage() {
         </div>
 
         {/* Mobile Section Progress */}
-        <div className="flex items-center justify-center gap-2 px-6 pb-4 lg:hidden">
-          {sections.map((_, index) => (
-            <div
-              key={index}
-              className={`h-2 rounded-full transition-all ${
-                index <= currentSection ? "bg-primary w-8" : "bg-muted w-2"
-              }`}
-            />
-          ))}
-        </div>
+        {!registeredEmail && (
+          <div className="flex items-center justify-center gap-2 px-6 pb-4 lg:hidden">
+            {sections.map((_, index) => (
+              <div
+                key={index}
+                className={`h-2 rounded-full transition-all ${
+                  index <= currentSection ? "bg-primary w-8" : "bg-muted w-2"
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         <div className="flex-1 flex items-start justify-center p-6 overflow-y-auto">
           <div className="w-full max-w-md space-y-6">
-            <div className="text-center lg:text-left">
-              <h2 className="text-3xl font-bold mb-2">{sections[currentSection].title}</h2>
-              <p className="text-muted-foreground">
-                Step {currentSection + 1} of {sections.length}
-              </p>
-            </div>
-
-            {error && (currentSection !== 3 || hasTriedDocumentsSubmit) && (
-              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm flex items-center gap-2">
-                <Icon name="exclamation-circle" />
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={currentSection === sections.length - 1 ? handleSubmit : (e) => e.preventDefault()}>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentSection}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                >
-                  {renderSection()}
-                </motion.div>
-              </AnimatePresence>
-
-              <div className="flex gap-3 mt-6">
-                {currentSection > 0 && (
-                  <Button type="button" variant="outline" className="flex-1 bg-transparent" onClick={handleBack}>
-                    <Icon name="arrow-left" className="mr-2" />
-                    Back
+            {registeredEmail ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="text-center">
+                  <h2 className="text-3xl font-bold mb-2">Verify Your Email</h2>
+                  <p className="text-muted-foreground">Check your email for the verification code</p>
+                </div>
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                  <Icon name="envelope" className="text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{registeredEmail}</p>
+                  </div>
+                  {emailVerified && (
+                    <Icon name="check-circle" className="text-green-500 shrink-0" />
+                  )}
+                </div>
+                <EmailVerification email={registeredEmail} onVerified={handleEmailVerified} />
+                {emailVerified && (
+                  <Button className="w-full" size="lg" onClick={handleGoToLogin}>
+                    Go to Login
                   </Button>
                 )}
-                {currentSection < sections.length - 1 ? (
-                  <Button type="button" className="flex-1" onClick={handleNext}>
-                    Continue
-                    <Icon name="arrow-right" className="ml-2" />
-                  </Button>
-                ) : (
-                  <Button type="submit" className="flex-1" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Icon name="spinner" className="mr-2 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      "Submit Application"
+              </motion.div>
+            ) : (
+              <>
+                <div className="text-center lg:text-left">
+                  <h2 className="text-3xl font-bold mb-2">{sections[currentSection].title}</h2>
+                  <p className="text-muted-foreground">
+                    Step {currentSection + 1} of {sections.length}
+                  </p>
+                </div>
+
+                {error && (currentSection !== 3 || hasTriedDocumentsSubmit) && (
+                  <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm flex items-center gap-2">
+                    <Icon name="exclamation-circle" />
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={currentSection === sections.length - 1 ? handleSubmit : (e) => e.preventDefault()}>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentSection}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                    >
+                      {renderSection()}
+                    </motion.div>
+                  </AnimatePresence>
+
+                  <div className="flex gap-3 mt-6">
+                    {currentSection > 0 && (
+                      <Button type="button" variant="outline" className="flex-1 bg-transparent" onClick={handleBack}>
+                        <Icon name="arrow-left" className="mr-2" />
+                        Back
+                      </Button>
                     )}
-                  </Button>
-                )}
-              </div>
-            </form>
+                    {currentSection < sections.length - 1 ? (
+                      <Button type="button" className="flex-1" onClick={handleNext}>
+                        Continue
+                        <Icon name="arrow-right" className="ml-2" />
+                      </Button>
+                    ) : (
+                      <Button type="submit" className="flex-1" disabled={isLoading}>
+                        {isLoading ? (
+                          <>
+                            <Icon name="spinner" className="mr-2 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          "Submit Application"
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </form>
 
-            <p className="text-center text-sm text-muted-foreground">
-              Already have a seller account?{" "}
-              <Link href="/auth/login?role=seller" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
-            </p>
+                <p className="text-center text-sm text-muted-foreground">
+                  Already have a seller account?{" "}
+                  <Link href="/auth/login?role=seller" className="text-primary hover:underline font-medium">
+                    Sign in
+                  </Link>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
