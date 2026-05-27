@@ -43,6 +43,10 @@ def _queue_realtime_emit(n: Notification) -> None:
 
 def _queue_notification_email(n: Notification) -> None:
     pending = db.session.info.setdefault(_PENDING_EMAILS_KEY, [])
+
+    user = db.session.get(User, n.user_id)
+    user_email = user.email if user is not None and user.active else None
+
     pending.append(
         {
             "user_id": n.user_id,
@@ -50,6 +54,7 @@ def _queue_notification_email(n: Notification) -> None:
             "message": n.body,
             "page": n.page,
             "role": n.role,
+            "_email": user_email,
         }
     )
 
@@ -72,12 +77,12 @@ def _emit_pending_notifications(session) -> None:
     from app.services.email_service import send_notification_email
 
     for item in pending_emails:
-        user = db.session.get(User, item["user_id"])
-        if user is None or not user.active or not user.email:
+        user_email = item.get("_email")
+        if not user_email:
             continue
         try:
             send_notification_email(
-                to_email=user.email,
+                to_email=user_email,
                 title=item["title"],
                 message=item["message"],
                 page=item.get("page"),
