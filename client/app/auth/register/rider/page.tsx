@@ -137,9 +137,11 @@ export default function RiderRegistrationPage() {
         return null
       case 2:
         if (!formData.vehicleType) return "Vehicle type is required"
-        if (!formData.licenseNumber.trim()) return "License number is required"
-        if (!formData.license) return "Please upload your driver's license"
-        if (!formData.orCr) return "Please upload your OR/CR"
+        if (formData.vehicleType !== "bicycle") {
+          if (!formData.licenseNumber.trim()) return "Plate number is required"
+          if (!formData.license) return "Please upload your driver's license"
+          if (!formData.orCr) return "Please upload your OR/CR"
+        }
         if (!formData.acceptTerms) return "You must accept the terms and conditions"
         return null
       default:
@@ -336,38 +338,42 @@ export default function RiderRegistrationPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="licenseNumber">License Number</Label>
-              <Input
-                id="licenseNumber"
-                placeholder="N01-23-456789"
-                value={formData.licenseNumber}
-                onChange={(e) => updateFormData({ licenseNumber: e.target.value })}
-                required
-              />
-            </div>
+            {formData.vehicleType !== "bicycle" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="licenseNumber">Plate Number</Label>
+                  <Input
+                    id="licenseNumber"
+                    placeholder="N01-23-456789"
+                    value={formData.licenseNumber}
+                    onChange={(e) => updateFormData({ licenseNumber: e.target.value })}
+                    required
+                  />
+                </div>
 
-            <div className="space-y-4 pt-2">
-              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Documents</h3>
+                <div className="space-y-4 pt-2">
+                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Documents</h3>
 
-              <div className="space-y-2">
-                <Label>Driver&apos;s License</Label>
-                <FileUploader
-                  accept="image/*,.pdf"
-                  onUpload={(file) => updateFormData({ license: file })}
-                  value={formData.license}
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label>Driver&apos;s License</Label>
+                    <FileUploader
+                      accept="image/*,.pdf"
+                      onUpload={(file) => updateFormData({ license: file })}
+                      value={formData.license}
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label>OR/CR (Official Receipt / Certificate of Registration)</Label>
-                <FileUploader
-                  accept="image/*,.pdf"
-                  onUpload={(file) => updateFormData({ orCr: file })}
-                  value={formData.orCr}
-                />
-              </div>
-            </div>
+                  <div className="space-y-2">
+                    <Label>OR/CR (Official Receipt / Certificate of Registration)</Label>
+                    <FileUploader
+                      accept="image/*,.pdf"
+                      onUpload={(file) => updateFormData({ orCr: file })}
+                      value={formData.orCr}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="flex items-start gap-2 pt-4">
               <Checkbox
