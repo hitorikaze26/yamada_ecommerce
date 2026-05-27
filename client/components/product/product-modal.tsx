@@ -45,12 +45,11 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[90vh] p-0 overflow-hidden rounded-lg">
-        <DialogTitle className="sr-only">{product.name}</DialogTitle>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[100dvh] sm:max-h-[90vh] p-0 overflow-hidden rounded-lg">
 
         <div className="flex flex-col md:flex-row md:h-[80vh]">
           {/* ── Image Column ── */}
-          <div className="relative bg-muted md:w-1/2 md:h-full overflow-hidden">
+          <div className="relative bg-muted md:w-1/2 md:h-full overflow-hidden max-h-[40vh] sm:max-h-[45vh] md:max-h-none">
             <div className="relative aspect-square md:aspect-auto md:h-full min-w-0">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -84,7 +83,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                   <button
                     key={index}
                     onClick={() => setCurrentImageIndex(index)}
-                    className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden shrink-0 border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                       index === currentImageIndex
                         ? "border-white shadow-lg ring-1 ring-black/10 scale-105"
                         : "border-white/60 opacity-70 hover:opacity-100"
@@ -100,7 +99,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
 
           {/* ── Details Column ── */}
           <div className="flex flex-col flex-1 min-w-0 md:w-1/2">
-            <div className="flex-1 overflow-y-auto p-6 pb-4">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 pb-4">
               {/* Seller */}
               <Link
                 href={`/seller/${product.sellerId}`}
@@ -153,7 +152,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
               {/* Description */}
               {product.description && (
                 <div
-                  className="text-sm text-muted-foreground leading-relaxed mb-5 line-clamp-3 prose prose-sm max-w-none"
+                  className="text-sm text-muted-foreground leading-relaxed mb-5 line-clamp-2 md:line-clamp-3 prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: product.description }}
                 />
               )}
@@ -174,7 +173,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 rounded-md border flex items-center justify-center hover:bg-muted transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="w-11 h-11 sm:w-10 sm:h-10 rounded-md border flex items-center justify-center hover:bg-muted transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label="Decrease quantity"
                   >
                     <Icon name="minus" />
@@ -182,7 +181,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                   <span className="w-12 text-center font-semibold text-lg">{quantity}</span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 rounded-md border flex items-center justify-center hover:bg-muted transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="w-11 h-11 sm:w-10 sm:h-10 rounded-md border flex items-center justify-center hover:bg-muted transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label="Increase quantity"
                   >
                     <Icon name="plus" />
@@ -192,13 +191,13 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
             </div>
 
             {/* ── Sticky Actions ── */}
-            <div className="p-6 pt-4 border-t bg-background">
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={handleAddToCart}>
+            <div className="p-4 sm:p-5 md:p-6 pt-3 sm:pt-4 border-t bg-background">
+              <div className="flex gap-2 sm:gap-3">
+                <Button variant="outline" className="flex-1 h-12 sm:h-10" onClick={handleAddToCart}>
                   <Icon name="shopping-cart" className="mr-2" />
                   Add to Cart
                 </Button>
-                <Button className="flex-1" onClick={handleAddToCart}>
+                <Button className="flex-1 h-12 sm:h-10" onClick={handleAddToCart}>
                   Buy Now
                 </Button>
               </div>
