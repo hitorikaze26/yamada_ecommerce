@@ -17,6 +17,7 @@ import Swal from "sweetalert2"
 import "sweetalert2/dist/sweetalert2.min.css"
 
 import { StoreNameLink } from "@/components/store/store-name-link"
+import { OrderReviewSection } from "@/components/order/order-review-section"
 import type { ReviewableItem, ProductReviewPayload } from "@/lib/review-types"
 import { ReportLinkButton } from "@/components/report/report-link-button"
 import {
@@ -134,10 +135,7 @@ function OrderContent({ orderId }: { orderId: string }) {
   const [submittedReviewItemIds, setSubmittedReviewItemIds] = useState<Set<number>>(new Set())
   const [deliveryPillOptions, setDeliveryPillOptions] = useState<string[]>([])
   const [orderDetailImageErrors, setOrderDetailImageErrors] = useState<Record<string, boolean>>({})
-  const [showRatingModal, setShowRatingModal] = useState(false)
-  const [ratingValue, setRatingValue] = useState(0)
-  const [ratingFeedback, setRatingFeedback] = useState("")
-  const [submittingReview, setSubmittingReview] = useState(false)
+  const [highlightReview, setHighlightReview] = useState(false)
 
   const loadOrder = React.useCallback(async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) {
@@ -290,9 +288,7 @@ function OrderContent({ orderId }: { orderId: string }) {
 
   useEffect(() => {
     if (autoRate && order && !order.hasReviewed) {
-      setRatingValue(0)
-      setRatingFeedback("")
-      setShowRatingModal(true)
+      setHighlightReview(true)
       const params = new URLSearchParams(searchParams.toString())
       params.delete("rate")
       router.replace(`/orders/${order.id}${params.toString() ? `?${params.toString()}` : ""}`, { scroll: false })
@@ -632,9 +628,7 @@ function OrderContent({ orderId }: { orderId: string }) {
                             if (!r.isConfirmed) return
                             try {
                               await ordersApi.confirmReceived(String(order.id))
-                              setRatingValue(0)
-                              setRatingFeedback("")
-                              setShowRatingModal(true)
+                              setHighlightReview(true)
                               setOrder({ ...order, status: "completed" })
                             } catch (e: unknown) {
                               const msg =
@@ -714,7 +708,7 @@ function OrderContent({ orderId }: { orderId: string }) {
                     {String(order.status).toLowerCase() === "completed" && !order.hasReviewed && (
                       <button
                         type="button"
-                        onClick={() => { setRatingValue(0); setRatingFeedback(""); setShowRatingModal(true) }}
+                        onClick={() => setHighlightReview(true)}
                         className="mt-4 w-full sm:w-auto px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2"
                       >
                         <Icon name="star" />
@@ -877,8 +871,21 @@ function OrderContent({ orderId }: { orderId: string }) {
                       <span>{order.paymentMethod ?? ""}</span>
                     </div>
                   </div>
-                </div>
               </div>
+            </div>
+
+            {order && String(order.status).toLowerCase() === "completed" && (
+              <div className="mt-6">
+                <OrderReviewSection
+                  orderId={order.id}
+                  reviewableItems={reviewableItems}
+                  submittedReviewItemIds={submittedReviewItemIds}
+                  deliveryPillOptions={deliveryPillOptions}
+                  onSubmit={handleSubmitReview}
+                  highlight={highlightReview}
+                />
+              </div>
+            )}
 
               {order && (
                 <div className="mt-6 flex flex-wrap gap-2">
@@ -994,96 +1001,6 @@ function OrderContent({ orderId }: { orderId: string }) {
           )}
         </div>
       </main>
-
-      {showRatingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-          <div className="bg-card border rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h3 className="text-xl font-bold mb-2">Rate your order</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              How would you rate your overall experience?
-            </p>
-
-            <div className="flex justify-center gap-1 mb-4">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRatingValue(star)}
-                  className={`text-3xl transition-colors ${
-                    star <= ratingValue
-                      ? "text-yellow-400"
-                      : "text-gray-300 dark:text-gray-600"
-                  }`}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
-
-            <textarea
-              placeholder="Share your feedback (optional)"
-              value={ratingFeedback}
-              onChange={(e) => setRatingFeedback(e.target.value)}
-              rows={3}
-              className="w-full rounded-xl border px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-
-            <div className="flex gap-3 mt-4">
-              <button
-                type="button"
-                onClick={() => setShowRatingModal(false)}
-                className="flex-1 py-2.5 border rounded-xl text-sm font-medium hover:bg-muted"
-              >
-                Skip
-              </button>
-              <button
-                type="button"
-                disabled={submittingReview || ratingValue === 0}
-                onClick={async () => {
-                  if (ratingValue === 0 || !order) return
-                  setSubmittingReview(true)
-                  try {
-                    const promises: Promise<unknown>[] = []
-                    for (const item of order.items) {
-                      promises.push(
-                        ordersApi.addReview(order.id, {
-                          orderItemId: item.id,
-                          reviewFormat: item.reviewFormat ?? "default",
-                          overallRating: ratingValue,
-                          ratings: {},
-                          customerReview: ratingFeedback || undefined,
-                          deliverySatisfaction: ratingValue,
-                          deliveryPills: [],
-                        }),
-                      )
-                    }
-                    await Promise.all(promises)
-                    setShowRatingModal(false)
-                    setOrder({ ...order, hasReviewed: true })
-                    setSubmittedReviewItemIds(new Set(order.items.map((i) => i.id)))
-                    await Swal.fire({
-                      icon: "success",
-                      title: "Review submitted!",
-                      timer: 1500,
-                      showConfirmButton: false,
-                    })
-                  } catch {
-                    await Swal.fire({
-                      icon: "error",
-                      title: "Failed to submit review",
-                    })
-                  } finally {
-                    setSubmittingReview(false)
-                  }
-                }}
-                className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
-              >
-                {submittingReview ? "Submitting…" : "Submit"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <Footer />
     </div>

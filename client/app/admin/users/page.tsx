@@ -712,38 +712,7 @@ function AdminUsersContent() {
                               ? raw.orders
                               : []
 
-                          const rows: {
-                            key: string
-                            productName: string
-                            productCode: string
-                            shopName: string
-                            price: number
-                            status: string
-                          }[] = []
-
-                          for (const order of orders) {
-                            const status = String(order.status ?? "").toLowerCase()
-                            const storeName = order.store?.name || "Unknown shop"
-                            const items: any[] = Array.isArray(order.items) ? order.items : []
-                            for (const item of items) {
-                              const productId = item.productId ?? item.product_id
-                              const product = item.product || {}
-                              const name = product.name || `Product #${productId ?? "?"}`
-                              const code = product.sku || `Code: ${productId ?? "?"}`
-                              const unitPrice = Number(item.unitPrice ?? item.unit_price ?? product.price ?? 0)
-
-                              rows.push({
-                                key: `${order.id ?? "order"}-${item.id ?? productId ?? Math.random()}`,
-                                productName: name,
-                                productCode: String(code),
-                                shopName: storeName,
-                                price: unitPrice,
-                                status,
-                              })
-                            }
-                          }
-
-                          if (rows.length === 0) {
+                          if (orders.length === 0) {
                             return (
                               <p className="text-muted-foreground">
                                 No orders found for this buyer or the backend endpoint is not returning data.
@@ -753,36 +722,74 @@ function AdminUsersContent() {
 
                           return (
                             <div className="space-y-2 max-h-64 overflow-auto">
-                              {rows.map((row) => (
-                                <div
-                                  key={row.key}
-                                  className="flex items-start justify-between gap-3 rounded-lg border bg-background/80 px-3 py-2"
-                                >
-                                  <div className="space-y-0.5">
-                                    <p className="font-medium text-[13px]">{row.productName}</p>
-                                    <p className="text-[11px] text-muted-foreground">{row.productCode}</p>
-                                    <p className="text-[11px] text-muted-foreground">
-                                      Shop: <span className="font-medium">{row.shopName}</span>
-                                    </p>
+                              {orders.map((order: any) => {
+                                const orderId = order.id ?? "?"
+                                const orderStatus = String(order.status ?? "").toLowerCase()
+                                const storeName = order.store?.name || "Unknown shop"
+                                const items: any[] = Array.isArray(order.items) ? order.items : []
+
+                                return (
+                                  <div
+                                    key={orderId}
+                                    className="rounded-lg border bg-background/80 px-3 py-2 space-y-1"
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <p className="font-medium text-[13px]">Order #{orderId}</p>
+                                      <span
+                                        className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${
+                                          orderStatus === "delivered" || orderStatus === "completed"
+                                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                            : orderStatus === "pending" || orderStatus === "processing"
+                                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                              : orderStatus === "cancelled" || orderStatus === "returned"
+                                                ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                : "bg-muted text-muted-foreground"
+                                        }`}
+                                      >
+                                        {orderStatus || "unknown"}
+                                      </span>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      {items.length === 0 ? (
+                                        <p className="text-[11px] text-muted-foreground italic">No items</p>
+                                      ) : (
+                                        items.map((item: any, idx: number) => {
+                                          const productId = item.productId ?? item.product_id
+                                          const product = item.product || {}
+                                          const name = product.name || `Product #${productId ?? "?"}`
+                                          const code = product.sku || `Code: ${productId ?? "?"}`
+                                          const unitPrice = Number(item.unitPrice ?? item.unit_price ?? product.price ?? 0)
+
+                                          return (
+                                            <div key={item.id ?? productId ?? idx} className="flex items-start justify-between gap-3">
+                                              <div className="space-y-0.5 min-w-0">
+                                                <p className="font-medium text-[12px]">{name}</p>
+                                                <p className="text-[10px] text-muted-foreground">{code}</p>
+                                                <p className="text-[10px] text-muted-foreground">
+                                                  Shop: <span className="font-medium">{storeName}</span>
+                                                </p>
+                                              </div>
+                                              <p className="text-[12px] font-semibold flex-shrink-0">{formatPrice(unitPrice)}</p>
+                                            </div>
+                                          )
+                                        })
+                                      )}
+                                    </div>
+
+                                    {order.rate != null && (
+                                      <p className="text-[11px] text-muted-foreground pt-1 border-t border-border/50">
+                                        Rate: {"★".repeat(Math.round(order.rate))}{"☆".repeat(5 - Math.round(order.rate))} ({order.rate}/5)
+                                      </p>
+                                    )}
+                                    {order.feedback && (
+                                      <p className="text-[11px] text-muted-foreground">
+                                        Feedback: {order.feedback}
+                                      </p>
+                                    )}
                                   </div>
-                                  <div className="text-right space-y-1 flex-shrink-0">
-                                    <p className="text-[13px] font-semibold">{formatPrice(row.price)}</p>
-                                    <span
-                                      className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${
-                                        row.status === "delivered" || row.status === "completed"
-                                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                          : row.status === "pending" || row.status === "processing"
-                                            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                                            : row.status === "cancelled" || row.status === "returned"
-                                              ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                              : "bg-muted text-muted-foreground"
-                                      }`}
-                                    >
-                                      {row.status || "unknown"}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                             </div>
                           )
                         })()}
