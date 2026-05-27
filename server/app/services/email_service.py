@@ -6,14 +6,11 @@ import logging
 import os
 from typing import Optional
 
-import resend
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 from flask import has_app_context, current_app
 
 _logger = logging.getLogger(__name__)
-
-resend.api_key = os.environ.get("RESEND_API_KEY", "")
-
-RESEND_FROM = os.environ.get("RESEND_FROM", "YamadaShop <onboarding@resend.dev>")
 
 YAMADA_MAIL_CONSOLE = os.environ.get("YAMADA_MAIL_CONSOLE", "false").lower() in ("1", "true", "yes")
 
@@ -52,7 +49,7 @@ def _send_email(
     body: str,
     critical: bool = False,
 ) -> None:
-    """Send email via Resend or log to console when YAMADA_MAIL_CONSOLE is true."""
+    """Send email via Brevo or log to console when YAMADA_MAIL_CONSOLE is true."""
     if not to_email or not to_email.strip():
         return
 
@@ -62,18 +59,30 @@ def _send_email(
         _log_email(to=to_email, subject=subject, body=body)
         return
 
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key["api-key"] = os.environ.get("BREVO_API_KEY", "")
+
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+        sib_api_v3_sdk.ApiClient(configuration)
+    )
+
+    send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+        to=[{"email": to_email}],
+        sender={
+            "email": os.environ.get("BREVO_FROM_EMAIL"),
+            "name": os.environ.get("BREVO_FROM_NAME", "YamadaShop"),
+        },
+        subject=subject,
+        html_content=_text_to_html(body),
+    )
+
     try:
-        resend.Emails.send({
-            "from": RESEND_FROM,
-            "to": to_email,
-            "subject": subject,
-            "html": _text_to_html(body),
-        })
-    except Exception as exc:
+        api_instance.send_transac_email(send_smtp_email)
+    except ApiException as exc:
         if critical:
             if has_app_context():
                 current_app.logger.error(
-                    "Critical email failed for %s (%s): %s — check RESEND_API_KEY",
+                    "Critical email failed for %s (%s): %s — check BREVO_API_KEY",
                     to_email,
                     subject,
                     exc,

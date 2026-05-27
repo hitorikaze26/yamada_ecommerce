@@ -21,4 +21,4 @@ gunicorn
 flask-limiter>=3.7
 supabase>=1.2
 email-validator
-resend
+sib-api-v3-sdk
