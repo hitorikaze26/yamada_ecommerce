@@ -228,8 +228,12 @@ class CommissionService:
         if any(keyword in address_lower for keyword in ['metro manila', 'ncr', 'manila']):
             return "Metro Manila"
         
+        # Check for Cagayan de Oro (Mindanao) before Cagayan province (Luzon)
+        if 'cagayan de oro' in address_lower:
+            return "Mindanao"
+        
         # Check for Luzon regions
-        if any(keyword in address_lower for keyword in ['luzon', 'quezon', 'bulacan', 'cavite', 'laguna', 'batangas', 'rizal']):
+        if any(keyword in address_lower for keyword in ['luzon', 'quezon', 'bulacan', 'cavite', 'laguna', 'batangas', 'rizal', 'cagayan']):
             return "Luzon"
         
         # Check for Visayas regions
@@ -237,7 +241,7 @@ class CommissionService:
             return "Visayas"
         
         # Check for Mindanao regions
-        if any(keyword in address_lower for keyword in ['mindanao', 'davao', 'cagayan', 'cotabato', 'zamboanga', 'general santos']):
+        if any(keyword in address_lower for keyword in ['mindanao', 'davao', 'cotabato', 'zamboanga', 'general santos']):
             return "Mindanao"
         
         # Default to Mindanao (highest rate)

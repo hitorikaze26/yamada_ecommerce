@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/product/product-card"
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
 import { productsApi } from "@/lib/api"
+import { normalizeProductList } from "@/lib/normalizers"
 import type { Product } from "@/lib/types"
 import { CATEGORIES, type CategoryId } from "@/lib/types"
 
@@ -34,26 +35,7 @@ export default function CategoryPage(props: CategoryPageProps) {
         const response = await productsApi.getAll({ category: categoryId })
         const apiProducts: any[] = response.data.products || []
 
-        const normalized: Product[] = apiProducts.map((p) => ({
-          id: String(p.id),
-          slug: String(p.id),
-          name: p.name ?? "",
-          category: categoryId,
-          subcategory: undefined,
-          description: "", // backend list endpoint does not include description
-          images: p.image_url ? [p.image_url] : [],
-          variations: [],
-          price: typeof p.price === "number" ? p.price : 0,
-          salePrice: undefined,
-          rating: typeof p.rating === "number" ? p.rating : 0,
-          reviewCount: typeof p.review_count === "number" ? p.review_count : 0,
-          sellerId: "",
-          sellerName: "",
-          sellerLogo: undefined,
-          visibility: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }))
+        const normalized: Product[] = normalizeProductList(apiProducts)
 
         setProducts(normalized)
       } catch (error) {

@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   userRef.current = user
 
   useEffect(() => {
+    let cancelled = false
     const checkAuth = async () => {
       try {
         const sessionRes = await authApi.checkSession()
@@ -112,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(hydrated))
         localStorage.setItem(ROLE_STORAGE_KEY, hydrated.role)
-        setUser(hydrated)
+        if (!cancelled) setUser(hydrated)
       } catch (error: unknown) {
         const status = (error as { response?: { status?: number } })?.response?.status
         if (status === 401 || status === 403) {
@@ -128,11 +129,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
     void checkAuth()
+    return () => { cancelled = true }
   }, [])
 
   const login = async (

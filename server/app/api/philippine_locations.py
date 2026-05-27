@@ -123,7 +123,7 @@ PHILIPPINE_LOCATIONS = {
                 "cities": ["Legazpi", "Naga", "Iriga", "Tabaco", "Ligao", "Masbate City", "Sorsogon City"]
             },
             "Cordillera Administrative Region": {
-                "cities": ["Baguio", "Tabuk", "Bontoc", "Laoag", "Ifugao"]
+                "cities": ["Baguio", "Tabuk", "Bontoc", "Ifugao"]
             }
         }
     },
@@ -149,7 +149,7 @@ PHILIPPINE_LOCATIONS = {
                 "cities": ["Davao", "Tagum", "Digos", "Mati", "Panabo", "Island Garden City of Samal", "Davao del Sur"]
             },
             "Soccsksargen": {
-                "cities": ["General Santos", "Koronadal", "Kidapawan", "Cotabato", "Tacurong", "Glan", "Midsayap"]
+                "cities": ["General Santos", "Koronadal", "Kidapawan", "Tacurong", "Glan", "Midsayap"]
             },
             "Caraga": {
                 "cities": ["Butuan", "Surigao", "Bislig", "Tandag", "Cabadbaran", "Bayugan"]
@@ -254,10 +254,15 @@ def get_barangays(region, province, city):
     region_name = normalize_region(region)
     if not region_name or region_name not in PHILIPPINE_LOCATIONS:
         return jsonify({"error": "Region not found", "received": region}), 404
-    if province not in PHILIPPINE_LOCATIONS[region_name]["provinces"]:
-        return jsonify({"error": "Province not found", "received": province}), 404
-    if city not in PHILIPPINE_LOCATIONS[region_name]["provinces"][province]["cities"]:
-        return jsonify({"error": "City not found", "received": city}), 404
+    # NCR (Metro Manila) has cities directly under region, not under provinces
+    if "cities" in PHILIPPINE_LOCATIONS[region_name]:
+        if city not in PHILIPPINE_LOCATIONS[region_name]["cities"]:
+            return jsonify({"error": "City not found", "received": city}), 404
+    else:
+        if province not in PHILIPPINE_LOCATIONS[region_name].get("provinces", {}):
+            return jsonify({"error": "Province not found", "received": province}), 404
+        if city not in PHILIPPINE_LOCATIONS[region_name]["provinces"][province]["cities"]:
+            return jsonify({"error": "City not found", "received": city}), 404
     
     # Return common barangay names - in production this would query a full database
     common_barangays = [
@@ -296,15 +301,25 @@ def search_locations():
     
     results = []
     for region_name, region_data in PHILIPPINE_LOCATIONS.items():
-        for province_name, province_data in region_data["provinces"].items():
-            for city in province_data["cities"]:
-                if (query in region_name.lower() or 
-                    query in province_name.lower() or 
-                    query in city.lower()):
+        # NCR (Metro Manila) has cities directly under region, not provinces
+        if "cities" in region_data:
+            for city in region_data["cities"]:
+                if query in region_name.lower() or query in city.lower():
                     results.append({
                         "region": region_name,
-                        "province": province_name,
+                        "province": None,
                         "city": city
                     })
+        else:
+            for province_name, province_data in region_data.get("provinces", {}).items():
+                for city in province_data.get("cities", []):
+                    if (query in region_name.lower() or 
+                        query in province_name.lower() or 
+                        query in city.lower()):
+                        results.append({
+                            "region": region_name,
+                            "province": province_name,
+                            "city": city
+                        })
     
     return jsonify({"results": results[:50]})  # Limit to 50 results

@@ -6,7 +6,8 @@ import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
-import { sellerApi, API_BASE_ORIGIN, notificationsApi, type NotificationDto } from "@/lib/api"
+import { sellerApi, notificationsApi, type NotificationDto } from "@/lib/api"
+import { normalizeProduct } from "@/lib/normalizers"
 import type { Product } from "@/lib/types"
 import { fetchSellerStoreGate } from "@/lib/seller-store-guard"
 import { formatPrice } from "@/lib/format"
@@ -186,8 +187,8 @@ function SellerProductsContent() {
       const apiProducts = (res.data?.products || res.data || []) as Product[]
 
       const enhanced = apiProducts.map((p) => {
+        const normalized = normalizeProduct(p as unknown as Record<string, unknown>)
         const totalInventory = (p.variations || []).reduce((sum, v) => sum + (v.inventory || 0), 0)
-        // Fall back to top-level quantity when no variations exist
         const stock = (p.variations || []).length > 0 ? totalInventory : ((p as any).quantity ?? totalInventory)
 
         let status: "active" | "draft" | "out of stock" | "under review" | "hidden" | "removed" | "restricted" = "active"
@@ -203,25 +204,10 @@ function SellerProductsContent() {
           status = "out of stock"
         }
 
-        const rawImage = (p as any).image_url ?? (p as any).imageUrl
-
-        // Build a full static URL when backend returns a relative path like
-        // "product_images/filename.webp" so Next Image can resolve it.
-        let imageUrl = rawImage as string | undefined
-        if (imageUrl && !imageUrl.startsWith("http")) {
-          // Backend may already prefix with /static, avoid double prefix
-          const path = imageUrl.startsWith("/static/") ? imageUrl : `/static/${imageUrl}`
-          imageUrl = `${API_BASE_ORIGIN}${path}`
-        }
-
         return {
-          ...p,
-          // Prefer backend image_url/imageUrl (normalized to absolute URL),
-          // but fall back to any existing images array
-          images: imageUrl ? [imageUrl] : p.images ?? [],
+          ...normalized,
           status,
           stock,
-          // `sold` is returned by /seller/products from real order data
           sold: (p as any).sold ?? 0,
         }
       })

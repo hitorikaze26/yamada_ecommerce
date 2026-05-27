@@ -335,7 +335,10 @@ def listProducts():
       elif sort_param == 'popular':
           stmt = stmt.order_by(Product.rating.desc(), Product.review_count.desc())
 
-      stmt = stmt.options(selectinload(Product.media)).limit(limit)
+      stmt = stmt.options(
+          selectinload(Product.media),
+          selectinload(Product.variations),
+      ).limit(limit)
       products = db.session.execute(stmt).scalars().all()
 
       # Preload store names for all products so the frontend can show
@@ -378,24 +381,55 @@ def listProducts():
                   seen.add(img)
                   unique_images.append(img)
 
+          tags_list = []
+          if p.tags_json:
+              try:
+                  parsed = json.loads(p.tags_json) if isinstance(p.tags_json, str) else p.tags_json
+                  if isinstance(parsed, list):
+                      tags_list = parsed
+              except Exception:
+                  pass
+
           data.append({
               "id": p.id,
               "name": p.name,
               "subcategory": getattr(p, "subcategory", None),
+              "description": p.description or "",
               "price": p.price,
+              "sale_price": p.sale_price,
+              "cost_price": p.cost_price,
+              "quantity": p.quantity,
               "image_url": _public_image_url(getattr(p, "image_url", None)),
               "images": unique_images,
               "rating": getattr(p, "rating", 0),
               "review_count": getattr(p, "review_count", 0),
               "store_id": getattr(p, "store_id", None),
-              # Alias for frontend field name
               "seller_name": stores_map.get(getattr(p, "store_id", None)),
               "categories": categories_by_product.get(p.id, []),
+              "brand": p.brand,
+              "product_condition": p.product_condition,
+              "weight_kg": p.weight_kg,
+              "material": p.material,
+              "care_instructions": p.care_instructions,
+              "tags_json": p.tags_json,
+              "tags": tags_list,
+              "variations": [
+                  {
+                      "id": v.id,
+                      "size": v.size,
+                      "color": v.color,
+                      "colorHex": getattr(v, 'color_hex', None),
+                      "sku": v.sku,
+                      "inventory": v.inventory,
+                      "price": v.price,
+                  }
+                  for v in p.variations
+              ],
           })
 
       return jsonify(products=data)
-    except Exception:
-      return jsonify(msg="Error occurred!"), 500
+    except Exception as e:
+      return jsonify(msg=str(e)), 500
 
 
 @products_bp.post('/create')

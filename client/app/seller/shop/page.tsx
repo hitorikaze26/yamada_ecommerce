@@ -464,104 +464,97 @@ export default function ShopSettingsPage() {
     }
   }
 
+  const reverseGeocodeAndDetectRegion = async () => {
+    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      })
+    })
+
+    const { latitude, longitude } = position.coords
+
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&country=Philippines`,
+      {
+        headers: {
+          'User-Agent': 'Yamada-Ecommerce/1.0 (geolocation; contact@yamada.ph)',
+        },
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch location data")
+    }
+
+    const data = await response.json()
+    const addr = data.address
+
+    const regionMap: Record<string, string> = {
+      "National Capital Region": "Metro Manila",
+      "NCR": "Metro Manila",
+      "Metro Manila": "Metro Manila",
+      "Calabarzon": "Luzon",
+      "Mimaropa": "Luzon",
+      "Bicol Region": "Luzon",
+      "Cagayan Valley": "Luzon",
+      "Central Luzon": "Luzon",
+      "Ilocos Region": "Luzon",
+      "Cordillera Administrative Region": "Luzon",
+      "Western Visayas": "Visayas",
+      "Central Visayas": "Visayas",
+      "Eastern Visayas": "Visayas",
+      "Northern Mindanao": "Mindanao",
+      "Davao Region": "Mindanao",
+      "Soccsksargen": "Mindanao",
+      "Caraga": "Mindanao",
+      "Bangsamoro": "Mindanao",
+      "Zamboanga Peninsula": "Mindanao",
+    }
+
+    let regionName = ""
+    if (addr.state) {
+      const stateUpper = addr.state.toUpperCase()
+      for (const [key, value] of Object.entries(regionMap)) {
+        if (stateUpper.includes(key.toUpperCase())) {
+          regionName = value
+          break
+        }
+      }
+    }
+
+    if (!regionName) {
+      const locationString = `${addr.city || ""} ${addr.province || ""} ${addr.state || ""}`.toLowerCase()
+      if (locationString.includes("manila") || locationString.includes("quezon") || locationString.includes("makati") || locationString.includes("pasig")) {
+        regionName = "Metro Manila"
+      } else if (locationString.includes("cagayan de oro")) {
+        regionName = "Mindanao"
+      } else if (locationString.includes("cebu") || locationString.includes("iloilo") || locationString.includes("bacolod")) {
+        regionName = "Visayas"
+      } else if (locationString.includes("davao") || locationString.includes("mindanao") || locationString.includes("cotabato") || locationString.includes("zamboanga")) {
+        regionName = "Mindanao"
+      } else {
+        regionName = "Luzon"
+      }
+    }
+
+    return {
+      regionName,
+      provinceName: addr.state || addr.province || "",
+      cityName: addr.city || addr.town || addr.village || "",
+    }
+  }
+
   const handleUseGeolocation = async () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser")
       return
     }
-
     setIsSaving("geolocation")
     try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        })
-      })
-
-      const { latitude, longitude } = position.coords
-      
-      // Use OpenStreetMap Nominatim API for reverse geocoding (free)
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&country=Philippines`,
-        {
-          headers: {
-            'User-Agent': 'Yamada-Ecommerce/1.0',
-          },
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch location data")
-      }
-
-      const data = await response.json()
-      const address = data.address
-
-      // Extract location components and map to Philippine regions
-      let regionName = ""
-      let provinceName = ""
-      let cityName = ""
-
-      // Map Philippine administrative divisions to regions
-      const regionMap: { [key: string]: string } = {
-        "National Capital Region": "Metro Manila",
-        "NCR": "Metro Manila",
-        "Metro Manila": "Metro Manila",
-        "Calabarzon": "Luzon",
-        "Mimaropa": "Luzon",
-        "Bicol Region": "Luzon",
-        "Cagayan Valley": "Luzon",
-        "Central Luzon": "Luzon",
-        "Ilocos Region": "Luzon",
-        "Cordillera Administrative Region": "Luzon",
-        "Western Visayas": "Visayas",
-        "Central Visayas": "Visayas",
-        "Eastern Visayas": "Visayas",
-        "Northern Mindanao": "Mindanao",
-        "Davao Region": "Mindanao",
-        "Soccsksargen": "Mindanao",
-        "Caraga": "Mindanao",
-        "Bangsamoro": "Mindanao",
-        "Zamboanga Peninsula": "Mindanao",
-      }
-
-      // Set region based on state/province
-      if (address.state) {
-        const stateUpper = address.state.toUpperCase()
-        for (const [key, value] of Object.entries(regionMap)) {
-          if (stateUpper.includes(key.toUpperCase())) {
-            regionName = value
-            break
-          }
-        }
-      }
-
-      // Fallback region detection based on common Philippine locations
-      if (!regionName) {
-        const locationString = `${address.city || ""} ${address.province || ""} ${address.state || ""}`.toLowerCase()
-        if (locationString.includes("manila") || locationString.includes("quezon") || locationString.includes("makati") || locationString.includes("pasig")) {
-          regionName = "Metro Manila"
-        } else if (locationString.includes("cebu") || locationString.includes("iloilo") || locationString.includes("bacolod")) {
-          regionName = "Visayas"
-        } else if (locationString.includes("davao") || locationString.includes("cagayan") || locationString.includes("mindanao")) {
-          regionName = "Mindanao"
-        } else {
-          regionName = "Luzon" // Default fallback
-        }
-      }
-
-      provinceName = address.state || address.province || ""
-      cityName = address.city || address.town || address.village || ""
-
-      setNewShipping({
-        ...newShipping,
-        regionName,
-        provinceName,
-        cityName,
-      })
-
+      const location = await reverseGeocodeAndDetectRegion()
+      setNewShipping({ ...newShipping, ...location })
       toast.success("Location detected successfully!")
     } catch (error: any) {
       console.error("Geolocation error:", error)
@@ -584,101 +577,11 @@ export default function ShopSettingsPage() {
       toast.error("Geolocation is not supported by your browser")
       return
     }
-
     if (!editingShipping) return
-
     setIsSaving("geolocation-edit")
     try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        })
-      })
-
-      const { latitude, longitude } = position.coords
-      
-      // Use OpenStreetMap Nominatim API for reverse geocoding (free)
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&country=Philippines`,
-        {
-          headers: {
-            'User-Agent': 'Yamada-Ecommerce/1.0',
-          },
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch location data")
-      }
-
-      const data = await response.json()
-      const address = data.address
-
-      // Extract location components and map to Philippine regions
-      let regionName = ""
-      let provinceName = ""
-      let cityName = ""
-
-      // Map Philippine administrative divisions to regions
-      const regionMap: { [key: string]: string } = {
-        "National Capital Region": "Metro Manila",
-        "NCR": "Metro Manila",
-        "Metro Manila": "Metro Manila",
-        "Calabarzon": "Luzon",
-        "Mimaropa": "Luzon",
-        "Bicol Region": "Luzon",
-        "Cagayan Valley": "Luzon",
-        "Central Luzon": "Luzon",
-        "Ilocos Region": "Luzon",
-        "Cordillera Administrative Region": "Luzon",
-        "Western Visayas": "Visayas",
-        "Central Visayas": "Visayas",
-        "Eastern Visayas": "Visayas",
-        "Northern Mindanao": "Mindanao",
-        "Davao Region": "Mindanao",
-        "Soccsksargen": "Mindanao",
-        "Caraga": "Mindanao",
-        "Bangsamoro": "Mindanao",
-        "Zamboanga Peninsula": "Mindanao",
-      }
-
-      // Set region based on state/province
-      if (address.state) {
-        const stateUpper = address.state.toUpperCase()
-        for (const [key, value] of Object.entries(regionMap)) {
-          if (stateUpper.includes(key.toUpperCase())) {
-            regionName = value
-            break
-          }
-        }
-      }
-
-      // Fallback region detection based on common Philippine locations
-      if (!regionName) {
-        const locationString = `${address.city || ""} ${address.province || ""} ${address.state || ""}`.toLowerCase()
-        if (locationString.includes("manila") || locationString.includes("quezon") || locationString.includes("makati") || locationString.includes("pasig")) {
-          regionName = "Metro Manila"
-        } else if (locationString.includes("cebu") || locationString.includes("iloilo") || locationString.includes("bacolod")) {
-          regionName = "Visayas"
-        } else if (locationString.includes("davao") || locationString.includes("cagayan") || locationString.includes("mindanao")) {
-          regionName = "Mindanao"
-        } else {
-          regionName = "Luzon" // Default fallback
-        }
-      }
-
-      provinceName = address.state || address.province || ""
-      cityName = address.city || address.town || address.village || ""
-
-      setEditingShipping({
-        ...editingShipping,
-        regionName,
-        provinceName,
-        cityName,
-      })
-
+      const location = await reverseGeocodeAndDetectRegion()
+      setEditingShipping({ ...editingShipping, ...location })
       toast.success("Location detected successfully!")
     } catch (error: any) {
       console.error("Geolocation error:", error)
@@ -696,6 +599,40 @@ export default function ShopSettingsPage() {
     }
   }
 
+  // Handle copying existing location
+  const handleCopyExistingLocation = (setting: ShippingSetting) => {
+    setNewShipping({
+      ...newShipping,
+      regionName: setting.regionName,
+      provinceName: setting.provinceName,
+      cityName: setting.cityName,
+    })
+    
+    // Update dropdown selections if the location exists in Philippine locations
+    if (philippineLocations && philippineLocations[setting.regionName]) {
+      const regionData = philippineLocations[setting.regionName]
+      setSelectedRegion(setting.regionName)
+      if (regionData.cities) {
+        // Metro Manila
+        setSelectedProvince("")
+        setCities(regionData.cities)
+        if (regionData.cities.includes(setting.cityName)) {
+          setSelectedCity(setting.cityName)
+        }
+      } else if (regionData.provinces && regionData.provinces[setting.provinceName]) {
+        setSelectedProvince(setting.provinceName)
+        const cities = regionData.provinces[setting.provinceName].cities
+        setCities(cities)
+        if (cities.includes(setting.cityName)) {
+          setSelectedCity(setting.cityName)
+        }
+      }
+    }
+    
+    setIsCopyDialogOpen(false)
+    toast.success("Location copied successfully!")
+  }
+
   // Fetch Philippine locations
   const fetchPhilippineLocations = async () => {
     try {
@@ -708,16 +645,28 @@ export default function ShopSettingsPage() {
     }
   }
 
+  // Load Philippine locations on component mount
+  useEffect(() => {
+    fetchPhilippineLocations()
+  }, [])
+
   // Handle region selection
   const handleRegionChange = (region: string) => {
     setSelectedRegion(region)
     setSelectedProvince("")
     setSelectedCity("")
-    
+
     if (philippineLocations && philippineLocations[region]) {
-      const provinceList = Object.keys(philippineLocations[region].provinces)
-      setProvinces(provinceList)
-      setCities([])
+      const regionData = philippineLocations[region]
+      if (regionData.cities) {
+        // Metro Manila — cities directly under region
+        setProvinces([])
+        setCities(regionData.cities)
+      } else {
+        const provinceList = Object.keys(regionData.provinces || {})
+        setProvinces(provinceList)
+        setCities([])
+      }
     }
   }
 
@@ -725,18 +674,23 @@ export default function ShopSettingsPage() {
   const handleProvinceChange = (province: string) => {
     setSelectedProvince(province)
     setSelectedCity("")
-    
-    if (philippineLocations && selectedRegion && philippineLocations[selectedRegion].provinces[province]) {
-      const cityList = philippineLocations[selectedRegion].provinces[province].cities
-      setCities(cityList)
+
+    if (philippineLocations && selectedRegion) {
+      const regionData = philippineLocations[selectedRegion]
+      if (regionData.cities) {
+        // Metro Manila — cities directly under region
+        setCities(regionData.cities)
+      } else if (regionData.provinces && regionData.provinces[province]) {
+        const cityList = regionData.provinces[province].cities
+        setCities(cityList)
+      }
     }
   }
 
   // Handle city selection
   const handleCityChange = (city: string) => {
     setSelectedCity(city)
-    
-    // Update the new shipping form
+
     setNewShipping({
       ...newShipping,
       regionName: selectedRegion,
@@ -744,37 +698,6 @@ export default function ShopSettingsPage() {
       cityName: city,
     })
   }
-
-  // Handle copying existing location
-  const handleCopyExistingLocation = (setting: ShippingSetting) => {
-    setNewShipping({
-      ...newShipping,
-      regionName: setting.regionName,
-      provinceName: setting.provinceName,
-      cityName: setting.cityName,
-    })
-    
-    // Update dropdown selections if the location exists in Philippine locations
-    if (philippineLocations && philippineLocations[setting.regionName]) {
-      setSelectedRegion(setting.regionName)
-      if (philippineLocations[setting.regionName].provinces[setting.provinceName]) {
-        setSelectedProvince(setting.provinceName)
-        const cities = philippineLocations[setting.regionName].provinces[setting.provinceName].cities
-        setCities(cities)
-        if (cities.includes(setting.cityName)) {
-          setSelectedCity(setting.cityName)
-        }
-      }
-    }
-    
-    setIsCopyDialogOpen(false)
-    toast.success("Location copied successfully!")
-  }
-
-  // Load Philippine locations on component mount
-  useEffect(() => {
-    fetchPhilippineLocations()
-  }, [])
 
   // Payment handler
   const handleUpdatePayment = async () => {

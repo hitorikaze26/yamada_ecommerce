@@ -45,10 +45,11 @@ def calculate_shipping():
     
     # Require JWT for POST (stateful/client-side sensitive) but allow GET for public lookups
     if request.method == 'POST':
+        from flask_jwt_extended import verify_jwt_in_request
+        from flask_jwt_extended.exceptions import NoAuthorizationError
         try:
-            from flask_jwt_extended import verify_jwt_in_request
             verify_jwt_in_request()
-        except Exception:
+        except NoAuthorizationError:
             return jsonify({'error': 'Authorization required'}), 401
     
     try:
@@ -145,10 +146,11 @@ def geocode_address():
         return '', 200
     
     # JWT protection only for POST requests
+    from flask_jwt_extended import verify_jwt_in_request
+    from flask_jwt_extended.exceptions import NoAuthorizationError
     try:
-        from flask_jwt_extended import verify_jwt_in_request
         verify_jwt_in_request()
-    except Exception as e:
+    except NoAuthorizationError:
         return jsonify({'error': 'Authorization required'}), 401
     
     try:

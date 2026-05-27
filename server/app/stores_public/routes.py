@@ -95,7 +95,9 @@ def featured_stores():
     try:
         stores = (
             db.session.execute(
-                select(Store).order_by(Store.created_at.desc()).limit(limit)
+                select(Store)
+                .options(selectinload(Store.seller).selectinload(Seller.registration))
+                .order_by(Store.created_at.desc()).limit(limit)
             )
             .scalars()
             .all()

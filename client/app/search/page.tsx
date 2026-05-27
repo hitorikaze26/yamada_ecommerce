@@ -11,7 +11,8 @@ import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { productsApi, resolveImageUrl } from "@/lib/api"
+import { productsApi } from "@/lib/api"
+import { normalizeProductList } from "@/lib/normalizers"
 import { CATEGORIES, type Product } from "@/lib/types"
 import { SellerShoppingBanner } from "@/components/seller/seller-shopping-banner"
 
@@ -21,14 +22,6 @@ const sortOptions = [
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
 ]
-
-const slugify = (value: string): string => {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-}
 
 function SearchContent() {
   const searchParams = useSearchParams()
@@ -79,71 +72,7 @@ function SearchContent() {
         const res = await productsApi.getAll(params)
         const apiProducts = (res.data?.products || res.data || []) as any[]
 
-        const detailedResponses = await Promise.all(
-          apiProducts.map((p) => productsApi.getById(String(p.id))),
-        )
-
-        const mapped: Product[] = detailedResponses
-          .map((detail) => (detail.data as any)?.product)
-          .filter((apiProduct: any) => !!apiProduct)
-          .map((apiProduct: any) => {
-            const numericId = String(apiProduct.id)
-            const nameForSlug = apiProduct.name ?? numericId
-            const slug = `${numericId}-${slugify(nameForSlug)}`
-
-            const apiCategories: string[] = Array.isArray(apiProduct.categories)
-              ? apiProduct.categories
-              : []
-
-            let imageUrl: string | undefined = apiProduct.image_url || apiProduct.imageUrl
-
-            // Normalize backend static paths (e.g. /static/...) to absolute URLs like the homepage does.
-            if (imageUrl && !imageUrl.startsWith("http")) {
-              // Ensure forward slashes and strip leading backslashes
-              const normalized = String(imageUrl).replace(/\\/g, "/")
-              const trimmed = normalized.replace(/^\/+/g, "")
-
-              if (trimmed.startsWith("static/")) {
-                imageUrl = resolveImageUrl(`/${trimmed}`) ?? undefined
-              } else {
-                imageUrl = resolveImageUrl(`/static/${trimmed}`) ?? undefined
-              }
-            }
-
-            return {
-              id: numericId,
-              slug,
-              name: apiProduct.name ?? "",
-              // Keep using categoryParam (category id from URL) for current filter behavior
-              category: categoryParam || "",
-              subcategory: apiProduct.subcategory ?? undefined,
-              categories: apiCategories,
-              description: apiProduct.description ?? "",
-              images: imageUrl ? [imageUrl] : [],
-              variations:
-                Array.isArray(apiProduct.variations)
-                  ? apiProduct.variations.map((v: any) => ({
-                      id: String(v.id),
-                      size: v.size ?? "",
-                      color: v.color ?? "",
-                  colorHex: v.colorHex ?? undefined,
-                      sku: v.sku ?? "",
-                      inventory: typeof v.inventory === "number" ? v.inventory : 0,
-                      price: typeof v.price === "number" ? v.price : undefined,
-                    }))
-                  : [],
-              price: typeof apiProduct.price === "number" ? apiProduct.price : 0,
-              salePrice: typeof apiProduct.sale_price === "number" ? apiProduct.sale_price : undefined,
-              rating: typeof apiProduct.rating === "number" ? apiProduct.rating : 0,
-              reviewCount: typeof apiProduct.review_count === "number" ? apiProduct.review_count : 0,
-              sellerId: apiProduct.store_id ? String(apiProduct.store_id) : "",
-              sellerName: apiProduct.seller_name ?? "",
-              sellerLogo: apiProduct.seller_logo ?? undefined,
-              visibility: true,
-              createdAt: apiProduct.created_at ?? new Date().toISOString(),
-              updatedAt: apiProduct.updated_at ?? apiProduct.created_at ?? new Date().toISOString(),
-            }
-          })
+        const mapped: Product[] = normalizeProductList(apiProducts)
 
         setProducts(mapped)
         // Initialize price range filter based on actual product prices on first load.

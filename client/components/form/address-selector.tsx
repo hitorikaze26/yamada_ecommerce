@@ -40,8 +40,8 @@ export function AddressSelector({ value, onChange }: AddressSelectorProps) {
     const loadRegions = async () => {
       try {
         const response = await phGeoApi.getRegions()
-        // Handle both formats: string array or {code, name} object array
-        const regionsData = response.data || []
+        // PSGC API returns a flat array of {code, name, regionName, ...}
+        const regionsData = Array.isArray(response.data) ? response.data : response.data?.regions || []
         const formattedRegions = regionsData.map((r: string | { code: string; name: string }) => {
           if (typeof r === 'string') {
             return { code: r, name: r }
@@ -75,8 +75,8 @@ export function AddressSelector({ value, onChange }: AddressSelectorProps) {
         console.log("[AddressSelector] Loading provinces for region:", selectedRegion)
         const response = await phGeoApi.getProvinces(selectedRegion)
         console.log("[AddressSelector] Provinces raw response:", response.data)
-        // Handle PSGC API format: array of {code, name, ...}
-        const provincesData = response.data || []
+        // PSGC API returns a flat array of {code, name, ...}
+        const provincesData = Array.isArray(response.data) ? response.data : response.data?.provinces || []
         const formattedProvinces = provincesData.map((p: any) => ({
           code: p.code?.toString() || '',
           name: p.name || p.provinceName || 'Unknown'
@@ -111,8 +111,8 @@ export function AddressSelector({ value, onChange }: AddressSelectorProps) {
         // Use updated phGeoApi that handles NCR internally
         const response = await phGeoApi.getMunicipalities(selectedRegion, selectedProvince)
         console.log("[AddressSelector] Municipalities raw response:", response.data)
-        // Handle PSGC API format
-        const citiesData = response.data || []
+        // PSGC API returns a flat array of {code, name, ...}
+        const citiesData = Array.isArray(response.data) ? response.data : response.data?.cities || []
         const formattedCities = citiesData.map((c: any) => ({
           code: c.code?.toString() || '',
           name: c.name || c.cityName || 'Unknown'
@@ -139,8 +139,8 @@ export function AddressSelector({ value, onChange }: AddressSelectorProps) {
       setIsLoadingBarangays(true)
       try {
         const response = await phGeoApi.getBarangays(selectedMunicipality)
-        // Handle PSGC API format
-        const barangaysData = response.data || []
+        // PSGC API returns a flat array of {code, name, ...}
+        const barangaysData = Array.isArray(response.data) ? response.data : response.data?.barangays || []
         const formattedBarangays = barangaysData.map((b: any) => ({
           code: b.code?.toString() || '',
           name: b.name || 'Unknown'

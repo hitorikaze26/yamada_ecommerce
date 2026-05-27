@@ -2,49 +2,12 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { buyerApi, resolveImageUrl } from "@/lib/api"
+import { buyerApi } from "@/lib/api"
 import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
 import { Icon } from "@/components/ui/icon"
 import { ReviewDisplayCard } from "@/components/reviews/review-display-card"
+import { normalizeReviewList } from "@/lib/normalizers"
 import type { SerializedReview } from "@/lib/review-types"
-
-function mapReviewRow(raw: Record<string, unknown>): SerializedReview {
-  const ratingsRaw = raw.ratings
-  const ratings: Record<string, number> = {}
-  if (ratingsRaw && typeof ratingsRaw === "object" && !Array.isArray(ratingsRaw)) {
-    Object.entries(ratingsRaw as Record<string, unknown>).forEach(([k, v]) => {
-      if (typeof v === "number") ratings[k] = v
-    })
-  }
-
-  const pillsRaw = raw.deliveryPills
-  const deliveryPills: string[] = Array.isArray(pillsRaw)
-    ? pillsRaw.map((p) => String(p))
-    : []
-
-  return {
-    id: Number(raw.id ?? 0),
-    rating: Number(raw.rating ?? 0),
-    reviewFormat: (raw.reviewFormat as SerializedReview["reviewFormat"]) ?? "default",
-    ratings,
-    comment: (raw.comment as string) ?? null,
-    deliverySatisfaction:
-      raw.deliverySatisfaction != null ? Number(raw.deliverySatisfaction) : null,
-    deliveryPills,
-    createdAt: (raw.createdAt as string) ?? null,
-    productId: raw.productId != null ? Number(raw.productId) : null,
-    productName: (raw.productName as string) ?? null,
-    productImage: resolveImageUrl((raw.productImage as string) ?? null),
-    buyerName: (raw.buyerName as string) ?? null,
-    sellerReply: (raw.sellerReply as string) ?? null,
-    sellerReplyAt: (raw.sellerReplyAt as string) ?? null,
-    variant: (raw.variant as string) ?? null,
-    unitPrice: raw.unitPrice != null ? Number(raw.unitPrice) : null,
-    quantity: raw.quantity != null ? Number(raw.quantity) : null,
-    orderItemId: raw.orderItemId != null ? Number(raw.orderItemId) : null,
-    orderId: raw.orderId != null ? Number(raw.orderId) : null,
-  }
-}
 
 export default function BuyerReviewsPage() {
   const [reviews, setReviews] = useState<SerializedReview[]>([])
@@ -56,7 +19,7 @@ export default function BuyerReviewsPage() {
     const load = async () => {
       try {
         const res = await buyerApi.getReviews({ page: 1, perPage: 50 })
-        const rows = unwrapBuyerList<Record<string, unknown>>(res.data, ["reviews"]).map(mapReviewRow)
+        const rows = normalizeReviewList(unwrapBuyerList<Record<string, unknown>>(res.data, ["reviews"]))
         setReviews(rows)
         setTotal(Number(res.data.total ?? rows.length))
       } catch (err) {

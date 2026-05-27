@@ -849,6 +849,9 @@ def checkout():
             buyer_region = addr_data.get('regionName')
             buyer_province = addr_data.get('provinceName')
             buyer_municipality = addr_data.get('municipalityName')
+            buyer_region_code = addr_data.get('regionCode')
+            buyer_province_code = addr_data.get('provinceCode')
+            buyer_municipality_code = addr_data.get('municipalityCode')
 
             current_app.logger.info(
                 f"[checkout] Calculating shipping: shop_id={store_id}, "
@@ -856,13 +859,16 @@ def checkout():
                 f"buyer_municipality={buyer_municipality!r}, order_total={total}"
             )
 
-            # Use ShippingService with textual location fields (region/province/municipality)
+            # Use ShippingService with both codes (preferred) and name fallback
             shipping_result = ShippingService.calculate_shipping_fee(
                 shop_id=store_id,
                 order_total=total,
                 buyer_region=buyer_region,
                 buyer_province=buyer_province,
-                buyer_municipality=buyer_municipality
+                buyer_municipality=buyer_municipality,
+                buyer_region_code=buyer_region_code,
+                buyer_province_code=buyer_province_code,
+                buyer_municipality_code=buyer_municipality_code
             )
 
             current_app.logger.info(f"[checkout] Shipping result: {shipping_result}")

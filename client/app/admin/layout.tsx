@@ -11,7 +11,8 @@ import { ChatInboxButton } from "@/components/chat/chat-inbox-button"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useAuth } from "@/context/auth-context"
 import { NotificationModal, type NotificationItem } from "@/components/notifications/notification-modal"
-import { notificationsApi, type NotificationDto } from "@/lib/api"
+import { notificationsApi } from "@/lib/api"
+import { normalizeNotificationList } from "@/lib/normalizers"
 
 const sidebarLinks = [
   { href: "/admin", label: "Dashboard", icon: "home", exact: true },
@@ -46,15 +47,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         role: "admin",
         limit: 100,
       })
-      const items: NotificationItem[] = (response.data.notifications || []).map(
-        (n: NotificationDto): NotificationItem => ({
-          id: String(n.id),
-          title: n.title,
-          description: n.description ?? "",
-          createdAt: n.createdAt ?? "",
-          read: n.read,
-        }),
-      )
+      const items: NotificationItem[] = normalizeNotificationList(response.data.notifications || [])
       setNotifications(items)
     } catch {
       setNotifications([])

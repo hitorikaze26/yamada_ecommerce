@@ -313,6 +313,29 @@ class ShippingService:
         return result
     
     @classmethod
+    def _normalize_region_name(cls, name: str) -> str:
+        """Map any Philippine region name/PSGC name to internal 4-group system."""
+        if not name:
+            return ""
+        n = name.strip().lower()
+        # Metro Manila / NCR (also matches PSGC codes like "130000000")
+        if n in ("metro manila", "ncr", "national capital region") or (n.isdigit() and n.startswith("13")):
+            return "Metro Manila"
+        # All other PSGC regions map to Luzon, Visayas, or Mindanao
+        luzon_keywords = ("luzon", "ilocos", "cagayan valley", "central luzon",
+                          "calabarzon", "mimaropa", "bicol", "cordillera")
+        visayas_keywords = ("visayas", "western visayas", "central visayas", "eastern visayas")
+        mindanao_keywords = ("mindanao", "zamboanga", "northern mindanao", "davao",
+                             "soccsksargen", "caraga", "barmm", "bangsamoro")
+        if any(kw in n for kw in luzon_keywords):
+            return "Luzon"
+        if any(kw in n for kw in visayas_keywords):
+            return "Visayas"
+        if any(kw in n for kw in mindanao_keywords):
+            return "Mindanao"
+        return name.strip()  # fallback to original
+
+    @classmethod
     def calculate_shipping_fee(cls, shop_id: int, order_total: float = 0.0,
                                buyer_region: str = None, buyer_province: str = None, buyer_municipality: str = None,
                                buyer_region_code: str = None, buyer_province_code: str = None, buyer_municipality_code: str = None) -> dict:
@@ -385,7 +408,9 @@ class ShippingService:
                     result['error'] = 'Buyer location fields required: region and municipality/city'
                     return result
 
-                b_region = _norm(buyer_region)
+                # Normalize region names from PSGC format (e.g. "CALABARZON", "NCR")
+                # to internal groups (Luzon, Metro Manila, Visayas, Mindanao) for comparison
+                b_region = cls._normalize_region_name(buyer_region)
                 b_province = _norm(buyer_province) if buyer_province else ''
                 b_municipality = _norm(buyer_municipality)
 
@@ -393,7 +418,7 @@ class ShippingService:
                 seller_province = getattr(seller, 'province_name', None)
                 seller_municipality = getattr(seller, 'municipality_name', None)
 
-                s_region = _norm(seller_region)
+                s_region = cls._normalize_region_name(seller_region)
                 s_province = _norm(seller_province) if seller_province else ''
                 s_municipality = _norm(seller_municipality)
                 _log_info(f"Using NAME-based comparison: seller({s_region}/{s_province}/{s_municipality}) vs buyer({b_region}/{b_province}/{b_municipality})")
@@ -409,7 +434,7 @@ class ShippingService:
                     else:
                         result['shipping_fee'] = 35.0
                         result['note'] = 'Same region, same province, different municipality'
-                elif not s_province and not b_province:
+                elif (not s_province and not b_province) and cls._normalize_region_name(s_region) == "Metro Manila":
                     # Both are NCR (no province) — compare municipality only
                     if s_municipality and s_municipality == b_municipality:
                         result['shipping_fee'] = 30.0

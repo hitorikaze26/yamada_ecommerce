@@ -11,6 +11,7 @@ import { useAuth } from "@/context/auth-context"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { buyerApi } from "@/lib/api"
 
+
 function readBuyerProfile(data: unknown): { givenName?: string; surname?: string } | null {
   if (!data || typeof data !== "object") return null
   const record = data as Record<string, unknown>

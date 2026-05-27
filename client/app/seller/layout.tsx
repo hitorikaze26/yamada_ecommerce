@@ -11,7 +11,8 @@ import { ChatInboxButton } from "@/components/chat/chat-inbox-button"
 import { useAuth } from "@/context/auth-context"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { NotificationModal, type NotificationItem } from "@/components/notifications/notification-modal"
-import { notificationsApi, type NotificationDto, sellerAccountApi } from "@/lib/api"
+import { notificationsApi, sellerAccountApi } from "@/lib/api"
+import { normalizeNotificationList } from "@/lib/normalizers"
 import {
   isSellerRestrictedPath,
   SELLER_PENDING_SWAL_TEXT,
@@ -102,15 +103,8 @@ function SellerLayoutInner({ children }: { children: React.ReactNode }) {
       const response = await notificationsApi.getAll({
         role: "seller",
       })
-      const items: NotificationItem[] = (response.data.notifications || []).map(
-        (n: NotificationDto): NotificationItem => ({
-          id: String(n.id),
-          title: n.title,
-          description: n.description,
-          createdAt: formatTime(n.createdAt ?? ""),
-          read: n.read,
-        }),
-      )
+      const items: NotificationItem[] = normalizeNotificationList(response.data.notifications || [])
+        .map((n) => ({ ...n, createdAt: formatTime(n.createdAt) }))
       setNotifications(items)
     } catch {
       setNotifications([])

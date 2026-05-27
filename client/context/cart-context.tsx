@@ -1,12 +1,13 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react"
 import { useAuth } from "./auth-context"
 import { cartApi, resolveImageUrl, buyerApi, shippingApi } from "@/lib/api"
 import type { Cart, CartItem, Product, ProductVariation } from "@/lib/types"
 import { getCartShippingEstimate, FREE_SHIPPING_THRESHOLD, FALLBACK_SHIPPING_FEE, type ShippingCalculation } from "@/lib/shipping"
 import { assertNotOwnStoreProduct } from "@/lib/seller-store-guard"
 import { toast } from "sonner"
+import axios from "axios"
 
 interface CartContextType {
   cart: Cart
@@ -147,13 +148,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }))
   }
 
+  const mountedRef = useRef(true)
+
   // Load cart from backend when user authenticates
   useEffect(() => {
+    let cancelled = false
     const loadCart = async () => {
       try {
         if (isAuthenticated && user) {
-          // Fetch cart from backend
           const response = await cartApi.get()
+          if (cancelled) return
           const backendCart = response.data?.cart
           
           if (backendCart && backendCart.items) {
@@ -163,37 +167,53 @@ export function CartProvider({ children }: { children: ReactNode }) {
             setShippingCalculation(null)
           }
         } else {
-          // Not authenticated - reset cart
           setCart({ items: [], subtotal: 0, shipping: 0, total: 0 })
           setShippingCalculation(null)
         }
       } catch (error) {
+        if (cancelled) return
         console.error("Failed to load cart:", error)
         setCart({ items: [], subtotal: 0, shipping: 0, total: 0 })
         setShippingCalculation(null)
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
     loadCart()
+    return () => { cancelled = true }
   }, [isAuthenticated, user, applyCartFromBackend])
 
   // Fetch buyer address for shipping calculation
-  useEffect(() => {
-    const fetchBuyerAddress = async () => {
-      if (!isAuthenticated || !user) return
-      try {
-        const response = await buyerApi.getProfile()
-        const profile = response.data?.profile || response.data
-        setBuyerAddress(profile?.address || null)
-      } catch (error) {
-        console.error('Failed to fetch buyer address:', error)
-        setBuyerAddress(null)
+useEffect(() => {
+  let cancelled = false
+
+  const fetchBuyerAddress = async () => {
+    if (!isAuthenticated || !user) return
+
+    try {
+      const response = await buyerApi.getProfile()
+      if (cancelled) return
+
+      const profile = response.data?.profile ?? response.data
+      setBuyerAddress(profile?.address ?? null)
+
+    } catch (error) {
+      if (cancelled) return
+
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
+        console.warn("Rate limited while fetching buyer address")
+        return
       }
+
+      console.error("Failed to fetch buyer address:", error)
+      setBuyerAddress(null)
     }
-    fetchBuyerAddress()
-  }, [isAuthenticated, user])
+  }
+
+  fetchBuyerAddress()
+  return () => { cancelled = true }
+}, [isAuthenticated, user])
 
   const computeShippingForItemList = useCallback(async (items: CartItem[]): Promise<Record<string, ShippingCalculation>> => {
     if (items.length === 0) return {}
@@ -508,14 +528,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return { items: newItems, ...calculateTotals(newItems, newShipping) }
     })
     void (async () => {
-      for (const itemId of itemIds) {
-        const numericId = parseBackendCartItemId(itemId)
-        if (numericId != null) {
-          try {
-            await cartApi.removeItem(numericId)
-          } catch (error) {
-            console.error("Failed to remove cart item:", error)
-          }
+      const numericIds = itemIds
+        .map(parseBackendCartItemId)
+        .filter((id): id is number => id != null)
+      if (numericIds.length > 0) {
+        try {
+          await Promise.all(numericIds.map((id) => cartApi.removeItem(id)))
+        } catch (error) {
+          console.error("Failed to remove some cart items:", error)
         }
       }
       try {

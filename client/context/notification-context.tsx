@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode,
 } from "react"
 import { notificationsApi, riderApi, type NotificationDto } from "@/lib/api"
@@ -27,6 +28,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, getRole } = useAuth()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const mountedRef = useRef(true)
+  const abortRef = useRef<AbortController | null>(null)
 
   const role = getRole()
 
@@ -38,8 +41,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true)
     try {
-      // Fetch ALL notifications for this user — no role/page filter
-      // so the same list is shared across homepage and buyer dashboard.
       const response = await notificationsApi.getAll()
       let items: NotificationItem[] = (response.data.notifications || []).map(
         (n: NotificationDto): NotificationItem => ({
@@ -51,7 +52,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }),
       )
 
-      // For riders, also merge delivery-based notifications
       if (role === "rider") {
         try {
           const deliveriesRes = await riderApi.getDeliveries()
@@ -90,41 +90,50 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Sort newest first
       items = items.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )
-      setNotifications(items)
+      if (mountedRef.current) {
+        setNotifications(items)
+      }
     } catch {
-      setNotifications([])
+      if (mountedRef.current) {
+        setNotifications([])
+      }
     } finally {
-      setIsLoading(false)
+      if (mountedRef.current) {
+        setIsLoading(false)
+      }
     }
   }, [isAuthenticated, role])
 
   useEffect(() => {
+    mountedRef.current = true
     void fetchNotifications()
+    return () => {
+      mountedRef.current = false
+      abortRef.current?.abort()
+    }
   }, [fetchNotifications])
 
   const markAsRead = useCallback(async (id: string) => {
-    // Optimistic update
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
     try {
       await notificationsApi.markAsRead(Number(id))
     } catch {
-      // Revert on error
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)))
     }
   }, [])
 
   const markAllAsRead = useCallback(async () => {
+    const previous = notifications
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
     try {
       await notificationsApi.markAllAsRead()
     } catch {
-      // Silently ignore — UI already updated optimistically
+      setNotifications(previous)
     }
-  }, [])
+  }, [notifications])
 
   const unreadCount = notifications.filter((n) => !n.read).length
 

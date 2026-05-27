@@ -26,6 +26,11 @@ def upgrade():
             sa.String(500).with_variant(sa.VARCHAR(length=500), "mysql"),
             nullable=False,
         ),
+        sa.Column(
+            "sort_order",
+            sa.INT().with_variant(sa.VARCHAR(length=500), "mysql"),
+            default=0,
+        ),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
             ["product_id"], ["products.id"], ondelete="CASCADE"

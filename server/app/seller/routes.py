@@ -213,23 +213,24 @@ def get_my_products():
             .options(selectinload(Product.variations))
         ).scalars().all()
 
+        # Bulk compute sold counts — replaces N+1 per-product queries
+        product_ids = [p.id for p in products]
+        sold_rows = db.session.execute(
+            select(
+                OrderItem.product_id,
+                db.func.coalesce(db.func.sum(OrderItem.quantity), 0)
+            )
+            .join(Order, Order.id == OrderItem.order_id)
+            .where(
+                OrderItem.product_id.in_(product_ids),
+                Order.status.in_([OrderStatus.DELIVERED, OrderStatus.COMPLETED])
+            )
+            .group_by(OrderItem.product_id)
+        ).all()
+        sold_map = {row[0]: int(row[1]) for row in sold_rows}
+
         serialized = []
         for p in products:
-            # Calculate sold count for this product
-            sold_count = 0
-            try:
-                sold_result = db.session.execute(
-                    select(db.func.sum(OrderItem.quantity))
-                    .join(Order, Order.id == OrderItem.order_id)
-                    .where(
-                        OrderItem.product_id == p.id,
-                        Order.status.in_([OrderStatus.DELIVERED, OrderStatus.COMPLETED])
-                    )
-                ).scalar()
-                sold_count = int(sold_result) if sold_result else 0
-            except Exception:
-                sold_count = 0
-
             item = {
                 "id": p.id,
                 "slug": getattr(p, "slug", None),
@@ -240,7 +241,7 @@ def get_my_products():
                 "description": p.description,
                 "image_url": _public_image_url(getattr(p, "image_url", None)),
                 "visibility": getattr(p, "is_live", True),
-                "sold": sold_count,
+                "sold": sold_map.get(p.id, 0),
                 **ProductModerationService.serialize_moderation_brief(p),
                 "variations": [
                     {
@@ -480,6 +481,11 @@ def get_seller_refund_requests():
 
         refunds = db.session.execute(
             select(RefundRequest)
+            .options(
+                selectinload(RefundRequest.payment_transaction),
+                selectinload(RefundRequest.order).selectinload(Order.items).selectinload(OrderItem.product),
+                selectinload(RefundRequest.buyer),
+            )
             .where(RefundRequest.seller_id == seller.id)
             .order_by(RefundRequest.created_at.desc())
         ).scalars().all()

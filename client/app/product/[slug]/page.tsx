@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart } from "@/context/cart-context"
 import { useToast } from "@/hooks/use-toast"
-import { productsApi, buyerApi, API_BASE_ORIGIN, resolveImageUrl } from "@/lib/api"
+import { productsApi, buyerApi, API_BASE_ORIGIN } from "@/lib/api"
+import { normalizeMediaPath, normalizeProduct, normalizeProductList } from "@/lib/normalizers"
 import { useAuth } from "@/context/auth-context"
 import { useWishlist } from "@/context/wishlist-context"
 import { usePathname, useRouter } from "next/navigation"
@@ -60,19 +61,6 @@ interface SimilarProductItem {
 
 const isSizeChartMatrix = (chart: Product["sizeChart"]): chart is SizeChartMatrix => {
   return Boolean(chart && typeof chart === "object" && "categoryKey" in chart && Array.isArray((chart as any).sizes))
-}
-
-const normalizeMediaPath = (path: string | undefined | null): string | undefined => {
-  if (!path) return undefined
-  if (path.startsWith("http")) return path
-
-  const normalized = path.replace(/\\/g, "/")
-  const trimmed = normalized.replace(/^\/+/, "")
-
-  if (trimmed.startsWith("static/")) {
-    return resolveImageUrl(`/${trimmed}`) ?? undefined
-  }
-  return resolveImageUrl(`/static/${trimmed}`) ?? undefined
 }
 
 function ProductMessageStoreButton({ storeId }: { storeId: number }) {
@@ -190,7 +178,6 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
           }
         }
 
-        // Normalize main image URL (from image_url) and additional media images
         let imageUrl: string | undefined = apiProduct.image_url || apiProduct.imageUrl
 
         if (!imageUrl && Array.isArray(apiProduct.media)) {
@@ -210,43 +197,11 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
         const allImages = Array.from(new Set([imageUrl, ...extraImages].filter(Boolean))) as string[]
 
         const normalized: Product = {
-          id: String(apiProduct.id ?? productId),
+          ...normalizeProduct(apiProduct),
+          id: productId,
           slug: productSlug,
-          name: apiProduct.name ?? "",
-          category: apiCategories[0] ?? "",
-          subcategory: apiProduct.subcategory ?? undefined,
-          categories: apiCategories,
-          description: apiProduct.description ?? "",
           images: allImages,
-          variations:
-            Array.isArray(apiProduct.variations)
-              ? apiProduct.variations.map((v: any) => ({
-                  id: String(v.id),
-                  size: v.size ?? "",
-                  color: v.color ?? "",
-                  colorHex: v.colorHex ?? undefined,
-                  sku: v.sku ?? "",
-                  inventory: typeof v.inventory === "number" ? v.inventory : 0,
-                  price: typeof v.price === "number" ? v.price : undefined,
-                }))
-              : [],
-          price: typeof apiProduct.price === "number" ? apiProduct.price : 0,
-          salePrice: typeof apiProduct.sale_price === "number" ? apiProduct.sale_price : undefined,
-          brand: apiProduct.brand ?? undefined,
-          productCondition: apiProduct.product_condition ?? undefined,
-          weightKg: typeof apiProduct.weight_kg === "number" ? apiProduct.weight_kg : undefined,
-          material: apiProduct.material ?? undefined,
-          careInstructions: apiProduct.care_instructions ?? undefined,
-          tags: parsedTags,
           sizeChart: parsedSizeChart,
-          rating: typeof apiProduct.rating === "number" ? apiProduct.rating : 0,
-          reviewCount: typeof apiProduct.review_count === "number" ? apiProduct.review_count : 0,
-          sellerId: apiProduct.store_id ? String(apiProduct.store_id) : "",
-          sellerName: apiProduct.seller_name ?? "",
-          sellerLogo: apiProduct.seller_logo ?? undefined,
-          visibility: true,
-          createdAt: apiProduct.created_at ?? new Date().toISOString(),
-          updatedAt: apiProduct.updated_at ?? apiProduct.created_at ?? new Date().toISOString(),
         }
 
         setProduct(normalized)
@@ -1024,27 +979,10 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
               <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                 {similarProducts.map((sp) => {
-                  const normalizedImageUrl = normalizeMediaPath(sp.image_url)
                   const tempProduct: Product = {
-                    id: sp.id,
+                    ...normalizeProduct(sp as unknown as Record<string, unknown>),
                     slug: sp.slug,
-                    name: sp.name,
-                    category: "",
-                    subcategory: undefined,
-                    categories: [],
-                    description: "",
-                    images: normalizedImageUrl ? [normalizedImageUrl] : [],
-                    variations: [],
-                    price: typeof sp.price === "number" ? sp.price : 0,
-                    salePrice: undefined,
-                    rating: typeof sp.rating === "number" ? sp.rating : 0,
-                    reviewCount: typeof sp.review_count === "number" ? sp.review_count : 0,
-                    sellerId: "",
-                    sellerName: "",
-                    sellerLogo: undefined,
-                    visibility: true,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
+                    images: normalizeMediaPath(sp.image_url) ? [normalizeMediaPath(sp.image_url)] : [],
                   }
 
                   return (

@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react"
@@ -74,11 +75,13 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, role, clear])
 
   useEffect(() => {
+    let cancelled = false
     if (isAuthenticated && role === "buyer") {
-      void fetchWishlist()
+      void fetchWishlist().then(() => { if (cancelled) clear() })
     } else {
       clear()
     }
+    return () => { cancelled = true }
   }, [isAuthenticated, role, user?.id, fetchWishlist, clear])
 
   const isWishlisted = useCallback(

@@ -101,7 +101,7 @@ def create_app(test_config=None):
         from flask import request, Response
         if request.path.startswith("/static/"):
             return Response(PLACEHOLDER_SVG, mimetype="image/svg+xml")
-        return {"error": "Not found"}, 404
+        return {"error": str(e)}, 404
 
     @app.route("/api/health")
     def health_check():

@@ -15,16 +15,9 @@ import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icon"
 import { mockCarouselSlides, mockFeaturedShops } from "@/lib/mock-data"
 import type { Product } from "@/lib/types"
-import { productsApi, type ProductQueryParams, resolveImageUrl } from "@/lib/api"
+import { productsApi, type ProductQueryParams } from "@/lib/api"
+import { normalizeProductList } from "@/lib/normalizers"
 import { SellerShoppingBanner } from "@/components/seller/seller-shopping-banner"
-
-const slugify = (value: string): string => {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-}
 
 export default function HomePage() {
   const [newArrivals, setNewArrivals] = useState<Product[]>([])
@@ -55,80 +48,8 @@ export default function HomePage() {
         const newestApi: any[] = (newestRes.data as any)?.products ?? []
         const popularApi: any[] = (popularRes.data as any)?.products ?? []
 
-        const [newestDetailed, popularDetailed] = await Promise.all([
-          Promise.all(newestApi.map((p: any) => productsApi.getById(String(p.id)))),
-          Promise.all(popularApi.map((p: any) => productsApi.getById(String(p.id)))),
-        ])
-
-        const mapToProduct = (responses: any[]): Product[] => {
-          return responses
-            .map((res) => (res.data as any)?.product)
-            .filter((apiProduct: any) => !!apiProduct)
-            .map((apiProduct: any) => {
-              const apiCategories: string[] = Array.isArray(apiProduct.categories) ? apiProduct.categories : []
-
-              const numericId = String(apiProduct.id)
-              const nameForSlug = apiProduct.name ?? numericId
-              const slug = `${numericId}-${slugify(nameForSlug)}`
-
-              let imageUrl: string | undefined = apiProduct.image_url || apiProduct.imageUrl
-
-              if (!imageUrl && Array.isArray(apiProduct.media)) {
-                const firstImage = apiProduct.media.find((m: any) => m && m.media_type === "image" && m.path) ??
-                  apiProduct.media[0]
-                if (firstImage?.path) {
-                  imageUrl = firstImage.path
-                }
-              }
-
-              if (imageUrl && !imageUrl.startsWith("http")) {
-                const normalized = imageUrl.replace(/\\/g, "/")
-                const trimmed = normalized.replace(/^\/+/, "")
-
-                if (trimmed.startsWith("static/")) {
-                  imageUrl = resolveImageUrl(`/${trimmed}`) ?? undefined
-                } else {
-                  imageUrl = resolveImageUrl(`/static/${trimmed}`) ?? undefined
-                }
-              }
-
-              return {
-                id: numericId,
-                slug,
-                name: apiProduct.name ?? "",
-                category: apiCategories[0] ?? "",
-                subcategory: apiProduct.subcategory ?? undefined,
-                categories: apiCategories,
-                description: apiProduct.description ?? "",
-                images: imageUrl ? [imageUrl] : [],
-                variations:
-                  Array.isArray(apiProduct.variations)
-                    ? apiProduct.variations.map((v: any) => ({
-                        id: String(v.id),
-                        size: v.size ?? "",
-                        color: v.color ?? "",
-                  colorHex: v.colorHex ?? undefined,
-                        sku: v.sku ?? "",
-                        inventory: typeof v.inventory === "number" ? v.inventory : 0,
-                        price: typeof v.price === "number" ? v.price : undefined,
-                      }))
-                    : [],
-                price: typeof apiProduct.price === "number" ? apiProduct.price : 0,
-                salePrice: undefined,
-                rating: typeof apiProduct.rating === "number" ? apiProduct.rating : 0,
-                reviewCount: typeof apiProduct.review_count === "number" ? apiProduct.review_count : 0,
-                sellerId: apiProduct.store_id ? String(apiProduct.store_id) : "",
-                sellerName: apiProduct.seller_name ?? "",
-                sellerLogo: apiProduct.seller_logo ?? undefined,
-                visibility: true,
-                createdAt: apiProduct.created_at ?? new Date().toISOString(),
-                updatedAt: apiProduct.updated_at ?? apiProduct.created_at ?? new Date().toISOString(),
-              }
-            })
-        }
-
-        const newestProducts = mapToProduct(newestDetailed)
-        const popularProducts = mapToProduct(popularDetailed)
+        const newestProducts = normalizeProductList(newestApi)
+        const popularProducts = normalizeProductList(popularApi)
 
         setNewArrivals(newestProducts)
         setBestSellers(popularProducts)

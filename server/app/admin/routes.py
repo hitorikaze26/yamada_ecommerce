@@ -17,6 +17,7 @@ from flask import (
     abort,
     url_for,
     request,
+    current_app,
 )
 from flask_jwt_extended import (
     jwt_required,
@@ -426,7 +427,9 @@ def list_all_orders():
 
     try:
         rows = db.session.execute(
-            select(Order).order_by(Order.created_at.desc())
+            select(Order)
+            .options(selectinload(Order.buyer), selectinload(Order.deliveries))
+            .order_by(Order.created_at.desc())
         ).scalars().all()
 
         result: list[dict] = []
@@ -684,7 +687,11 @@ def list_categories():
 def get_store_detail(store_id):
     """Return store + seller basic info for admin inspection."""
 
-    store = db.session.execute(select(Store).where(Store.id == store_id)).scalar_one_or_none()
+    store = db.session.execute(
+        select(Store)
+        .options(selectinload(Store.seller).selectinload(Seller.registration), selectinload(Store.user))
+        .where(Store.id == store_id)
+    ).scalar_one_or_none()
 
     if store is None:
         return jsonify(msg='Store not found'), 404
@@ -751,7 +758,9 @@ def get_store_detail(store_id):
 def list_stores():
     """Return all stores for admin, with basic info per store."""
 
-    stores = db.session.execute(select(Store)).scalars().all()
+    stores = db.session.execute(
+        select(Store).options(selectinload(Store.seller))
+    ).scalars().all()
 
     result = []
     for s in stores:
