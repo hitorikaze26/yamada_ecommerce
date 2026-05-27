@@ -40,8 +40,8 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[--color-off-white] dark:bg-[#060709]">
-      <header className="w-full border-b bg-[#f1f0f1] dark:bg-[#0c0d10] dark:border-[#1c1d21]">
+    <div className="min-h-screen flex flex-col bg-[--color-off-white] dark:bg-navy">
+      <header className="w-full border-b bg-muted dark:bg-navy/90 dark:border-muted">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between gap-6">
             <Link href="/landing" className="flex items-center gap-3">
@@ -57,7 +57,7 @@ export default function LandingPage() {
               <span className="sm:hidden text-lg font-semibold text-[--color-charcoal] dark:text-white">Yamada</span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-10 text-sm font-medium text-[--color-charcoal] dark:text-gray-200">
+            <nav className="hidden md:flex items-center gap-10 text-sm font-medium text-[--color-charcoal] dark:text-[--color-foreground]">
               <button className="hover:text-black dark:hover:text-white transition-colors">Why us</button>
               <button className="hover:text-black dark:hover:text-white transition-colors">Contact us</button>
               <button className="hover:text-black dark:hover:text-white transition-colors">About</button>
@@ -67,7 +67,7 @@ export default function LandingPage() {
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="text-[--color-charcoal] dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors"
+                className="text-[--color-charcoal] dark:text-[--color-foreground] hover:text-black dark:hover:text-[--color-foreground] transition-colors"
                 aria-label="Toggle theme"
               >
                 <Icon name={isDark ? "moon" : "sun"} />
@@ -82,7 +82,7 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative border-b bg-[--color-off-white] dark:bg-[#060709] dark:border-[#1c1d21]">
+        <section className="relative border-b bg-[--color-off-white] dark:bg-navy dark:border-muted">
           <div className="container mx-auto px-4 py-10 lg:py-16">
             <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] items-center">
               {/* Left: Text */}
@@ -93,8 +93,8 @@ export default function LandingPage() {
                 variants={fadeInUp(0)}
                 className="space-y-6"
               >
-                <div className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-[#111827] px-4 py-2 shadow-sm text-xs font-medium text-[--color-rosewood] mb-4">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[--color-secondary] dark:bg-[#f97376] text-[--color-rosewood] dark:text-[#111827] text-sm">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-muted px-4 py-2 shadow-sm text-xs font-medium text-[--color-rosewood] mb-4">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[--color-secondary] dark:bg-[--color-blush] text-[--color-rosewood] dark:text-navy text-sm">
                     Y
                   </span>
                   <span>Yamada Collections</span>
@@ -106,8 +106,8 @@ export default function LandingPage() {
                   <span className="text-[--color-rosewood]">Shop the Yamada Collection.</span>
                 </h1>
 
-                <p className="max-w-xl text-sm sm:text-base text-[--color-muted-foreground] dark:text-gray-300 mb-4">
-                  Discover curated women&apos;s fashion &mdash; from elegant dresses to everyday essentials.
+                <p className="max-w-xl text-sm sm:text-base text-[--color-muted-foreground] mb-4">
+                  Discover curated women&apos;s fashion, from elegant dresses to everyday essentials.
                   Style, comfort, and confidence delivered to your door.
                 </p>
 
@@ -159,7 +159,7 @@ export default function LandingPage() {
                 variants={fadeIn(0.2)}
                 className="relative"
               >
-                <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#020617] shadow-[0_18px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.6)] border border-[--color-warm-gray] dark:border-[#1f2933]">
+                <div className="relative overflow-hidden rounded-3xl bg-card dark:bg-card shadow-sm border border-[--color-warm-gray] dark:border-muted">
                   <div className="aspect-[4/3] overflow-hidden">
                     <video
                       className="h-full w-full object-cover scale-105 transition-transform duration-700 ease-out hover:scale-110"
@@ -178,7 +178,7 @@ export default function LandingPage() {
         </section>
 
         {/* Middle Cards: Deliver / Partner */}
-        <section className="bg-[--color-off-white] dark:bg-[#05060a] py-10 lg:py-14">
+        <section className="bg-[--color-off-white] dark:bg-navy/95 py-10 lg:py-14">
           <div className="container mx-auto px-4 space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               {/* Deliver card */}
@@ -187,12 +187,12 @@ export default function LandingPage() {
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.4 }}
                 variants={fadeInUp(0.1)}
-                className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#020617] shadow-[0_18px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.6)] border border-[--color-warm-gray] dark:border-[#1f2933] px-8 py-8 flex flex-col gap-4"
+                className="relative overflow-hidden rounded-3xl bg-card dark:bg-card shadow-sm border border-[--color-warm-gray] dark:border-muted px-8 py-8 flex flex-col gap-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">
                     <h2 className="text-xl font-semibold text-[--color-charcoal] dark:text-white">Deliver with Us</h2>
-                    <p className="text-sm text-[--color-muted-foreground] dark:text-gray-300 max-w-sm">
+                    <p className="text-sm text-[--color-muted-foreground] max-w-sm">
                       Deliver orders, track earnings, and maximize your delivery schedule with flexible work.
                     </p>
                   </div>
@@ -220,12 +220,12 @@ export default function LandingPage() {
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.4 }}
                 variants={fadeInUp(0.2)}
-                className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#020617] shadow-[0_18px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.6)] border border-[--color-warm-gray] dark:border-[#1f2933] px-8 py-8 flex flex-col gap-4"
+                className="relative overflow-hidden rounded-3xl bg-card dark:bg-card shadow-sm border border-[--color-warm-gray] dark:border-muted px-8 py-8 flex flex-col gap-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">
                     <h2 className="text-xl font-semibold text-[--color-charcoal] dark:text-white">Partner with Yamada</h2>
-                    <p className="text-sm text-[--color-muted-foreground] dark:text-gray-300 max-w-sm">
+                    <p className="text-sm text-[--color-muted-foreground] max-w-sm">
                       Open your shop, upload products, manage inventory, and reach fashion-forward customers.
                     </p>
                   </div>
@@ -251,7 +251,7 @@ export default function LandingPage() {
         </section>
 
         {/* Why Shop with Yamada */}
-        <section className="bg-white dark:bg-[#05060a] py-12 lg:py-16">
+        <section className="bg-white dark:bg-navy py-12 lg:py-16">
           <div className="container mx-auto px-4">
             <motion.div
               initial="hidden"
@@ -260,21 +260,21 @@ export default function LandingPage() {
               variants={fadeInUp(0)}
               className="mb-8 text-center"
             >
-              <h2 className="text-2xl sm:text-3xl font-semibold text-[--color-charcoal] dark:text-white mb-2">
+              <h2 className="text-2xl sm:text-3xl font-semibold text-[--color-charcoal] dark:text-[--color-foreground] mb-2">
                 Why Shop with Yamada?
               </h2>
-              <p className="text-sm sm:text-base text-[--color-muted-foreground] dark:text-gray-300">
-                Designed for women. Designed for you.
+              <p className="text-sm sm:text-base text-[--color-muted-foreground]">
+                Designed for women, designed for you.
               </p>
             </motion.div>
 
-            <div className="overflow-hidden rounded-3xl border border-[--color-warm-gray] dark:border-[#1f2933] bg-[--color-off-white] dark:bg-[#020617] shadow-[0_18px_40px_rgba(0,0,0,0.04)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.6)] px-6 py-8 sm:px-10 sm:py-10">
+            <div className="overflow-hidden rounded-3xl border border-[--color-warm-gray] dark:border-muted bg-[--color-off-white] dark:bg-card shadow-sm px-6 py-8 sm:px-10 sm:py-10">
               <div className="grid gap-8 md:grid-cols-4">
                 {[
                   {
                     title: "Trendy & Curated Collections",
                     description:
-                      "From chic dresses to activewear – everything is handpicked to match your look.",
+                      "From chic dresses to activewear, everything is handpicked to match your look.",
                     icon: "shopping-bag",
                   },
                   {
@@ -301,15 +301,15 @@ export default function LandingPage() {
                     whileInView="visible"
                     viewport={{ once: true, amount: 0.4 }}
                     variants={fadeInUp(0.1 + index * 0.1)}
-                    className="flex flex-col items-start gap-3 border-b last:border-b-0 md:border-b-0 md:border-r last:md:border-r-0 border-[--color-warm-gray]/60 pb-6 last:pb-0 md:pb-0 md:pr-6 last:md:pr-0"
+                    className="flex flex-col items-start gap-3 border-b last:border-b-0 md:border-b-0 md:border-r last:md:border-r-0 border-[--color-warm-gray]/60 pb-6 last:pb-0 md:pb-0 md:pr-6 last:md:pr-0 transition-all duration-300 hover:opacity-80"
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[--color-secondary] dark:bg-[#111827] text-lg text-[--color-charcoal] dark:text-[#f9fafb]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[--color-secondary] dark:bg-muted text-lg text-[--color-charcoal] dark:text-[--color-foreground]">
                       <Icon name={item.icon} size="lg" />
                     </div>
                     <h3 className="text-sm font-semibold text-[--color-charcoal] dark:text-white">
                       {item.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-[--color-muted-foreground] dark:text-gray-300">
+                    <p className="text-xs sm:text-sm text-[--color-muted-foreground]">
                       {item.description}
                     </p>
                   </motion.div>
