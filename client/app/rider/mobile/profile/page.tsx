@@ -348,14 +348,20 @@ export default function RiderMobileProfile() {
         <div className="space-y-4">
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Vehicle Type</label>
-            <input
-              type="text"
+            <select
               value={formData.vehicleType}
               onChange={(e) => setFormData({ ...formData, vehicleType: e.target.value })}
               disabled={!isEditing || !isApproved}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-pink-300 disabled:bg-gray-50 dark:disabled:bg-gray-800"
-              placeholder="e.g. Motorcycle"
-            />
+            >
+              <option value="">Select vehicle type</option>
+              <option value="bicycle">Bicycle</option>
+              <option value="motorcycle">Motorcycle</option>
+              <option value="car">Car</option>
+              <option value="suv">SUV</option>
+              <option value="truck">Truck</option>
+              <option value="van">Van</option>
+            </select>
           </div>
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">License Number</label>

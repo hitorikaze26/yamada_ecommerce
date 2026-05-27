@@ -582,8 +582,28 @@ def _serialize_available_order_for_rider(order: Order) -> dict:
 		"municipalityName": municipality_name,
 		"deliveryNotes": getattr(order, "delivery_notes", None),
 		"items": items_summary,
-		"isAutoMatched": True,
-	}
+    "isAutoMatched": True,
+    }
+
+
+def _get_rider_match_field(vehicle_type: str | None) -> tuple:
+    """Return (rider_attribute, buyer_attribute) for location matching based on vehicle type.
+
+    - bicycle        → barangay
+    - motorcycle     → municipality (default)
+    - car, suv       → province
+    - truck, van     → region
+    """
+    vt = (vehicle_type or "").lower().strip()
+    if vt == "bicycle":
+        return ("barangay_name", "barangay_name")
+    elif vt in ("car", "suv"):
+        return ("province_name", "province_name")
+    elif vt in ("truck", "van"):
+        return ("region_name", "region_name")
+    else:
+        return ("municipality_name", "municipality_name")
+
 
 
 @orders_bp.post("/orders/checkout")
@@ -2024,10 +2044,16 @@ def rider_accept_order(order_id: int):
             return jsonify(msg="Rider account is not yet verified/approved"), 403
 
         rider_profile = getattr(current_user, "rider_profile", None)
-        rider_municipality = getattr(rider_profile, "municipality_name", None) if rider_profile else None
+        if not rider_profile:
+            return jsonify(msg="Rider profile not found"), 400
 
-        if not rider_municipality:
-            return jsonify(msg="Rider municipality not set"), 400
+        rider_vehicle = getattr(rider_profile, "vehicle_type", None)
+        rider_field, buyer_field = _get_rider_match_field(rider_vehicle)
+        rider_value = getattr(rider_profile, rider_field, None)
+        rider_label = rider_field.replace("_name", "").replace("_", " ")
+
+        if not rider_value:
+            return jsonify(msg=f"Rider {rider_label} not set"), 400
 
         order = db.session.execute(
             select(Order).where(Order.id == order_id).with_for_update()
@@ -2047,8 +2073,9 @@ def rider_accept_order(order_id: int):
             select(BuyerProfile).where(BuyerProfile.user_id == buyer.id)
         ).scalar_one_or_none()
 
-        if buyer_profile is None or buyer_profile.municipality_name != rider_municipality:
-            return jsonify(msg="Order is not in the rider's area"), 403
+        buyer_attr = getattr(BuyerProfile, buyer_field)
+        if buyer_profile is None or getattr(buyer_profile, buyer_field, None) != rider_value:
+            return jsonify(msg=f"Order is outside your {rider_label} area"), 403
 
         # Ensure this order is not already assigned to a rider (locked read)
         existing_delivery = db.session.execute(
@@ -2226,29 +2253,32 @@ def list_rider_deliveries():
 
         payload: list[dict] = [_serialize_rider_delivery(d) for d in assigned_deliveries]
 
-        # 2) Orders in the rider's municipality with status SHIPPED or OUT_FOR_DELIVERY
+        # 2) Orders matching the rider's vehicle range + location
         rider_profile = getattr(current_user, "rider_profile", None)
-        rider_municipality = getattr(rider_profile, "municipality_name", None) if rider_profile else None
 
-        if rider_municipality:
-            # Only include orders that do not yet have a RiderDelivery, so once
-            # a rider accepts an order it no longer appears as an
-            # auto-matched option for others.
-            available_orders = db.session.execute(
-                select(Order)
-                .join(User, Order.buyer_id == User.id)
-                .join(BuyerProfile, BuyerProfile.user_id == User.id)
-                .where(
-                    BuyerProfile.municipality_name == rider_municipality,
-                    Order.status.in_([OrderStatus.SHIPPED, OrderStatus.OUT_FOR_DELIVERY]),
-                    ~exists(
-                        select(RiderDelivery.id).where(RiderDelivery.order_id == Order.id)
-                    ),
-                )
-            ).scalars().all()
+        if rider_profile:
+            rider_vehicle = getattr(rider_profile, "vehicle_type", None)
+            rider_field, buyer_field = _get_rider_match_field(rider_vehicle)
+            rider_value = getattr(rider_profile, rider_field, None)
 
-            for order in available_orders:
-                payload.append(_serialize_available_order_for_rider(order))
+            if rider_value:
+                buyer_attr = getattr(BuyerProfile, buyer_field)
+
+                available_orders = db.session.execute(
+                    select(Order)
+                    .join(User, Order.buyer_id == User.id)
+                    .join(BuyerProfile, BuyerProfile.user_id == User.id)
+                    .where(
+                        buyer_attr == rider_value,
+                        Order.status.in_([OrderStatus.SHIPPED, OrderStatus.OUT_FOR_DELIVERY]),
+                        ~exists(
+                            select(RiderDelivery.id).where(RiderDelivery.order_id == Order.id)
+                        ),
+                    )
+                ).scalars().all()
+
+                for order in available_orders:
+                    payload.append(_serialize_available_order_for_rider(order))
 
         return jsonify(deliveries=payload), 200
     except Exception:

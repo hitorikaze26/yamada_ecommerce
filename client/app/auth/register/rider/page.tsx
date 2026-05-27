@@ -38,9 +38,11 @@ interface RiderFormData {
 }
 
 const vehicleTypes = [
-  { value: "motorcycle", label: "Motorcycle" },
   { value: "bicycle", label: "Bicycle" },
+  { value: "motorcycle", label: "Motorcycle" },
   { value: "car", label: "Car" },
+  { value: "suv", label: "SUV" },
+  { value: "truck", label: "Truck" },
   { value: "van", label: "Van" },
 ]
 

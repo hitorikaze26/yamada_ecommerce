@@ -402,13 +402,20 @@ export default function RiderProfilePage() {
           <div className="grid sm:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2">Vehicle Type</label>
-              <input
-                type="text"
+              <select
                 value={formData.vehicleType}
                 onChange={(e) => setFormData({ ...formData, vehicleType: e.target.value })}
                 disabled={!isEditing || !isApproved}
                 className="w-full px-4 py-3 rounded-xl border bg-background focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-              />
+              >
+                <option value="">Select vehicle type</option>
+                <option value="bicycle">Bicycle</option>
+                <option value="motorcycle">Motorcycle</option>
+                <option value="car">Car</option>
+                <option value="suv">SUV</option>
+                <option value="truck">Truck</option>
+                <option value="van">Van</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">License Number</label>
