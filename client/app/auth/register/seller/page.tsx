@@ -17,6 +17,7 @@ import { DarkModeToggle } from "@/components/ui/dark-mode-toggle"
 import { AddressSelector } from "@/components/form/address-selector"
 import { FileUploader } from "@/components/form/file-uploader"
 import { PasswordStrengthIndicator } from "@/components/form/password-strength"
+import { EmailVerification } from "@/components/form/email-verification"
 import { GlassAlert } from "@/components/ui/glass-alert"
 import { CATEGORIES } from "@/lib/types"
 import { authApi, type AddressData } from "@/lib/api"
@@ -24,27 +25,22 @@ import { authApi, type AddressData } from "@/lib/api"
 const STORAGE_KEY = "yamada-seller-registration"
 
 interface SellerFormData {
-  // Basic Info
   givenName: string
   surname: string
   email: string
   password: string
   confirmPassword: string
   contactNumber: string
-  // Shop Info
   shopName: string
   categories: string[]
   tagline: string
   description: string
   logo: File | null
-  // Address
   address: AddressData | null
-  // Documents
   dti: File | null
   birTin: File | null
   businessPermit: File | null
   validId: File | null
-  // Terms
   acceptTerms: boolean
 }
 
@@ -86,9 +82,12 @@ export default function SellerRegistrationPage() {
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const [alertVariant, setAlertVariant] = useState<"success" | "error" | "info" | "warning">("info")
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
+  const [emailVerified, setEmailVerified] = useState(false)
 
   // Load saved progress
   useEffect(() => {
+    if (registeredEmail) return
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       try {
@@ -109,10 +108,11 @@ export default function SellerRegistrationPage() {
         console.error("Failed to load saved data")
       }
     }
-  }, [])
+  }, [registeredEmail])
 
   // Save progress
   useEffect(() => {
+    if (registeredEmail) return
     const dataToSave = {
       ...formData,
       password: "",
@@ -125,7 +125,7 @@ export default function SellerRegistrationPage() {
       currentSection,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave))
-  }, [formData, currentSection])
+  }, [formData, currentSection, registeredEmail])
 
   const updateFormData = (updates: Partial<SellerFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }))
@@ -148,7 +148,7 @@ export default function SellerRegistrationPage() {
 
   const validateSection = (section: number): string | null => {
     switch (section) {
-      case 0: // Basic Info
+      case 0:
         if (!formData.givenName.trim()) return "Given name is required"
         if (!formData.surname.trim()) return "Surname is required"
         if (!formData.email.trim()) return "Email is required"
@@ -156,14 +156,14 @@ export default function SellerRegistrationPage() {
         if (formData.password !== formData.confirmPassword) return "Passwords do not match"
         if (!formData.contactNumber.trim()) return "Contact number is required"
         return null
-      case 1: // Shop Info
+      case 1:
         if (!formData.shopName.trim()) return "Shop name is required"
         if (formData.categories.length === 0) return "Select at least one category"
         return null
-      case 2: // Address
+      case 2:
         if (!formData.address) return "Please select your shop address"
         return null
-      case 3: // Documents
+      case 3:
         if (!formData.dti) return "DTI registration is required"
         if (!formData.birTin) return "BIR TIN is required"
         if (!formData.businessPermit) return "Business permit is required"
@@ -211,7 +211,7 @@ export default function SellerRegistrationPage() {
         return
       }
 
-      await authApi.registerSeller({
+      const res = await authApi.registerSeller({
         givenName: formData.givenName,
         surname: formData.surname,
         email: formData.email.trim(),
@@ -231,28 +231,24 @@ export default function SellerRegistrationPage() {
         },
       })
 
+      const registeredEmail = res.data?.email || formData.email
+      setRegisteredEmail(registeredEmail)
       localStorage.removeItem(STORAGE_KEY)
-      showAlert("Seller registration successful.", "success")
       setIsLoading(false)
-
-      const result = await Swal.fire({
-        title: "Registration Successful",
-        text: "Your seller account has been created. You can now log in.",
-        icon: "success",
-        confirmButtonText: "Go to Login",
-      })
-
-      if (result.isConfirmed || result.isDismissed) {
-        router.push("/auth/login?role=seller&registered=true")
-      }
-      return
     } catch (err: any) {
       const msg = err?.response?.data?.msg || "Registration failed. Please try again."
       setError(msg)
       showAlert("Seller registration failed. Please try again.", "error")
-    } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleEmailVerified = () => {
+    setEmailVerified(true)
+  }
+
+  const handleGoToLogin = () => {
+    router.push("/auth/login?role=seller")
   }
 
   const renderSection = () => {
@@ -488,6 +484,78 @@ export default function SellerRegistrationPage() {
       default:
         return null
     }
+  }
+
+  if (registeredEmail && !emailVerified) {
+    return (
+      <div className="min-h-screen flex">
+        <div className="hidden lg:flex lg:w-1/2 bg-secondary relative overflow-hidden lg:sticky lg:top-0 lg:h-screen">
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20" />
+          <div className="relative z-10 flex flex-col justify-between p-12 text-white">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <span className="text-2xl font-bold">Y</span>
+              </div>
+              <span className="text-2xl font-semibold">Yamada</span>
+            </Link>
+            <div>
+              <h1 className="text-4xl font-bold mb-4">Verify Your Email</h1>
+              <p className="text-lg opacity-90">Check your email for the verification code to activate your seller account</p>
+            </div>
+            <div className="text-sm opacity-70">Your shop application will be reviewed by admin after email verification</div>
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col">
+          <div className="flex justify-between items-center p-6">
+            <Link href="/" className="lg:hidden flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-xl">Y</span>
+              </div>
+              <span className="text-xl font-semibold">Yamada</span>
+            </Link>
+            <DarkModeToggle />
+          </div>
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="w-full max-w-md space-y-6">
+              <div className="text-center">
+                <h2 className="text-3xl font-bold mb-2">Verify Your Email</h2>
+                <p className="text-muted-foreground">A verification code was sent to your email</p>
+              </div>
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                <Icon name="envelope" className="text-primary" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{registeredEmail}</p>
+                </div>
+              </div>
+              <EmailVerification email={registeredEmail} onVerified={handleEmailVerified} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (registeredEmail && emailVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md text-center space-y-6"
+        >
+          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
+            <Icon name="check-circle" size="xl" className="text-green-600 dark:text-green-400" />
+          </div>
+          <h2 className="text-3xl font-bold">Registration Successful</h2>
+          <p className="text-muted-foreground">
+            Your seller account has been created and your email is verified. Your shop application is now under review.
+          </p>
+          <Button className="w-full" size="lg" onClick={handleGoToLogin}>
+            Go to Login
+          </Button>
+        </motion.div>
+      </div>
+    )
   }
 
   return (

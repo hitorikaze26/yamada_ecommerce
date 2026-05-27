@@ -16,6 +16,7 @@ import { DarkModeToggle } from "@/components/ui/dark-mode-toggle"
 import { AddressSelector } from "@/components/form/address-selector"
 import { FileUploader } from "@/components/form/file-uploader"
 import { PasswordStrengthIndicator } from "@/components/form/password-strength"
+import { EmailVerification } from "@/components/form/email-verification"
 import { GlassAlert } from "@/components/ui/glass-alert"
 import { authApi, type AddressData } from "@/lib/api"
 
@@ -44,6 +45,8 @@ export default function BuyerRegistrationPage() {
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const [alertVariant, setAlertVariant] = useState<"success" | "error" | "info" | "warning">("info")
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
+  const [emailVerified, setEmailVerified] = useState(false)
 
   // Step 1 data
   const [step1Data, setStep1Data] = useState<Step1Data>({
@@ -94,13 +97,14 @@ export default function BuyerRegistrationPage() {
 
   // Save progress to localStorage
   useEffect(() => {
+    if (registeredEmail) return // Don't overwrite saved data during verification
     const dataToSave = {
       step1: { ...step1Data, password: "", confirmPassword: "" }, // Don't save passwords
       step2: { address: step2Data.address }, // Don't save file
       step,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave))
-  }, [step1Data, step2Data.address, step])
+  }, [step1Data, step2Data.address, step, registeredEmail])
 
   const validateStep1 = (): string | null => {
     if (!step1Data.givenName.trim()) return "Given name is required"
@@ -143,7 +147,7 @@ export default function BuyerRegistrationPage() {
     setIsLoading(true)
 
     try {
-      await authApi.registerBuyer({
+      const res = await authApi.registerBuyer({
         givenName: step1Data.givenName,
         surname: step1Data.surname,
         email: step1Data.email,
@@ -153,25 +157,25 @@ export default function BuyerRegistrationPage() {
         validId: step2Data.validId ?? "",
       })
 
-      // Clear saved progress
+      const registeredEmail = res.data?.email || step1Data.email
+      setRegisteredEmail(registeredEmail)
+      setStep(3)
+
       localStorage.removeItem(STORAGE_KEY)
-
-      showAlert("Buyer registration successful.", "success")
-
-      await Swal.fire({
-        title: "Registration Successful",
-        text: "Your account has been created. You can now log in.",
-        icon: "success",
-        confirmButtonText: "Go to Login",
-      })
-
-      router.push("/auth/login?role=buyer&registered=pending_approval")
     } catch (err) {
       setError("Registration failed. Please try again.")
       showAlert("Buyer registration failed. Please try again.", "error")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleEmailVerified = () => {
+    setEmailVerified(true)
+  }
+
+  const handleGoToLogin = () => {
+    router.push("/auth/login?role=buyer")
   }
 
   return (
@@ -213,7 +217,7 @@ export default function BuyerRegistrationPage() {
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 1 ? "bg-white text-primary" : "bg-white/20"}`}
               >
-                {step > 1 ? <Icon name="check" /> : "1"}
+                {step > 2 ? <Icon name="check" /> : "1"}
               </div>
               <span className={step >= 1 ? "font-medium" : "opacity-70"}>Basic Info</span>
             </div>
@@ -225,6 +229,15 @@ export default function BuyerRegistrationPage() {
                 {step > 2 ? <Icon name="check" /> : "2"}
               </div>
               <span className={step >= 2 ? "font-medium" : "opacity-70"}>Address & ID</span>
+            </div>
+            <div className="w-12 h-0.5 bg-white/30" />
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 3 ? "bg-white text-primary" : "bg-white/20"}`}
+              >
+                "3"
+              </div>
+              <span className={step >= 3 ? "font-medium" : "opacity-70"}>Verify</span>
             </div>
           </div>
         </div>
@@ -243,36 +256,24 @@ export default function BuyerRegistrationPage() {
         </div>
 
         {/* Mobile Step Indicator */}
-        <div className="flex items-center justify-center gap-4 px-6 pb-4 lg:hidden">
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${step >= 1 ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-            >
-              {step > 1 ? <Icon name="check" size="sm" /> : "1"}
-            </div>
-            <span className={`text-sm ${step >= 1 ? "font-medium" : "text-muted-foreground"}`}>Basic</span>
-          </div>
-          <div className="w-8 h-0.5 bg-border" />
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${step >= 2 ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-            >
-              "2"
-            </div>
-            <span className={`text-sm ${step >= 2 ? "font-medium" : "text-muted-foreground"}`}>Address</span>
-          </div>
+        <div className="flex items-center justify-center gap-2 px-6 pb-4 lg:hidden">
+          <div className={`h-2 rounded-full transition-all ${step >= 1 ? "bg-primary w-8" : "bg-muted w-2"}`} />
+          <div className={`h-2 rounded-full transition-all ${step >= 2 ? "bg-primary w-8" : "bg-muted w-2"}`} />
+          <div className={`h-2 rounded-full transition-all ${step >= 3 ? "bg-primary w-8" : "bg-muted w-2"}`} />
         </div>
 
         <div className="flex-1 flex items-start justify-center p-6 overflow-y-auto">
           <div className="w-full max-w-md space-y-6">
             <div className="text-center lg:text-left">
-              <h2 className="text-3xl font-bold mb-2">{step === 1 ? "Create Account" : "Complete Your Profile"}</h2>
+              <h2 className="text-3xl font-bold mb-2">
+                {step === 1 ? "Create Account" : step === 2 ? "Complete Your Profile" : "Verify Your Email"}
+              </h2>
               <p className="text-muted-foreground">
-                {step === 1 ? "Enter your details to get started" : "Add your address and verification documents"}
+                {step === 1 ? "Enter your details to get started" : step === 2 ? "Add your address and verification documents" : "Check your email for the verification code"}
               </p>
             </div>
 
-            {error && (
+            {error && step !== 3 && (
               <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm flex items-center gap-2">
                 <Icon name="exclamation-circle" />
                 {error}
@@ -463,14 +464,46 @@ export default function BuyerRegistrationPage() {
                   </div>
                 </motion.form>
               )}
+
+              {step === 3 && registeredEmail && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
+                  <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                    <Icon name="envelope" className="text-primary" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{registeredEmail}</p>
+                    </div>
+                    {emailVerified && (
+                      <Icon name="check-circle" className="text-green-500 shrink-0" />
+                    )}
+                  </div>
+
+                  <EmailVerification
+                    email={registeredEmail}
+                    onVerified={handleEmailVerified}
+                  />
+
+                  {emailVerified && (
+                    <Button className="w-full" size="lg" onClick={handleGoToLogin}>
+                      Go to Login
+                    </Button>
+                  )}
+                </motion.div>
+              )}
             </AnimatePresence>
 
-            <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link href="/auth/login?role=buyer" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
-            </p>
+            {step < 3 && (
+              <p className="text-center text-sm text-muted-foreground">
+                Already have an account?{" "}
+                <Link href="/auth/login?role=buyer" className="text-primary hover:underline font-medium">
+                  Sign in
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </div>

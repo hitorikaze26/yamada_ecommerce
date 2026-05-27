@@ -295,6 +295,12 @@ export const authApi = {
 
   deleteAccount: (password: string) =>
     apiClient.delete("/accounts/delete-account", { data: { password } }),
+
+  sendVerificationCode: (email: string) =>
+    apiClient.post("/accounts/send-verification-code", { email }),
+
+  verifyEmailCode: (email: string, code: string) =>
+    apiClient.post("/accounts/verify-email-code", { email, code }),
 }
 
 // Products API

@@ -37,7 +37,7 @@ from app.models import (
 )
 from app.extensions import mail, bcrypt, limiter
 from app.services import sms_service
-from app.services.email_service import send_password_reset_email
+from app.services.email_service import send_password_reset_email, send_verification_email
 from app.coupon_helpers import serialize_coupon, validate_coupon
 from app.chat.service import get_platform_admin_user
 from app.notifications.service import create_notification, notify_admin_order_issue_reported
@@ -643,7 +643,7 @@ def register_rider():
 		db.session.add(rider_profile)
 		db.session.commit()
 
-		return jsonify(msg="Successfully registered rider. Awaiting admin approval."), 201
+		return jsonify(msg="Successfully registered rider. Please verify your email.", email=user.email), 201
 	except IntegrityError:
 		db.session.rollback()
 		return jsonify(msg="Email already exists!"), 400
@@ -711,6 +711,10 @@ def register_seller():
 
         role = _ensure_role_by_name("seller")
         user_role = UserRole(user=user, role=role)
+
+        # Auto-assign buyer role so sellers can browse marketplace
+        buyer_role = _ensure_role_by_name("buyer")
+        buyer_user_role = UserRole(user=user, role=buyer_role)
 
         # Create seller profile with detailed address
         full_name = f"{given_name} {surname}".strip()
@@ -858,11 +862,12 @@ def register_seller():
 
         db.session.add(user)
         db.session.add(user_role)
+        db.session.add(buyer_user_role)
         db.session.add(seller)
         db.session.add(store_registration)
         db.session.commit()
 
-        return jsonify(msg="Successfully registered seller. Awaiting admin approval."), 201
+        return jsonify(msg="Successfully registered seller. Please verify your email.", email=user.email), 201
     except IntegrityError:
         db.session.rollback()
         return jsonify(msg="Email already exists!"), 400
@@ -970,7 +975,7 @@ def register_buyer():
         db.session.add(buyer_profile)
         db.session.commit()
 
-        return jsonify(msg="Successfully registered buyer. Awaiting admin approval."), 201
+        return jsonify(msg="Successfully registered buyer. Please verify your email.", email=user.email), 201
     except IntegrityError:
         db.session.rollback()
         return jsonify(msg="Email already exists!"), 400
@@ -2547,3 +2552,134 @@ def reset_password():
     except Exception:
         db.session.rollback()
         return jsonify(msg="Failed to reset password"), 500
+
+
+VERIFICATION_CODE_LENGTH = 6
+VERIFICATION_EXPIRY_MINUTES = 15
+
+
+def _invalidate_verification_codes(user_id: int) -> None:
+    db.session.execute(
+        delete(PasswordResetCode).where(
+            PasswordResetCode.user_id == user_id,
+            PasswordResetCode.channel == "email_verification",
+        )
+    )
+
+
+def _get_active_verification_code(user_id: int):
+    now = datetime.now(timezone.utc)
+    return db.session.execute(
+        select(PasswordResetCode)
+        .where(
+            PasswordResetCode.user_id == user_id,
+            PasswordResetCode.channel == "email_verification",
+        )
+        .order_by(PasswordResetCode.created_at.desc())
+    ).scalars().first()
+
+
+@auth_bp.post("/send-verification-code")
+@limiter.limit("5 per minute")
+def send_verification_code():
+    """Generate and send a 6-digit email verification code."""
+    if not request.is_json:
+        return jsonify(msg="JSON required"), 400
+
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+
+    if not email:
+        return jsonify(msg="Email is required"), 400
+
+    user = _find_user_by_email_or_username(email)
+    if user is None:
+        return jsonify(msg="User not found"), 404
+
+    if user.email_verified:
+        return jsonify(msg="Email already verified"), 200
+
+    try:
+        code = _generate_pin()
+        code_hash = bcrypt.generate_password_hash(code).decode("utf-8")
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            minutes=VERIFICATION_EXPIRY_MINUTES
+        )
+
+        _invalidate_verification_codes(user.id)
+        db.session.add(
+            PasswordResetCode(
+                user_id=user.id,
+                code_hash=code_hash,
+                channel="email_verification",
+                expires_at=expires_at,
+                attempts=0,
+                verified=False,
+            )
+        )
+
+        send_verification_email(
+            to_email=user.email,
+            code=code,
+            expiry_minutes=VERIFICATION_EXPIRY_MINUTES,
+        )
+
+        db.session.commit()
+        return jsonify(msg="Verification code sent"), 200
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.exception("send_verification_code failed: %s", exc)
+        return jsonify(msg="Failed to send verification code"), 500
+
+
+@auth_bp.post("/verify-email-code")
+@limiter.limit("10 per minute")
+def verify_email_code():
+    """Verify email verification code and activate the user."""
+    if not request.is_json:
+        return jsonify(msg="JSON required"), 400
+
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+    code = (data.get("code") or "").strip()
+
+    if not email or not code:
+        return jsonify(msg="email and code are required"), 400
+    if len(code) != VERIFICATION_CODE_LENGTH or not code.isdigit():
+        return jsonify(msg=f"Code must be {VERIFICATION_CODE_LENGTH} digits"), 400
+
+    user = _find_user_by_email_or_username(email)
+    if user is None:
+        return jsonify(msg="Invalid verification code"), 400
+
+    if user.email_verified:
+        return jsonify(msg="Email already verified"), 200
+
+    record = _get_active_verification_code(user.id)
+    if record is None:
+        return jsonify(msg="Invalid or expired verification code"), 400
+
+    now = datetime.now(timezone.utc)
+    expires = record.expires_at
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if now > expires:
+        return jsonify(msg="Invalid or expired verification code"), 400
+
+    if record.attempts >= MAX_PIN_ATTEMPTS:
+        return jsonify(msg="Too many attempts. Request a new code."), 400
+
+    if not bcrypt.check_password_hash(record.code_hash, code):
+        record.attempts += 1
+        db.session.commit()
+        return jsonify(msg="Invalid verification code"), 400
+
+    try:
+        user.email_verified = True
+        user.active = True
+        _invalidate_verification_codes(user.id)
+        db.session.commit()
+        return jsonify(msg="Email verified successfully"), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify(msg="Failed to verify email"), 500

@@ -181,3 +181,19 @@ def send_password_reset_email(*, to_email: str, pin: str, expiry_minutes: int) -
         body=body,
         critical=True,
     )
+
+
+def send_verification_email(*, to_email: str, code: str, expiry_minutes: int) -> None:
+    """Send email verification code."""
+    body = (
+        f"Hello,\n\n"
+        f"Your Yamada email verification code is: {code}\n\n"
+        f"This code expires in {expiry_minutes} minutes.\n"
+        f"If you did not register for Yamada, ignore this email.\n"
+    )
+    _send_email(
+        to_email=to_email,
+        subject="Yamada email verification code",
+        body=body,
+        critical=True,
+    )

@@ -88,36 +88,8 @@ class Config:
         "MAIL_DEFAULT_SENDER",
         "Yamada Support <noreply@example.com>",
     )
-    MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "smtp")
+    MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "console")
 
-    TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
-    TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
-    TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER", "")
-
-    OPENROUTESERVICE_API_KEY = os.environ.get("OPENROUTESERVICE_API_KEY", "")
-
-    DISABLE_STRICT_SLASHES = True
-
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-
-    DB_SERVER = os.environ.get("DB_SERVER", "127.0.0.1")
-
-    # Development runs on HTTP localhost — cookies must NOT be Secure
-    JWT_COOKIE_SECURE = False
-    JWT_COOKIE_SAMESITE = "Lax"
-
-    _dev_uri = _database_url(
-        os.environ.get(
-            "DEV_DATABASE_URL",
-            "mysql+pymysql://root:hitorikaze%401226@localhost:3306/yamada_db",
-        )
-    )
-    SQLALCHEMY_DATABASE_URI = _dev_uri
-    SQLALCHEMY_ENGINE_OPTIONS = _engine_options_for_uri(_dev_uri)
-
-    SUPPORTS_LOCAL_STORAGE = EnvFlags.USE_LOCAL_STORAGE
 
 
 class ProductionConfig(Config):
