@@ -44,12 +44,12 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[96vw] max-w-7xl max-h-[90vh] p-0">
+      <DialogContent className="w-[96vw] max-w-4xl max-h-[90vh] p-0">
         <DialogTitle className="sr-only">{product.name}</DialogTitle>
         <div className="grid md:grid-cols-2 max-h-[90vh] overflow-y-auto md:overflow-hidden md:h-[80vh]">
           {/* Image Section */}
-          <div className="relative bg-muted md:h-full">
-            <div className="relative aspect-square md:aspect-auto md:h-full">
+          <div className="relative bg-muted md:h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
+            <div className="relative aspect-square md:aspect-auto md:h-full min-w-0">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentImageIndex}
@@ -93,7 +93,7 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
           </div>
 
           {/* Content Section */}
-          <div className="p-6 flex flex-col overflow-y-auto overflow-x-hidden">
+          <div className="p-6 md:pl-0 flex flex-col overflow-y-auto min-w-0">
             <div className="flex-1">
               <Link href={`/seller/${product.sellerId}`} className="text-sm text-primary hover:underline">
                 {product.sellerName}
