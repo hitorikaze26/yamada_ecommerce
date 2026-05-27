@@ -127,6 +127,7 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
 
   useEffect(() => {
     const fetchProduct = async () => {
+      if (!productId) return
       try {
         const response = await productsApi.getById(String(productId))
         const apiProduct = response.data.product
