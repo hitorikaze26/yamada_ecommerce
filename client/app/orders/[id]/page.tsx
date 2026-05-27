@@ -457,6 +457,14 @@ function OrderContent({ orderId }: { orderId: string }) {
     await ordersApi.addReview(Number(order.id), payload)
     setSubmittedReviewItemIds((prev) => new Set([...prev, payload.orderItemId]))
     setReviewableItems((prev) => prev.filter((i) => i.orderItemId !== payload.orderItemId))
+    const remaining = reviewableItems.filter((i) => i.orderItemId !== payload.orderItemId).length
+    await Swal.fire({
+      icon: "success",
+      title: remaining === 0 ? "All items reviewed!" : "Review submitted!",
+      text: remaining === 0 ? "Thank you for your feedback." : undefined,
+      timer: 1500,
+      showConfirmButton: false,
+    })
   }
 
   return (
