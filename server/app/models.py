@@ -103,10 +103,9 @@ def product_can_seller_edit(product: "Product") -> bool:
     )
 
 
-# NOTE: Do NOT use values_callable here. Without it, SQLAlchemy serializes
-# using member.value (lowercase).  With values_callable, it switches to
-# member.name (uppercase), which breaks native PostgreSQL ENUMs created
-# with lowercase values (e.g. 'held' vs 'HELD').
+# NOTE: Without values_callable, SQLAlchemy serializes using member.name
+# (uppercase).  With values_callable=lambda x: [e.value for e in x], it
+# uses member.value (lowercase), matching the data already in the DB.
 
 
 class DeliveryStatus(enum.Enum):
@@ -501,7 +500,7 @@ class Product(Base):
     image_url: Mapped[str] = mapped_column(nullable=True)
     is_live: Mapped[bool] = mapped_column(Boolean, default=True)
     moderation_status: Mapped[ProductModerationStatus] = mapped_column(
-        Enum(ProductModerationStatus),
+        Enum(ProductModerationStatus, values_callable=lambda x: [e.value for e in x]),
         default=ProductModerationStatus.ACTIVE,
     )
     moderation_reason: Mapped[str] = mapped_column(TEXT, nullable=True)
@@ -641,7 +640,6 @@ class ProductVariation(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id', ondelete='CASCADE'))
     size: Mapped[str] = mapped_column(nullable=True)
     color: Mapped[str] = mapped_column(nullable=True)
-    color_hex: Mapped[str] = mapped_column(String(7), nullable=True)
     sku: Mapped[str] = mapped_column(nullable=True)
     price: Mapped[float] = mapped_column(Float, nullable=True)
     inventory: Mapped[int] = mapped_column(Integer, nullable=True)
@@ -936,7 +934,10 @@ class PaymentTransaction(Base):
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
     amount: Mapped[float] = mapped_column(Float, default=0.0)
     platform_fee: Mapped[float] = mapped_column(Float, default=0.0)
-    status: Mapped[PaymentStatus] = mapped_column(Enum(PaymentStatus), default=PaymentStatus.HELD)
+    status: Mapped[PaymentStatus] = mapped_column(
+        Enum(PaymentStatus, values_callable=lambda x: [e.value for e in x]),
+        default=PaymentStatus.HELD,
+    )
     created_at: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(
         nullable=True,
