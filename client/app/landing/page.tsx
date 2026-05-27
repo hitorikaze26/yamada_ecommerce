@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icon"
 import { HeroButton } from "@/components/ui/hero-button"
 import { useTheme } from "@/components/providers/theme-provider"
-import truckAnimation from "@/public/landing_page_reso/e1f7c594-116b-11ee-8ced-5714a508688b.json"
-import cartAnimation from "@/public/landing_page_reso/8bcc177a-116a-11ee-adca-a3cf94025c10.json"
+import truckLight from "@/public/landing_page_reso/truck-light.json"
+import truckDark from "@/public/landing_page_reso/truck-dark.json"
+import cartLight from "@/public/landing_page_reso/cart-light.json"
+import cartDark from "@/public/landing_page_reso/cart-dark.json"
 
 const fadeInUp = (delay: number) => ({
   hidden: { opacity: 0, y: 24 },
@@ -33,6 +35,9 @@ export default function LandingPage() {
   const { resolvedTheme, setTheme, theme } = useTheme()
 
   const isDark = resolvedTheme === "dark"
+
+  const truckAnimation = isDark ? truckDark : truckLight
+  const cartAnimation = isDark ? cartDark : cartLight
 
   const toggleTheme = () => {
     if (theme === "system") {
