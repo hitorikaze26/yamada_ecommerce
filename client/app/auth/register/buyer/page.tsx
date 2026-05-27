@@ -235,7 +235,7 @@ export default function BuyerRegistrationPage() {
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 3 ? "bg-white text-primary" : "bg-white/20"}`}
               >
-                "3"
+                3
               </div>
               <span className={step >= 3 ? "font-medium" : "opacity-70"}>Verify</span>
             </div>
