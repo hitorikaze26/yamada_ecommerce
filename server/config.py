@@ -75,19 +75,6 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
-    MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
-    MAIL_PORT = int(os.environ.get("MAIL_PORT", "587"))
-    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() in (
-        "1",
-        "true",
-        "yes",
-    )
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
-    MAIL_DEFAULT_SENDER = os.environ.get(
-        "MAIL_DEFAULT_SENDER",
-        "Yamada Support <noreply@example.com>",
-    )
     YAMADA_MAIL_CONSOLE = os.environ.get("YAMADA_MAIL_CONSOLE", "false")
 
 
@@ -145,13 +132,6 @@ class TestingConfig(Config):
     )
     SQLALCHEMY_DATABASE_URI = _test_uri
     SQLALCHEMY_ENGINE_OPTIONS = _engine_options_for_uri(_test_uri)
-
-    MAIL_SERVER = "sandbox.smtp.mailtrap.io"
-    MAIL_PORT = 587
-    MAIL_USE_TLS = True
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
-    MAIL_DEFAULT_SENDER = "Yamada Test <test@example.com>"
 
     SUPPORTS_LOCAL_STORAGE = True  # Always true in testing
 

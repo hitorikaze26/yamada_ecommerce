@@ -8,7 +8,6 @@ sqlalchemy
 flask-migrate
 flask-wtf
 flask-jwt-extended
-flask-mailman
 flask-bcrypt
 python-engineio
 python-socketio
@@ -23,3 +22,4 @@ flask-limiter>=3.7
 supabase>=1.2
 # email-validator is used for input validation
 email-validator
+resend

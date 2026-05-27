@@ -10,7 +10,6 @@ from .models import (
 from .seed_commands import seed_admin_command, seed_report_types_command, seed_categories_command
 from .extensions import (
     csrf, 
-    mail, 
     jwt,
     bcrypt,
     limiter,
@@ -78,7 +77,6 @@ def create_app(test_config=None):
     migrate = Migrate()
     migrate.init_app(app, db)
     csrf.init_app(app)
-    mail.init_app(app)
     jwt.init_app(app)
     bcrypt.init_app(app)
     limiter.init_app(app)

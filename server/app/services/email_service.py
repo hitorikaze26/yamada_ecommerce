@@ -3,27 +3,23 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Optional
 
-from flask import current_app, has_app_context
-from flask_mailman import EmailMessage
+import resend
+from flask import has_app_context, current_app
 
 _logger = logging.getLogger(__name__)
 
+resend.api_key = os.environ.get("RESEND_API_KEY", "")
 
-def _mail_password() -> str:
-    """Gmail app passwords are often copied with spaces."""
-    if has_app_context():
-        raw = current_app.config.get("MAIL_PASSWORD") or ""
-    else:
-        raw = ""
-    return str(raw).replace(" ", "")
+RESEND_FROM = os.environ.get("RESEND_FROM", "YamadaShop <onboarding@resend.dev>")
+
+YAMADA_MAIL_CONSOLE = os.environ.get("YAMADA_MAIL_CONSOLE", "false").lower() in ("1", "true", "yes")
 
 
 def _is_console_mode() -> bool:
-    if has_app_context():
-        return str(current_app.config.get("YAMADA_MAIL_CONSOLE", "false")).lower() in ("1", "true", "yes")
-    return True
+    return YAMADA_MAIL_CONSOLE
 
 
 def _log_email(*, to: str, subject: str, body: str) -> None:
@@ -43,6 +39,12 @@ def _log_email(*, to: str, subject: str, body: str) -> None:
         _logger.info(message)
 
 
+def _text_to_html(text: str) -> str:
+    """Convert plain text to a minimal HTML email body."""
+    paragraphs = [f"<p>{line}</p>" for line in text.strip().split("\n\n") if line.strip()]
+    return f"<!DOCTYPE html><html><body style=\"font-family: sans-serif; line-height: 1.6;\">{''.join(paragraphs)}</body></html>"
+
+
 def _send_email(
     *,
     to_email: str,
@@ -50,7 +52,7 @@ def _send_email(
     body: str,
     critical: bool = False,
 ) -> None:
-    """Send email via SMTP or log to console when MAIL_BACKEND=console."""
+    """Send email via Resend or log to console when YAMADA_MAIL_CONSOLE is true."""
     if not to_email or not to_email.strip():
         return
 
@@ -60,29 +62,18 @@ def _send_email(
         _log_email(to=to_email, subject=subject, body=body)
         return
 
-    msg = EmailMessage(subject=subject, to=[to_email], body=body)
-
-    original_password = None
-    if has_app_context():
-        original_password = current_app.config.get("MAIL_PASSWORD")
-        current_app.config["MAIL_PASSWORD"] = _mail_password()
-
     try:
-        msg.send()
+        resend.Emails.send({
+            "from": RESEND_FROM,
+            "to": to_email,
+            "subject": subject,
+            "html": _text_to_html(body),
+        })
     except Exception as exc:
-        if critical and has_app_context() and current_app.debug:
-            current_app.logger.warning(
-                "Critical email failed (%s). DEV fallback logged for %s",
-                exc,
-                to_email,
-            )
-            _log_email(to=to_email, subject=subject, body=body)
-            return
         if critical:
             if has_app_context():
                 current_app.logger.error(
-                    "Critical email failed for %s (%s): %s — check MAIL_BACKEND, "
-                    "MAIL_USERNAME, and Gmail App Password on Railway",
+                    "Critical email failed for %s (%s): %s — check RESEND_API_KEY",
                     to_email,
                     subject,
                     exc,
@@ -102,9 +93,6 @@ def _send_email(
                 subject,
                 exc,
             )
-    finally:
-        if has_app_context() and original_password is not None:
-            current_app.config["MAIL_PASSWORD"] = original_password
 
 
 def send_notification_email(
