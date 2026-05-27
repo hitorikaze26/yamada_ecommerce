@@ -1567,7 +1567,7 @@ class PasswordResetCode(Base):
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), index=True)
     code_hash: Mapped[str] = mapped_column(VARCHAR(255))
-    channel: Mapped[str] = mapped_column(String(16), default="email")
+    channel: Mapped[str] = mapped_column(String(32), default="email")
     expires_at: Mapped[datetime.datetime] = mapped_column(DATETIME)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
