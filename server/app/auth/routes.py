@@ -35,7 +35,7 @@ from app.models import (
     StoreRequestStatus,
     PasswordResetCode,
 )
-from app.extensions import mail, bcrypt, limiter
+from app.extensions import bcrypt, limiter
 from app.services import sms_service
 from app.services.email_service import send_password_reset_email, send_verification_email
 from app.coupon_helpers import serialize_coupon, validate_coupon
