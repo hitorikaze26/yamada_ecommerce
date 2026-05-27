@@ -59,6 +59,22 @@ function BuyerOrdersContent() {
   const buyerUnverified = role === "buyer" && !isVerified()
   const { isBusy, openBuyerOrder } = useChatOpen()
 
+  const placedParam = searchParams.get("placed")
+  useEffect(() => {
+    if (placedParam === "1") {
+      void Swal.fire({
+        title: "Order placed!",
+        text: "Your order has been placed successfully. Track it under My Orders.",
+        icon: "success",
+        timer: 3000,
+        showConfirmButton: false,
+      })
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete("placed")
+      router.replace(`/buyer/orders${params.toString() ? `?${params.toString()}` : ""}`, { scroll: false })
+    }
+  }, [placedParam, router])
+
   const fetchOrders = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) {
       setIsLoading(true)
