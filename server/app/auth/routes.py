@@ -2632,7 +2632,7 @@ def send_verification_code():
     except Exception as exc:
         db.session.rollback()
         current_app.logger.exception("send_verification_code failed: %s", exc)
-        return jsonify(msg="Failed to send verification code"), 500
+        return jsonify(error=str(exc), msg="Failed to send verification code"), 500
 
 
 @auth_bp.post("/verify-email-code")
