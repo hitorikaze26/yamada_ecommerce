@@ -180,7 +180,7 @@ export function adminUserDisplayName(user: NormalizedAdminUser | Record<string, 
   const given = u.given_name?.trim()
   const surname = u.surname?.trim()
   if (given || surname) return `${given ?? ""} ${surname ?? ""}`.trim()
-  if (u.Username && u.Username !== u["User email"]) return u.Username
+  if (u.given_name && u.given_name !== u["User email"]?.split("@")[0]) return u.given_name
   const email = u["User email"]
   if (email) {
     const local = email.split("@")[0]

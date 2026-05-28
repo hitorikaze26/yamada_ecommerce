@@ -9,11 +9,7 @@ import { ordersApi, productsApi, reportsApi } from "@/lib/api"
 import { productCoverImage } from "@/lib/product-images"
 import type { Order, Product, ProblemReportDto } from "@/lib/types"
 import { useAuth } from "@/context/auth-context"
-import {
-  BUYER_ORDER_FILTERS,
-  countOrdersByBuyerFilter,
-  type BuyerOrderFilterKey,
-} from "@/lib/buyer/order-filters"
+import { countOrdersByBuyerFilter } from "@/lib/buyer/order-filters"
 import { formatOrderStatusLabel, getEffectiveOrderStatus } from "@/lib/buyer/order-status"
 import { orderStatusColors } from "@/lib/order-status"
 import { getBuyerFetchError, unwrapBuyerList } from "@/lib/buyer-fetch"
@@ -84,28 +80,6 @@ export default function BuyerDashboard() {
       {error && !isLoading && (
         <div className="bg-destructive/10 text-destructive border border-destructive/30 rounded-2xl p-4 text-sm">
           {error}
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        <div>
-          <h2 className="text-lg font-semibold mb-3">Order shortcuts</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {BUYER_ORDER_FILTERS.filter((f) => f.key !== "all").map((f) => {
-              const counts = countOrdersByBuyerFilter(orders)
-              const count = counts[f.key as BuyerOrderFilterKey]
-              return (
-                <Link
-                  key={f.key}
-                  href={`/buyer/orders?filter=${f.key}`}
-                  className="bg-card border rounded-xl p-4 hover:border-primary/50 transition-colors"
-                >
-                  <p className="text-sm font-medium">{f.label}</p>
-                  <p className="text-2xl font-bold mt-1">{count}</p>
-                </Link>
-              )
-            })}
-          </div>
         </div>
       )}
 

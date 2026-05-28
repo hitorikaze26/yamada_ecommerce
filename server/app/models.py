@@ -747,6 +747,8 @@ class RecentlyViewedProduct(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id', ondelete='CASCADE'))
     viewed_at: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
 
+    product: Mapped["Product"] = relationship()
+
 
 @dataclass
 class Coupon(Base):

@@ -107,24 +107,31 @@ def get_addresses():
             'Profile address sync failed for user %s: %s', user_id, exc
         )
 
-    stmt = select(UserAddress).where(UserAddress.user_id == user_id)
-    addresses = db.session.execute(stmt).scalars().all()
+    try:
+        stmt = select(UserAddress).where(UserAddress.user_id == user_id)
+        addresses = db.session.execute(stmt).scalars().all()
 
-    payload = [addr.to_json() for addr in addresses]
-    if not payload:
-        user = db.session.execute(
-            select(User)
-            .options(joinedload(User.buyer_profile))
-            .where(User.id == user_id)
-        ).scalar_one_or_none()
-        bp = user.buyer_profile if user else None
-        if bp and (bp.municipality_name or bp.barangay_name or bp.region_name):
-            payload = [_profile_address_json(bp)]
+        payload = [addr.to_json() for addr in addresses]
+        if not payload:
+            user = db.session.execute(
+                select(User)
+                .options(joinedload(User.buyer_profile))
+                .where(User.id == user_id)
+            ).scalar_one_or_none()
+            bp = user.buyer_profile if user else None
+            if bp and (bp.municipality_name or bp.barangay_name or bp.region_name):
+                payload = [_profile_address_json(bp)]
 
-    return jsonify({
-        'addresses': payload,
-        'count': len(payload)
-    }), 200
+        return jsonify({
+            'addresses': payload,
+            'count': len(payload)
+        }), 200
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            'Failed to fetch addresses for user %s: %s', user_id, exc
+        )
+        return jsonify({'error': 'Failed to fetch addresses'}), 500
 
 @user_bp.route('/user/addresses', methods=['POST'])
 @jwt_required()

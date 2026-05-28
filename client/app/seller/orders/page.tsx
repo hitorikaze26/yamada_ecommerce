@@ -198,7 +198,7 @@ export default function SellerOrdersPage() {
           buyer.name ||
           [buyer.firstName, buyer.lastName].filter(Boolean).join(" ") ||
           [buyer.first_name, buyer.last_name].filter(Boolean).join(" ") ||
-          buyer.username ||
+          buyer.givenName ||
           null
 
         const buyerName = shippingFullName || primaryBuyerName || "Customer"

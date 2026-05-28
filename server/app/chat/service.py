@@ -109,10 +109,10 @@ def _user_display_name(user: User) -> str:
     full = f"{given} {surname}".strip()
     if full:
         return full
-    username = (user.username or "").strip()
-    if username and "@" not in username:
-        return username
-    return username or "User"
+    given = (user.given_name or "").strip()
+    if given:
+        return given
+    return (user.username or "").strip() or "User"
 
 
 def _avatar_url(user: User) -> Optional[str]:

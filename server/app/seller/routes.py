@@ -299,7 +299,7 @@ def get_seller_orders():
             if buyer is not None:
                 buyer_name_parts = [buyer.given_name or "", buyer.surname or ""]
                 buyer_full_name = " ".join(p for p in buyer_name_parts if p).strip()
-                buyer_name = buyer_full_name or buyer.username or buyer.email
+                buyer_name = buyer_full_name or buyer.given_name or buyer.email
                 buyer_payload = {
                     "id": buyer.id,
                     "name": buyer_name,
@@ -342,7 +342,7 @@ def get_seller_orders():
                 if rider is not None:
                     rider_name_parts = [rider.given_name or "", rider.surname or ""]
                     rider_full_name = " ".join(p for p in rider_name_parts if p).strip()
-                    rider_name = rider_full_name or rider.username or rider.email
+                    rider_name = rider_full_name or rider.given_name or rider.email
                     # Get vehicle info from rider_profile if available
                     vehicle_type = None
                     license_number = None
@@ -397,7 +397,7 @@ def _buyer_display_name(buyer: User | None) -> str | None:
         return None
     parts = [buyer.given_name, buyer.surname]
     name = " ".join(p for p in parts if p).strip()
-    return name or buyer.username or buyer.email
+    return name or buyer.given_name or buyer.email
 
 
 def _serialize_seller_refund_request(r: RefundRequest) -> dict:

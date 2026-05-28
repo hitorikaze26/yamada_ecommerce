@@ -256,7 +256,7 @@ def get_rider_earnings():
             
             result.append({
                 **earning.to_json(),
-                "riderName": rider.username if rider else "Unknown",
+                "riderName": rider.given_name if rider else "Unknown",
                 "orderId": order.id if order else None,
                 "orderStatus": order.status.value if order and hasattr(order.status, 'value') else str(order.status) if order else None
             })
