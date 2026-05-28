@@ -154,7 +154,7 @@ export function canBuyerConfirmReceipt(
   const raw = normalizeOrderStatus(orderStatus)
   if (["completed", "cancelled", "canceled", "returned", "pending"].includes(raw)) return false
   const effective = getEffectiveOrderStatus(orderStatus, riderDeliveryStatus, riderProofPhotoUrl, riderHasProofPhoto)
-  return effective === "delivered"
+  return effective === "delivered" || raw === "out_for_delivery"
 }
 
 export function canBuyerLeaveReview(orderStatus: string): boolean {

@@ -108,7 +108,7 @@ export default function LandingPage() {
                   <span>Yamada Collections</span>
                 </div>
 
-                <h1 className="focus-in-contract text-3xl sm:text-4xl lg:text-[2.9rem] font-semibold leading-tight text-[--color-charcoal] dark:text-white">
+                <h1 className="focus-in-contract text-3xl sm:text-4xl lg:text-[2.9rem] font-semibold leading-tight text-[--color-charcoal] dark:text-white break-words">
                   Feel Confident. Feel Beautiful.
                   <br />
                   <span className="text-[--color-rosewood]">Shop the Yamada Collection.</span>
@@ -121,19 +121,19 @@ export default function LandingPage() {
 
                 {/* Hero CTAs */}
                 <div className="space-y-4">
-                  <div className="flex flex-wrap gap-3">
-                    <HeroButton as={Link} href="/auth/login?role=rider">
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <HeroButton as={Link} href="/auth/login?role=rider" className="w-full sm:w-auto justify-center">
                       Rider Portal
                     </HeroButton>
-                    <HeroButton as={Link} href="/auth/login?role=seller">
+                    <HeroButton as={Link} href="/auth/login?role=seller" className="w-full sm:w-auto justify-center">
                       Seller Portal
                     </HeroButton>
                   </div>
 
-                  <Link href="/home" className="mt-2 inline-block">
+                  <Link href="/home" className="mt-1 sm:mt-2 block w-full sm:w-auto">
                     <button
                       type="button"
-                      className="group relative z-10 flex justify-center items-center gap-2 mx-auto px-5 py-2.5 text-sm sm:text-base lg:font-semibold
+                      className="group relative z-10 flex justify-center items-center gap-2 w-full sm:w-auto mx-auto px-5 py-3 sm:py-2.5 text-sm sm:text-base lg:font-semibold
                                  rounded-full border-2 shadow-xl overflow-hidden isolation-auto
                                  bg-transparent text-[--color-charcoal] border-[--color-rosewood]
                                  before:absolute before:content-[''] before:w-full before:h-full before:-left-full before:rounded-full
@@ -168,7 +168,7 @@ export default function LandingPage() {
                 className="relative"
               >
                 <div className="relative overflow-hidden rounded-3xl bg-card dark:bg-card shadow-sm border border-[--color-warm-gray] dark:border-muted">
-                  <div className="aspect-[4/3] overflow-hidden">
+                  <div className="aspect-[3/2] sm:aspect-[4/3] overflow-hidden">
                     <video
                       className="h-full w-full object-cover scale-105 transition-transform duration-700 ease-out hover:scale-110"
                       autoPlay

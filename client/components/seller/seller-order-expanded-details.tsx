@@ -270,7 +270,7 @@ export function SellerOrderExpandedDetails({
             )}
           </Button>
         )}
-        {order.status === "pending" && (
+        {(order.status === "pending" || order.status === "processing") && (
           <Button
             type="button"
             variant="outline"

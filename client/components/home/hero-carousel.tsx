@@ -51,7 +51,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
 
   return (
     <section
-      className="relative h-[60vh] md:h-[70vh] lg:h-[80vh] overflow-hidden"
+      className="relative h-[50vh] md:h-[70vh] lg:h-[80vh] overflow-hidden"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       aria-label="Featured promotions carousel"
@@ -82,11 +82,11 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
                 transition={{ delay: 0.2, duration: 0.5 }}
                 className="max-w-xl"
               >
-                <span className="text-primary font-medium text-sm md:text-base">{slides[currentIndex].subtitle}</span>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold mt-2 mb-4 text-foreground text-balance">
+                <span className="text-primary font-medium text-xs sm:text-sm md:text-base">{slides[currentIndex].subtitle}</span>
+                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold mt-2 mb-4 text-foreground text-balance">
                   {slides[currentIndex].title}
                 </h1>
-                <p className="text-muted-foreground text-base md:text-lg mb-6 text-pretty">
+                <p className="text-muted-foreground text-sm sm:text-base md:text-lg mb-6 text-pretty">
                   {slides[currentIndex].description}
                 </p>
                 <Button asChild size="lg" className="rounded-full">
@@ -104,14 +104,14 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
       {/* Navigation Arrows */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
         aria-label="Previous slide"
       >
         <Icon name="angle-left" size="lg" />
       </button>
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
         aria-label="Next slide"
       >
         <Icon name="angle-right" size="lg" />

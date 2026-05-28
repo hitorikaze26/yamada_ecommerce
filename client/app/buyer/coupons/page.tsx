@@ -50,7 +50,7 @@ export default function BuyerCouponsPage() {
       </div>
 
       {loading && <div className="bg-card border rounded-2xl p-4">Loading...</div>}
-      {error && <div className="text-destructive text-sm">{error}</div>}
+      {error && <div className="bg-destructive/10 text-destructive border border-destructive/30 rounded-2xl p-4 text-sm">{error}</div>}
 
       {!loading && !error && coupons.length === 0 && (
         <div className="bg-card border rounded-2xl p-8 text-center text-muted-foreground">

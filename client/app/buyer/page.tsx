@@ -58,10 +58,10 @@ export default function BuyerDashboard() {
   ).length
 
   const stats = [
-    { label: "Total Orders", value: totalOrders.toString(), icon: "shopping-bag", color: "bg-blue-500" },
+    { label: "Total Orders", value: totalOrders.toString(), icon: "shopping-bag", color: "bg-primary" },
     { label: "Pending", value: pendingOrders.toString(), icon: "clock", color: "bg-amber-500" },
-    { label: "Delivered", value: deliveredOrders.toString(), icon: "check-circle", color: "bg-green-500" },
-    { label: "Open Reports", value: openReports.toString(), icon: "exclamation", color: "bg-orange-500" },
+    { label: "Delivered", value: deliveredOrders.toString(), icon: "check-circle", color: "bg-emerald-600" },
+    { label: "Open Reports", value: openReports.toString(), icon: "exclamation", color: "bg-rosewood/80" },
   ]
 
   const recentOrders = [...orders]
@@ -106,15 +106,16 @@ export default function BuyerDashboard() {
 
       {/* Recent Orders */}
       {!isLoading && !error && (
-      <div className="bg-card border rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Recent Orders</h2>
+      <div className="bg-card border rounded-2xl p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold">Recent Orders</h2>
           <Link href="/buyer/orders" className="text-primary hover:underline text-sm font-medium">
             View All
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b">
@@ -140,36 +141,45 @@ export default function BuyerDashboard() {
                   <td className="py-4 px-4">
                     {(() => {
                       const rd = (order as Order & { riderDelivery?: { status?: string } }).riderDelivery
-                      const effective = getEffectiveOrderStatus(
-                        order.status ?? "",
-                        rd?.status,
-                      )
+                      const effective = getEffectiveOrderStatus(order.status ?? "", rd?.status)
                       return (
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                            orderStatusColors[effective] || "bg-muted text-muted-foreground"
-                          }`}
-                        >
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${orderStatusColors[effective] || "bg-muted text-muted-foreground"}`}>
                           {formatOrderStatusLabel(effective)}
                         </span>
                       )
                     })()}
                   </td>
-                  <td className="py-4 px-4 text-muted-foreground">
-                    {order.items?.length ?? 0} items
-                  </td>
-                  <td className="py-4 px-4 text-right font-medium">
-                    {formatPrice(order.total ?? 0)}
-                  </td>
+                  <td className="py-4 px-4 text-muted-foreground">{order.items?.length ?? 0} items</td>
+                  <td className="py-4 px-4 text-right font-medium">{formatPrice(order.total ?? 0)}</td>
                   <td className="py-4 px-4 text-right">
-                    <Link href={`/orders/${order.id}`} className="text-primary hover:underline text-sm">
-                      View
-                    </Link>
+                    <Link href={`/orders/${order.id}`} className="text-primary hover:underline text-sm">View</Link>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="sm:hidden space-y-3">
+          {recentOrders.map((order) => {
+            const rd = (order as Order & { riderDelivery?: { status?: string } }).riderDelivery
+            const effective = getEffectiveOrderStatus(order.status ?? "", rd?.status)
+            return (
+              <Link key={order.id} href={`/orders/${order.id}`} className="block bg-muted/30 border rounded-xl p-4 hover:border-primary/30 transition-colors">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="font-semibold text-sm">{order.orderNumber}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${orderStatusColors[effective] || "bg-muted text-muted-foreground"}`}>
+                    {formatOrderStatusLabel(effective)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{new Date(order.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}</span>
+                  <span>{order.items?.length ?? 0} items · {formatPrice(order.total ?? 0)}</span>
+                </div>
+              </Link>
+            )
+          })}
         </div>
       </div>
       )}

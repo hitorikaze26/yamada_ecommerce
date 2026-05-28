@@ -17,9 +17,11 @@ import {
 } from "@/components/buyer/buyer-verification-banner"
 import { formatShippingDisplay, FREE_SHIPPING_THRESHOLD } from "@/lib/shipping"
 import { ShippingEstimator } from "@/components/cart/shipping-estimator"
+import { CartVariantDialog } from "@/components/cart/cart-variant-dialog"
 import { formatPrice } from "@/lib/format"
 import { productCoverImage } from "@/lib/product-images"
 import { StoreNameLink } from "@/components/store/store-name-link"
+import type { CartItem } from "@/lib/types"
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart, shippingBySeller, isCalculatingShipping, calculateShippingForItems } = useCart()
@@ -28,6 +30,7 @@ export default function CartPage() {
 
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
+  const [variantDialogItem, setVariantDialogItem] = useState<CartItem | null>(null)
 
   // Helper function to normalize image URLs
   // Select all items by default when cart loads
@@ -230,9 +233,9 @@ export default function CartPage() {
                             />
                           </div>
 
-                          <Link
-                            href={`/product/${item.product.slug}`}
-                            className="relative w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-muted flex-shrink-0"
+                          <button
+                            onClick={() => setVariantDialogItem(item)}
+                            className="relative w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-muted flex-shrink-0 cursor-pointer text-left"
                           >
                             {imageErrors[item.id] ? (
                               <div className="w-full h-full flex items-center justify-center bg-muted">
@@ -247,17 +250,17 @@ export default function CartPage() {
                                 onError={() => setImageErrors((prev) => ({ ...prev, [item.id]: true }))}
                               />
                             )}
-                          </Link>
+                          </button>
 
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between gap-4">
                               <div>
-                                <Link
-                                  href={`/product/${item.product.slug}`}
-                                  className="font-medium hover:text-primary transition-colors line-clamp-2"
+                                <button
+                                  onClick={() => setVariantDialogItem(item)}
+                                  className="font-medium hover:text-primary transition-colors line-clamp-2 text-left"
                                 >
                                   {item.product.name}
-                                </Link>
+                                </button>
                                 <p className="text-sm text-muted-foreground mt-1">
                                   {item.selectedVariation.size} / {item.selectedVariation.color}
                                 </p>
@@ -376,6 +379,12 @@ export default function CartPage() {
           </div>
         </div>
       </main>
+
+      <CartVariantDialog
+        item={variantDialogItem!}
+        open={variantDialogItem !== null}
+        onOpenChange={(open) => { if (!open) setVariantDialogItem(null) }}
+      />
 
       <Footer />
     </div>

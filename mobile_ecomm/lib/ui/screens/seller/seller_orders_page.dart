@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/alert_service.dart';
@@ -24,6 +25,7 @@ class _SellerOrdersPageState extends ConsumerState<SellerOrdersPage>
   late final TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  Timer? _pollTimer;
 
   @override
   void initState() {
@@ -35,10 +37,14 @@ class _SellerOrdersPageState extends ConsumerState<SellerOrdersPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(sellerOrdersProvider.notifier).fetchOrders();
     });
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      ref.read(sellerOrdersProvider.notifier).fetchOrders(silent: true);
+    });
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();

@@ -4,6 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 
 import { usePathname } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Icon } from "@/components/ui/icon"
@@ -42,6 +43,7 @@ function BuyerLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { user } = useAuth()
   const [displayName, setDisplayName] = useState<string | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     const fetchProfileName = async () => {
@@ -60,52 +62,113 @@ function BuyerLayoutContent({ children }: { children: React.ReactNode }) {
     void fetchProfileName()
   }, [])
 
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [pathname])
+
+  const sidebarNav = (
+    <div className="bg-card border rounded-2xl p-4 lg:p-6">
+      <div className="flex items-center gap-3 mb-5 pb-5 border-b min-w-0">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Icon name="user" size="lg" className="text-primary" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sm truncate">
+            {displayName || user?.email || "Buyer"}
+          </p>
+          <p className="text-xs text-muted-foreground truncate" title={user?.email || ""}>
+            {user?.email}
+          </p>
+        </div>
+      </div>
+
+      <nav className="space-y-1">
+        {sidebarLinks.map((link) => {
+          const isActive =
+            pathname === link.href ||
+            (link.href !== "/buyer" && pathname.startsWith(`${link.href}/`))
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`flex items-center gap-3 px-3 py-2.5 lg:px-4 lg:py-3 rounded-xl transition-colors text-sm lg:text-base ${
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon name={link.icon} />
+              <span className="font-medium">{link.label}</span>
+            </Link>
+          )
+        })}
+      </nav>
+    </div>
+  )
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
 
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar */}
-            <aside className="lg:w-64 flex-shrink-0">
-              <div className="bg-card border rounded-2xl p-6 sticky top-24">
-                <div className="flex items-center gap-3 mb-6 pb-6 border-b min-w-0">
-                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Icon name="user" size="lg" className="text-primary" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm md:text-base truncate">
-                      {displayName || user?.email || "Buyer"}
-                    </p>
-                    <p className="text-xs md:text-sm text-muted-foreground truncate" title={user?.email || ""}>
-                      {user?.email}
-                    </p>
-                  </div>
-                </div>
+        <div className="container mx-auto px-4 py-4 lg:py-8">
+          {/* Mobile sidebar toggle */}
+          <div className="flex items-center gap-3 mb-4 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl border bg-card text-sm font-medium hover:bg-muted transition-colors"
+              aria-label="Open navigation menu"
+            >
+              <Icon name="bars" />
+              <span>Menu</span>
+            </button>
+            <span className="text-sm text-muted-foreground">
+              {sidebarLinks.find((l) => l.href === pathname || pathname.startsWith(l.href))?.label || "Dashboard"}
+            </span>
+          </div>
 
-                <nav className="space-y-1">
-                  {sidebarLinks.map((link) => {
-                    const isActive =
-                      pathname === link.href ||
-                      (link.href !== "/buyer" && pathname.startsWith(`${link.href}/`))
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        <Icon name={link.icon} />
-                        <span className="font-medium">{link.label}</span>
-                      </Link>
-                    )
-                  })}
-                </nav>
-              </div>
+          {/* Mobile drawer overlay */}
+          <AnimatePresence>
+            {sidebarOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="fixed inset-0 z-50 bg-black/50 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <motion.aside
+                  initial={{ x: "-100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "-100%" }}
+                  transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                  className="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] overflow-y-auto bg-background p-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-semibold text-sm">Navigation</span>
+                    <button
+                      type="button"
+                      onClick={() => setSidebarOpen(false)}
+                      className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center"
+                      aria-label="Close menu"
+                    >
+                      <Icon name="times" />
+                    </button>
+                  </div>
+                  {sidebarNav}
+                </motion.aside>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Desktop sidebar */}
+            <aside className="hidden lg:block lg:w-64 flex-shrink-0">
+              <div className="sticky top-24">{sidebarNav}</div>
             </aside>
 
             {/* Main Content */}

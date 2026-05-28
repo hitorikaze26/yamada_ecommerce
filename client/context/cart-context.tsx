@@ -17,6 +17,7 @@ interface CartContextType {
   removeFromCart: (itemId: string) => void
   removeItemsByIds: (itemIds: string[]) => void
   clearCart: () => void
+  changeVariation: (itemId: string, newVariation: ProductVariation) => void
   itemCount: number
   shippingCalculation: ShippingCalculation | null
   shippingBySeller: Record<string, ShippingCalculation>
@@ -560,6 +561,75 @@ useEffect(() => {
     })
   }
 
+  const changeVariation = (itemId: string, newVariation: ProductVariation) => {
+    if (!isAuthenticated) return
+
+    const oldItem = cart.items.find((item) => item.id === itemId)
+    if (!oldItem) return
+    if (oldItem.selectedVariation.id === newVariation.id) return
+
+    const oldQuantity = oldItem.quantity
+
+    // Optimistically update local state
+    setCart((prev) => {
+      const filtered = prev.items.filter((item) => item.id !== itemId)
+      const newItem: CartItem = {
+        id: `pending-${oldItem.product.id}-${newVariation.id}`,
+        product: oldItem.product,
+        quantity: oldQuantity,
+        selectedVariation: newVariation,
+      }
+      const newItems = [...filtered, newItem]
+      const newSubtotal = newItems.reduce((sum, item) => {
+        const price = item.selectedVariation.price ?? item.product.salePrice ?? item.product.price
+        return sum + price * item.quantity
+      }, 0)
+      const newShipping = getCartShippingEstimate(newSubtotal)
+      setShippingCalculation(newShipping)
+      return { items: newItems, ...calculateTotals(newItems, newShipping) }
+    })
+
+    const persistChange = async () => {
+      // Get numeric ID for old item
+      let numericId = parseBackendCartItemId(itemId)
+      if (numericId == null && oldItem) {
+        try {
+          const response = await cartApi.get()
+          const backendItems = response.data?.cart?.items ?? []
+          const match = backendItems.find(
+            (bi: { productId: number; variationId: number }) =>
+              String(bi.productId) === oldItem.product.id &&
+              String(bi.variationId) === oldItem.selectedVariation.id,
+          )
+          if (match) numericId = match.id
+        } catch {
+          void reloadCartFromBackend()
+          return
+        }
+      }
+      if (numericId == null) {
+        void reloadCartFromBackend()
+        return
+      }
+
+      try {
+        // Remove old item
+        await cartApi.removeItem(numericId)
+        // Add new item with new variation
+        const addResponse = await cartApi.add(
+          parseInt(oldItem.product.id, 10),
+          parseInt(newVariation.id, 10),
+          oldQuantity,
+        )
+        applyCartFromBackend(addResponse.data?.cart)
+      } catch (error) {
+        console.error("Failed to change variation:", error)
+        void reloadCartFromBackend()
+      }
+    }
+    void persistChange()
+  }
+
   const itemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
@@ -572,6 +642,7 @@ useEffect(() => {
         removeFromCart,
         removeItemsByIds,
         clearCart,
+        changeVariation,
         itemCount,
         shippingCalculation,
         shippingBySeller,

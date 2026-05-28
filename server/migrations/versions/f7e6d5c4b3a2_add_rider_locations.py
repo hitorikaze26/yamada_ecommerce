@@ -1,6 +1,6 @@
 """Add rider_locations table for live GPS tracking
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: f7e6d5c4b3a2
 Revises: z1a2b3c4d5e6
 Create Date: 2026-05-28 07:30:00.000000
 
@@ -11,7 +11,7 @@ from sqlalchemy import inspect
 
 
 # revision identifiers, used by Alembic.
-revision = 'a1b2c3d4e5f6'
+revision = 'f7e6d5c4b3a2'
 down_revision = 'z1a2b3c4d5e6'
 branch_labels = None
 depends_on = None

@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useCallback, useEffect, useState } from "react"
+import { Suspense, use, useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
@@ -29,6 +29,24 @@ interface StoreCoupon {
 }
 
 export default function StoreProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<StoreProfileSkeleton />}>
+      <StoreProfileContent params={params} />
+    </Suspense>
+  )
+}
+
+function StoreProfileSkeleton() {
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex-1 flex items-center justify-center gap-2 py-32 text-muted-foreground">
+        <span>Loading boutique…</span>
+      </div>
+    </div>
+  )
+}
+
+function StoreProfileContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const storeId = Number(id)
   const { user, isAuthenticated, getRole } = useAuth()
