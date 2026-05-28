@@ -174,3 +174,36 @@ def seed_categories_command():
             count += 1
     db.session.commit()
     click.echo(f"Seeded {count} categories.")
+
+
+@click.command("geofill-stores")
+@with_appcontext
+def geofill_stores_command():
+    """Geocode all stores that are missing latitude/longitude."""
+    from app.models import Store
+    from app.services.shipping_service import ShippingService
+
+    stores = db.session.execute(
+        select(Store).where(
+            Store.latitude.is_(None) | Store.longitude.is_(None)
+        )
+    ).scalars().all()
+
+    if not stores:
+        click.echo("All stores already have coordinates.")
+        return
+
+    click.echo(f"Geocoding {len(stores)} stores without coordinates…")
+    success = 0
+    for store in stores:
+        address = store.address or store.store_name
+        coords = ShippingService.geocode_address(address)
+        if coords:
+            store.latitude = coords[0]
+            store.longitude = coords[1]
+            success += 1
+            click.echo(f"  ✓ {store.store_name} → ({coords[0]:.4f}, {coords[1]:.4f})")
+        else:
+            click.echo(f"  ✗ {store.store_name} — could not geocode")
+    db.session.commit()
+    click.echo(f"Done. Updated {success}/{len(stores)} stores.")

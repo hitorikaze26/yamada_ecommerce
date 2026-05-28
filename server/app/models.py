@@ -701,6 +701,21 @@ class RiderDelivery(Base):
 
 
 @dataclass
+class RiderLocation(Base):
+    __tablename__ = 'rider_locations'
+
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    rider_id: Mapped[int] = mapped_column(ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    order_id: Mapped[int] = mapped_column(ForeignKey('orders.id', ondelete='CASCADE'), nullable=True)
+    latitude: Mapped[float] = mapped_column(Numeric(10, 8), nullable=False)
+    longitude: Mapped[float] = mapped_column(Numeric(11, 8), nullable=False)
+    timestamp: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
+
+    rider: Mapped["User"] = relationship(foreign_keys=[rider_id])
+    order: Mapped["Order"] = relationship(back_populates='rider_locations')
+
+
+@dataclass
 class WishlistItem(Base):
     __tablename__ = 'wishlist_items'
 
@@ -921,6 +936,7 @@ class Order(Base):
     store: Mapped["Store"] = relationship()
     items: Mapped[List["OrderItem"]] = relationship(back_populates='order', cascade='all, delete')
     deliveries: Mapped[List["RiderDelivery"]] = relationship(back_populates='order', cascade='all, delete')
+    rider_locations: Mapped[List["RiderLocation"]] = relationship(back_populates='order', cascade='all, delete')
 
     @property
     def grand_total(self) -> float:
@@ -1543,6 +1559,7 @@ class CartItem(Base):
                 'name': self.product.name,
                 'price': self.product.price,
                 'salePrice': self.product.sale_price,
+                'slug': getattr(self.product, 'slug', None) or str(self.product.id),
                 'imageUrl': image_url or '/placeholder.svg?height=80&width=80&query=fashion',
                 'images': images if images else ['/placeholder.svg?height=80&width=80&query=fashion'],
             } if self.product else None,

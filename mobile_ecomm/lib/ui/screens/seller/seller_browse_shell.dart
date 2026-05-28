@@ -9,7 +9,7 @@ import '../../widgets/app_count_badge.dart';
 import '../../widgets/chat/chat_header_icon_button.dart';
 import '../../widgets/notifications/notification_icon_button.dart';
 
-/// Buyer-style shop chrome for sellers browsing the marketplace.
+/// Buyer-style marketplace chrome for sellers browsing the marketplace.
 class SellerBrowseShell extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -141,7 +141,7 @@ class _SellerBrowseShellState extends ConsumerState<SellerBrowseShell> {
           onPressed: () => context.go(AppRouter.sellerDashboard),
         ),
         title: Text(
-          isCart ? 'Cart' : (isSearch ? 'Search' : 'Browse shop'),
+          isCart ? 'Cart' : (isSearch ? 'Search' : 'Browse marketplace'),
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
         ),
         actions: [
@@ -158,18 +158,62 @@ class _SellerBrowseShellState extends ConsumerState<SellerBrowseShell> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          MaterialBanner(
-            content: const Text(
-              "You're shopping as a customer. Purchases use your buyer cart.",
-            ),
-            leading: const Icon(Icons.shopping_bag_outlined),
-            backgroundColor: AppColors.rosewood.withValues(alpha: 0.08),
-            actions: [
-              TextButton(
-                onPressed: () => context.go(AppRouter.sellerDashboard),
-                child: const Text('Back to seller panel'),
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.rosewood.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.rosewood.withValues(alpha: 0.25),
               ),
-            ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 1),
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: AppColors.rosewood,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "You're shopping as a customer. Browse, search, and checkout like a buyer — orders here are separate from your seller dashboard.",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white70 : AppColors.charcoal,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => context.go(AppRouter.sellerDashboard),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.rosewood,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Back to Seller Center',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           Expanded(child: widget.child),
         ],

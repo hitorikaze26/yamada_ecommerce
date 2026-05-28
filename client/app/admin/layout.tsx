@@ -22,6 +22,7 @@ const sidebarLinks = [
   { href: "/admin/products", label: "Products", icon: "box" },
   { href: "/admin/orders", label: "Orders", icon: "shopping-bag" },
   { href: "/admin/refunds", label: "Refunds", icon: "receipt" },
+  { href: "/admin/deliveries", label: "Deliveries", icon: "map-marker" },
   { href: "/admin/riders", label: "Riders", icon: "truck-side" },
   { href: "/admin/reports", label: "Reports", icon: "exclamation" },
   { href: "/admin/categories", label: "Categories", icon: "tags" },

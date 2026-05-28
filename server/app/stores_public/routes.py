@@ -180,6 +180,42 @@ def _resolve_store(store_id: int) -> Store | None:
     ).scalar_one_or_none()
 
 
+@stores_public.get("/with-coordinates")
+def stores_with_coordinates():
+    """Return all stores that have lat/lng set, for map display."""
+    try:
+        stores = (
+            db.session.execute(
+                select(Store)
+                .options(selectinload(Store.seller).selectinload(Seller.registration))
+                .where(Store.latitude.isnot(None), Store.longitude.isnot(None))
+                .order_by(Store.store_name)
+            )
+            .scalars()
+            .all()
+        )
+        data = []
+        for s in stores:
+            seller = s.seller
+            registration = seller.registration if seller else None
+            logo = _public_image_url(getattr(seller, "avatar_path", None)) if seller else None
+            data.append({
+                "id": s.id,
+                "storeId": s.id,
+                "storeName": s.store_name,
+                "name": s.store_name,
+                "address": s.address,
+                "latitude": float(s.latitude),
+                "longitude": float(s.longitude),
+                "logoUrl": logo,
+                "tagline": registration.tagline if registration else None,
+            })
+        return jsonify(stores=data), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify(stores=[]), 200
+
+
 @stores_public.get("/<int:store_id>")
 @jwt_required(optional=True)
 def get_store_profile(store_id: int):

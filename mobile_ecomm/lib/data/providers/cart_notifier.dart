@@ -268,36 +268,9 @@ class CartNotifier extends StateNotifier<CartState> {
 
   Future<void> addToCartSimple(Product product, int quantity) async {
     await _guardOwnStorePurchase(product);
-    // For products without variations (quick add from homepage)
-    final items = List<CartItem>.from(state.items);
-    final existingIndex = items.indexWhere(
-      (item) => item.productId == product.id && item.size == null && item.color == null,
-    );
-
-    if (existingIndex >= 0) {
-      final existing = items[existingIndex];
-      items[existingIndex] = existing.copyWith(
-        quantity: existing.quantity + quantity,
-      );
-    } else {
-      items.add(CartItem(
-        id: '${product.id}_quick_${DateTime.now().millisecondsSinceEpoch}',
-        productId: product.id,
-        productName: product.name,
-        productImage: product.images.isNotEmpty ? product.images.first : null,
-        productPrice: product.price,
-        salePrice: product.salePrice,
-        quantity: quantity,
-        size: null,
-        color: null,
-        sku: null,
-        productSlug: product.slug,
-        sellerId: product.sellerId,
-        sellerName: product.sellerName,
-      ));
-    }
-
-    state = state.copyWith(items: items);
+    final variation = product.variations.isNotEmpty ? product.variations.first : null;
+    if (variation == null) return;
+    await addToCart(product, quantity, variation);
   }
 
   /// Update quantity - sync with database

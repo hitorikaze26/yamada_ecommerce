@@ -45,6 +45,7 @@ from app.models import (
     UserRole,
     Role,
     RiderDelivery,
+    RiderLocation,
 )
 from app.coupon_helpers import serialize_coupon
 from app.utils.static_urls import public_static_url
@@ -2067,3 +2068,103 @@ def admin_update_problem_report(report_id: int):
         report.admin_notes = data['adminNotes']
     db.session.commit()
     return jsonify(report=_serialize_problem_report(report, include_evidence=True)), 200
+
+
+@admin_bp.get("/deliveries/active")
+@jwt_required()
+@admin_required()
+def admin_active_deliveries():
+    """Return all active deliveries with rider location for the admin map."""
+    try:
+        active_statuses = [
+            DeliveryStatus.PENDING,
+            DeliveryStatus.PICKUP,
+            DeliveryStatus.TRANSIT,
+        ]
+        deliveries = db.session.execute(
+            select(RiderDelivery)
+            .options(
+                selectinload(RiderDelivery.rider),
+                selectinload(RiderDelivery.order).selectinload(Order.buyer),
+            )
+            .where(RiderDelivery.status.in_(active_statuses))
+            .order_by(RiderDelivery.updated_at.desc().nullslast())
+        ).scalars().all()
+
+        result = []
+        for d in deliveries:
+            rider = d.rider
+            order = d.order
+
+            rider_name = None
+            if rider:
+                given = getattr(rider, "given_name", None) or ""
+                surname = getattr(rider, "surname", None) or ""
+                rider_name = f"{given} {surname}".strip() or getattr(rider, "email", None)
+
+            buyer_name = None
+            buyer_lat = None
+            buyer_lng = None
+            if order:
+                buyer = order.buyer
+                if buyer:
+                    given = getattr(buyer, "given_name", None) or ""
+                    surname = getattr(buyer, "surname", None) or ""
+                    buyer_name = f"{given} {surname}".strip() or getattr(buyer, "email", None)
+
+            # Latest rider location
+            latest_loc = db.session.execute(
+                select(RiderLocation)
+                .where(RiderLocation.order_id == d.order_id)
+                .order_by(RiderLocation.timestamp.desc())
+                .limit(1)
+            ).scalar_one_or_none()
+
+            rider_lat = float(latest_loc.latitude) if latest_loc else None
+            rider_lng = float(latest_loc.longitude) if latest_loc else None
+
+            # Destination lat/lng from shipping address or buyer profile
+            dest_lat = None
+            dest_lng = None
+            if order and order.shipping_address:
+                try:
+                    addr = json.loads(order.shipping_address)
+                    if isinstance(addr, dict):
+                        dest_lat = addr.get("latitude") or addr.get("lat")
+                        dest_lng = addr.get("longitude") or addr.get("lng")
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            status_value = d.status.value if isinstance(d.status, DeliveryStatus) else str(d.status)
+
+            result.append({
+                "deliveryId": d.id,
+                "orderId": d.order_id,
+                "status": status_value,
+                "distanceKm": float(d.distance_km or 0),
+                "fee": float(d.fee or 0),
+                "createdAt": d.created_at.isoformat() if d.created_at else None,
+                "updatedAt": d.updated_at.isoformat() if d.updated_at else None,
+                "rider": {
+                    "id": rider.id if rider else None,
+                    "name": rider_name,
+                } if rider else None,
+                "buyer": {
+                    "id": order.buyer_id if order else None,
+                    "name": buyer_name,
+                } if order else None,
+                "riderLocation": {
+                    "latitude": rider_lat,
+                    "longitude": rider_lng,
+                } if rider_lat and rider_lng else None,
+                "destination": {
+                    "latitude": dest_lat,
+                    "longitude": dest_lng,
+                } if dest_lat and dest_lng else None,
+            })
+
+        return jsonify(deliveries=result), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Failed to fetch active deliveries: {e}")
+        return jsonify(deliveries=[], error="Internal error"), 500

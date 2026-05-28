@@ -697,6 +697,40 @@ class AuthApi {
       throw Exception(msg ?? 'Failed to delete account');
     }
   }
+
+  /// Send verification code to email
+  /// POST /api/accounts/send-verification-code
+  /// Body: { email }
+  static Future<void> sendVerificationCode(String email) async {
+    final dio = await ApiClient.getInstance();
+    try {
+      await dio.post('/accounts/send-verification-code', data: {
+        'email': email.trim(),
+      });
+    } on DioException catch (e) {
+      final msg = e.response?.data?['msg']?.toString();
+      throw Exception(msg ?? 'Failed to send verification code');
+    }
+  }
+
+  /// Verify email code
+  /// POST /api/accounts/verify-email-code
+  /// Body: { email, code }
+  static Future<void> verifyEmailCode({
+    required String email,
+    required String code,
+  }) async {
+    final dio = await ApiClient.getInstance();
+    try {
+      await dio.post('/accounts/verify-email-code', data: {
+        'email': email.trim(),
+        'code': code.trim(),
+      });
+    } on DioException catch (e) {
+      final msg = e.response?.data?['msg']?.toString();
+      throw Exception(msg ?? 'Invalid verification code');
+    }
+  }
 }
 
 /// Seller documents container

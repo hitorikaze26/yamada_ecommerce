@@ -9,8 +9,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../data/models/address_model.dart';
 import '../../../data/providers/auth_notifier.dart';
-import '../../../data/services/auth_api.dart';
 import '../../widgets/address_selector.dart';
+import '../../widgets/email_verification_widget.dart';
 import '../../widgets/file_uploader.dart';
 import '../../widgets/hero_button.dart';
 
@@ -44,6 +44,10 @@ class _BuyerRegisterPageState extends ConsumerState<BuyerRegisterPage> {
   // Step 2 Data
   AddressData? _address;
   File? _validId;
+
+  // Step 3: Email verification
+  String? _registeredEmail;
+  bool _emailVerified = false;
 
   @override
   void dispose() {
@@ -108,6 +112,15 @@ class _BuyerRegisterPageState extends ConsumerState<BuyerRegisterPage> {
     setState(() => _currentStep = 2);
   }
 
+  void _handleEmailVerified() {
+    setState(() => _emailVerified = true);
+    AlertService.showSnackBar(
+      context: context,
+      message: 'Email verified successfully!',
+      variant: AlertVariant.success,
+    );
+  }
+
   Future<void> _handleSubmit() async {
     final error = _validateStep2();
     if (error != null) {
@@ -130,17 +143,10 @@ class _BuyerRegisterPageState extends ConsumerState<BuyerRegisterPage> {
     );
 
     if (success && mounted) {
-      // Show success alert matching Next.js client SweetAlert
-      await AlertService.showSuccess(
-        context: context,
-        title: 'Registration Successful',
-        message: 'Your account has been created. You can now log in.',
-        confirmButtonText: 'Go to Login',
-        onConfirm: () {
-          // Navigate to login with pending approval flag
-          context.go('${AppRouter.login}?role=buyer&registered=pending_approval');
-        },
-      );
+      setState(() {
+        _registeredEmail = _emailController.text.trim();
+        _currentStep = 3;
+      });
     } else if (mounted) {
       final authError = ref.read(authProvider).error;
       if (authError != null) {
@@ -155,6 +161,13 @@ class _BuyerRegisterPageState extends ConsumerState<BuyerRegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_currentStep == 3 && _registeredEmail != null) {
+      return _buildVerificationView();
+    }
+    return _buildRegistrationForm();
+  }
+
+  Widget _buildRegistrationForm() {
     final isLoading = ref.watch(authLoadingProvider);
     final theme = Theme.of(context);
 
@@ -183,53 +196,111 @@ class _BuyerRegisterPageState extends ConsumerState<BuyerRegisterPage> {
             },
             icon: const Icon(Icons.arrow_back),
           ),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildStepIndicator(),
+                const SizedBox(height: 32),
+                Text(
+                  _currentStep == 1 ? 'Create Account' : 'Complete Your Profile',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _currentStep == 1
+                      ? 'Enter your details to get started'
+                      : 'Add your address and verification documents',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 24),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: _currentStep == 1
+                      ? _buildStep1Form()
+                      : _buildStep2Form(),
+                ),
+                const SizedBox(height: 32),
+                _buildNavigationButtons(isLoading),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerificationView() {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Join YAMADA'),
+        centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Step indicator
-              _buildStepIndicator(),
-              const SizedBox(height: 32),
-
-              // Step title
+              const SizedBox(height: 16),
+              Center(
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.email_outlined,
+                    color: AppColors.primary,
+                    size: 32,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               Text(
-                _currentStep == 1 ? 'Create Account' : 'Complete Your Profile',
+                'Verify Your Email',
+                textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
-                _currentStep == 1
-                    ? 'Enter your details to get started'
-                    : 'Add your address and verification documents',
+                'Check your inbox for the verification code',
+                textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-              const SizedBox(height: 24),
-
-              // Form content
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: _currentStep == 1
-                    ? _buildStep1Form()
-                    : _buildStep2Form(),
+              const SizedBox(height: 28),
+              EmailVerificationWidget(
+                email: _registeredEmail!,
+                onVerified: _handleEmailVerified,
               ),
-
-              const SizedBox(height: 32),
-
-              // Navigation buttons
-              _buildNavigationButtons(isLoading),
+              if (_emailVerified) ...[
+                const SizedBox(height: 24),
+                HeroButton(
+                  onPressed: () {
+                    context.go('${AppRouter.login}?role=buyer&registered=pending_approval');
+                  },
+                  text: 'Go to Login',
+                ),
+              ],
             ],
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildStepIndicator() {

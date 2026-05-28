@@ -42,8 +42,7 @@ class SellerProductsApi {
         developer.log('Deleted product $productId', name: 'SellerProductsApi');
         return true;
       } else {
-        throw Exception(
-            'Failed to delete product: ${response.statusCode}');
+        throw Exception('Failed to delete product: ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Error deleting product: $e', name: 'SellerProductsApi');
@@ -70,6 +69,7 @@ class SellerProductsApi {
     required List<Map<String, dynamic>> variations,
     required List<File> imageFiles,
     List<File> videoFiles = const [],
+    Map<String, dynamic>? sizeChart,
   }) async {
     try {
       final dio = await ApiClient.getInstance();
@@ -93,8 +93,7 @@ class SellerProductsApi {
             .add(MapEntry('sale_price', salePrice.toStringAsFixed(0)));
       }
       if (costPrice != null) {
-        formData.fields
-            .add(MapEntry('cost_price', costPrice.toString()));
+        formData.fields.add(MapEntry('cost_price', costPrice.toString()));
       }
       if (weightKg != null) {
         formData.fields.add(MapEntry('weight_kg', weightKg.toString()));
@@ -103,15 +102,13 @@ class SellerProductsApi {
         formData.fields.add(MapEntry('material', material));
       }
       if (careInstructions != null && careInstructions.isNotEmpty) {
-        formData.fields
-            .add(MapEntry('care_instructions', careInstructions));
+        formData.fields.add(MapEntry('care_instructions', careInstructions));
       }
       if (tags != null && tags.isNotEmpty) {
         formData.fields.add(MapEntry('tags', tags));
       }
       if (lowStockThreshold != null && lowStockThreshold.isNotEmpty) {
-        formData.fields
-            .add(MapEntry('low_stock_threshold', lowStockThreshold));
+        formData.fields.add(MapEntry('low_stock_threshold', lowStockThreshold));
       }
 
       // ── Total stock (sum of all variation stocks) ─────────────────────
@@ -124,6 +121,11 @@ class SellerProductsApi {
       // ── Variations JSON ───────────────────────────────────────────────
       if (variations.isNotEmpty) {
         formData.fields.add(MapEntry('variations', jsonEncode(variations)));
+      }
+
+      // ── Size chart JSON (mirrors web client) ─────────────────────────
+      if (sizeChart != null) {
+        formData.fields.add(MapEntry('size_chart', jsonEncode(sizeChart)));
       }
 
       // ── Images ────────────────────────────────────────────────────────

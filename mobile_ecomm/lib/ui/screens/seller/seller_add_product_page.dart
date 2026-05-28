@@ -10,21 +10,155 @@ import '../../../data/models/category_model.dart';
 import '../../../data/providers/seller_products_notifier.dart';
 import '../../../data/services/auth_api.dart';
 
-List<Map<String, String>> get _allCategories => Category.categories
-    .map((c) => {'id': c.id, 'name': c.name})
-    .toList();
+List<Map<String, String>> get _allCategories =>
+    Category.categories.map((c) => {'id': c.id, 'name': c.name}).toList();
 
 const _clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 const _variationColors = [
-  'Black','White','Off White','Cream','Beige','Nude','Taupe','Brown','Camel','Tan',
-  'Light Gray','Gray','Charcoal','Silver','Gold','Rose Gold','Blush Pink','Baby Pink',
-  'Dusty Pink','Mauve','Rose','Hot Pink','Red','Maroon','Wine','Burgundy','Coral',
-  'Peach','Orange','Rust','Yellow','Mustard','Olive','Army Green','Sage Green',
-  'Mint Green','Forest Green','Emerald Green','Teal','Turquoise','Blue','Baby Blue',
-  'Sky Blue','Royal Blue','Navy Blue','Lavender','Lilac','Violet','Purple','Plum',
-  'Multicolor','Floral Print','Animal Print','Other',
+  'Black',
+  'White',
+  'Off White',
+  'Cream',
+  'Beige',
+  'Nude',
+  'Taupe',
+  'Brown',
+  'Camel',
+  'Tan',
+  'Light Gray',
+  'Gray',
+  'Charcoal',
+  'Silver',
+  'Gold',
+  'Rose Gold',
+  'Blush Pink',
+  'Baby Pink',
+  'Dusty Pink',
+  'Mauve',
+  'Rose',
+  'Hot Pink',
+  'Red',
+  'Maroon',
+  'Wine',
+  'Burgundy',
+  'Coral',
+  'Peach',
+  'Orange',
+  'Rust',
+  'Yellow',
+  'Mustard',
+  'Olive',
+  'Army Green',
+  'Sage Green',
+  'Mint Green',
+  'Forest Green',
+  'Emerald Green',
+  'Teal',
+  'Turquoise',
+  'Blue',
+  'Baby Blue',
+  'Sky Blue',
+  'Royal Blue',
+  'Navy Blue',
+  'Lavender',
+  'Lilac',
+  'Violet',
+  'Purple',
+  'Plum',
+  'Multicolor',
+  'Floral Print',
+  'Animal Print',
+  'Other',
 ];
+
+// ── Size chart constants ──────────────────────────────────────────────────────
+
+const _sizeChartCategoryMap = <String, _SizeChartCategoryDef>{
+  'tops-blouses': _SizeChartCategoryDef(
+    key: 'tops',
+    measurements: ['bust', 'waist', 'length', 'shoulder', 'sleeve_length'],
+  ),
+  'dress-skirts': _SizeChartCategoryDef(
+    key: 'dresses_and_skirts',
+    measurements: ['bust', 'waist', 'hips', 'length'],
+  ),
+  'bottoms': _SizeChartCategoryDef(
+    key: 'bottoms',
+    measurements: ['waist', 'hips', 'inseam', 'length', 'thigh'],
+  ),
+  'jackets-coats': _SizeChartCategoryDef(
+    key: 'jackets',
+    measurements: ['bust', 'shoulder', 'sleeve_length', 'waist', 'length'],
+  ),
+};
+
+const _sizeChartMeasurementLabels = <String, String>{
+  'bust': 'Bust',
+  'waist': 'Waist',
+  'hips': 'Hips',
+  'length': 'Length',
+  'shoulder': 'Shoulder',
+  'sleeve_length': 'Sleeve',
+  'inseam': 'Inseam',
+  'thigh': 'Thigh',
+  'underbust': 'Underbust',
+  'stretch_fit_range': 'Stretch',
+  'foot_length': 'Foot length',
+};
+
+const _shoeSubcategories = [
+  'Heels',
+  'Flats',
+  'Sandals',
+  'Sneakers',
+  'Boots',
+  'Loafers',
+];
+
+const _defaultSizes = ['XS', 'S', 'M', 'L', 'XL'];
+
+class _SizeChartCategoryDef {
+  final String key;
+  final List<String> measurements;
+  const _SizeChartCategoryDef({required this.key, required this.measurements});
+}
+
+_SizeChartCategoryDef? _sizeChartDefFor(String categoryId, String subcategory) {
+  if (categoryId == 'activewear') {
+    return subcategory.toLowerCase().contains('bra')
+        ? const _SizeChartCategoryDef(
+            key: 'activewear_and_yoga_pants',
+            measurements: ['bust', 'underbust', 'waist', 'hips'])
+        : const _SizeChartCategoryDef(
+            key: 'activewear_and_yoga_pants',
+            measurements: [
+                'waist',
+                'hips',
+                'inseam',
+                'length',
+                'stretch_fit_range'
+              ]);
+  }
+  if (categoryId == 'lingerie-sleepwear') {
+    return subcategory.toLowerCase().contains('bra')
+        ? const _SizeChartCategoryDef(
+            key: 'lingerie_and_sleepwear',
+            measurements: ['bust', 'underbust', 'waist', 'hips'])
+        : const _SizeChartCategoryDef(
+            key: 'lingerie_and_sleepwear',
+            measurements: ['bust', 'waist', 'hips', 'length']);
+  }
+  if (categoryId == 'accessories-shoes' &&
+      _shoeSubcategories.contains(subcategory)) {
+    return null; // handled by shoe chart
+  }
+  return _sizeChartCategoryMap[categoryId];
+}
+
+bool _isShoeCategory(String categoryId, String subcategory) =>
+    categoryId == 'accessories-shoes' &&
+    _shoeSubcategories.contains(subcategory);
 
 // ── Variation model ───────────────────────────────────────────────────────────
 
@@ -34,6 +168,7 @@ class _SizeRow {
   String size;
   int stock;
   String sku;
+  double? price;
 
   _SizeRow({
     required this.id,
@@ -74,6 +209,7 @@ class _ColorGroup {
             ],
             'stock': r.stock,
             'sku': r.sku,
+            if (r.price != null && r.price! > 0) 'price': r.price,
           })
       .toList();
 }
@@ -166,14 +302,26 @@ class _VideoPreviewCardState extends State<_VideoPreviewCard> {
               height: 26,
               decoration: const BoxDecoration(
                   color: Colors.red, shape: BoxShape.circle),
-              child:
-                  const Icon(Icons.close, size: 15, color: Colors.white),
+              child: const Icon(Icons.close, size: 15, color: Colors.white),
             ),
           ),
         ),
       ],
     );
   }
+}
+
+/// One row in the shoe size chart
+class _ShoeSizeRow {
+  int us;
+  int eu;
+  String footLengthCm = '';
+  String footLengthInch = '';
+
+  _ShoeSizeRow({
+    required this.us,
+    required this.eu,
+  });
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
@@ -186,8 +334,7 @@ class SellerAddProductPage extends ConsumerStatefulWidget {
       _SellerAddProductPageState();
 }
 
-class _SellerAddProductPageState
-    extends ConsumerState<SellerAddProductPage> {
+class _SellerAddProductPageState extends ConsumerState<SellerAddProductPage> {
   int _step = 1;
   bool _isSubmitting = false;
   String? _submitError;
@@ -221,6 +368,14 @@ class _SellerAddProductPageState
   String _condition = 'new';
   bool _termsAgreed = false;
   final List<_ColorGroup> _colorGroups = [];
+
+  // ── Size chart (matching web client pattern) ─────────────────────────────
+  _SizeChartCategoryDef? _sizeChartDef;
+  // Map of size label → { measurement_id → cm_value }
+  final Map<String, Map<String, String>> _sizeChartCms = {};
+  // Shoe-specific
+  bool _isShoeChart = false;
+  final List<_ShoeSizeRow> _shoeSizeRows = [];
 
   final _imagePicker = ImagePicker();
 
@@ -271,8 +426,7 @@ class _SellerAddProductPageState
       final raw = profile['categories'];
       if (raw is List && raw.isNotEmpty) {
         setState(() {
-          _allowedCategories =
-              raw.map((e) => e.toString()).toList();
+          _allowedCategories = raw.map((e) => e.toString()).toList();
           _loadingCategories = false;
         });
       } else {
@@ -299,6 +453,35 @@ class _SellerAddProductPageState
         .cast<Map<String, String>>();
   }
 
+  void _initSizeChart() {
+    final def = _sizeChartDefFor(_category, _subcategory);
+    final isShoe = _isShoeCategory(_category, _subcategory);
+    setState(() {
+      _sizeChartDef = def;
+      _isShoeChart = isShoe;
+      if (isShoe) {
+        _shoeSizeRows.clear();
+        _shoeSizeRows.addAll([
+          _ShoeSizeRow(us: 5, eu: 35),
+          _ShoeSizeRow(us: 6, eu: 36),
+          _ShoeSizeRow(us: 7, eu: 37),
+          _ShoeSizeRow(us: 8, eu: 38),
+          _ShoeSizeRow(us: 9, eu: 39),
+        ]);
+      } else if (def != null) {
+        _sizeChartCms.clear();
+        for (final label in _defaultSizes) {
+          _sizeChartCms[label] = {
+            for (final m in def.measurements) m: '',
+          };
+        }
+      } else {
+        _sizeChartCms.clear();
+        _shoeSizeRows.clear();
+      }
+    });
+  }
+
   // ── Validation ────────────────────────────────────────────────────────────
 
   String? _validateStep1() {
@@ -312,6 +495,10 @@ class _SellerAddProductPageState
   String? _validateStep3() {
     final price = double.tryParse(_priceCtrl.text.trim());
     if (price == null || price <= 0) return 'Enter a valid price.';
+    final w = _weightCtrl.text.trim();
+    if (w.isEmpty || double.tryParse(w) == null || double.parse(w) <= 0) {
+      return 'Enter a valid weight.';
+    }
     if (!_termsAgreed) return 'Please agree to the terms before submitting.';
     return null;
   }
@@ -330,8 +517,7 @@ class _SellerAddProductPageState
     });
   }
 
-  void _removeImage(int index) =>
-      setState(() => _imageFiles.removeAt(index));
+  void _removeImage(int index) => setState(() => _imageFiles.removeAt(index));
 
   Future<void> _pickVideo() async {
     final picked = await _imagePicker.pickVideo(
@@ -342,8 +528,7 @@ class _SellerAddProductPageState
     setState(() => _videoFiles.add(File(picked.path)));
   }
 
-  void _removeVideo(int index) =>
-      setState(() => _videoFiles.removeAt(index));
+  void _removeVideo(int index) => setState(() => _videoFiles.removeAt(index));
 
   // ── Variation helpers ─────────────────────────────────────────────────────
 
@@ -399,37 +584,73 @@ class _SellerAddProductPageState
     final costPrice = double.tryParse(_costPriceCtrl.text.trim());
     final weightKg = double.tryParse(_weightCtrl.text.trim());
 
-    final success =
-        await ref.read(sellerProductsProvider.notifier).createProduct(
-              name: _nameCtrl.text.trim(),
-              brand: _brandCtrl.text.trim(),
-              description: _descCtrl.text.trim(),
-              category: _category,
-              subcategory:
-                  _subcategory.isNotEmpty ? _subcategory : null,
-              price: price,
-              salePrice: salePrice,
-              costPrice: costPrice,
-              condition: _condition,
-              weightKg: weightKg,
-              material: _materialCtrl.text.trim().isNotEmpty
-                  ? _materialCtrl.text.trim()
-                  : null,
-              careInstructions: _careCtrl.text.trim().isNotEmpty
-                  ? _careCtrl.text.trim()
-                  : null,
-              tags: _tagsCtrl.text.trim().isNotEmpty
-                  ? _tagsCtrl.text.trim()
-                  : null,
-              lowStockThreshold: _lowStockCtrl.text.trim().isNotEmpty
-                  ? _lowStockCtrl.text.trim()
-                  : null,
-              variations: _colorGroups
-                  .expand((g) => g.toPayload())
-                  .toList(),
-              imageFiles: _imageFiles,
-              videoFiles: _videoFiles,
-            );
+    // ── Build size chart payload (mirrors web client) ──────────────────
+    Map<String, dynamic>? sizeChartPayload;
+    if (_isShoeChart && _shoeSizeRows.any((r) => r.footLengthCm.isNotEmpty)) {
+      sizeChartPayload = {
+        'categoryKey': 'shoes',
+        'measurements': ['foot_length'],
+        'sizes': _shoeSizeRows
+            .map((r) => {
+                  'us': r.us,
+                  'eu': r.eu,
+                  'cm': {'foot_length': r.footLengthCm},
+                  'inch': {'foot_length': r.footLengthInch},
+                })
+            .toList(),
+      };
+    } else if (_sizeChartDef != null) {
+      final hasValues = _sizeChartCms.values
+          .any((m) => m.values.any((v) => v.trim().isNotEmpty));
+      if (hasValues) {
+        sizeChartPayload = {
+          'categoryKey': _sizeChartDef!.key,
+          'measurements': _sizeChartDef!.measurements,
+          'sizes': _defaultSizes.map((label) {
+            final cms = _sizeChartCms[label] ?? {};
+            return {
+              'label': label,
+              'international': label,
+              'numeric': '',
+              'cm': {
+                for (final m in _sizeChartDef!.measurements) m: cms[m] ?? '',
+              },
+              'inch': {
+                for (final m in _sizeChartDef!.measurements) m: '',
+              },
+            };
+          }).toList(),
+        };
+      }
+    }
+
+    final success = await ref
+        .read(sellerProductsProvider.notifier)
+        .createProduct(
+          name: _nameCtrl.text.trim(),
+          brand: _brandCtrl.text.trim(),
+          description: _descCtrl.text.trim(),
+          category: _category,
+          subcategory: _subcategory.isNotEmpty ? _subcategory : null,
+          price: price,
+          salePrice: salePrice,
+          costPrice: costPrice,
+          condition: _condition,
+          weightKg: weightKg,
+          material: _materialCtrl.text.trim().isNotEmpty
+              ? _materialCtrl.text.trim()
+              : null,
+          careInstructions:
+              _careCtrl.text.trim().isNotEmpty ? _careCtrl.text.trim() : null,
+          tags: _tagsCtrl.text.trim().isNotEmpty ? _tagsCtrl.text.trim() : null,
+          lowStockThreshold: _lowStockCtrl.text.trim().isNotEmpty
+              ? _lowStockCtrl.text.trim()
+              : null,
+          variations: _colorGroups.expand((g) => g.toPayload()).toList(),
+          imageFiles: _imageFiles,
+          videoFiles: _videoFiles,
+          sizeChart: sizeChartPayload,
+        );
 
     setState(() => _isSubmitting = false);
     if (!mounted) return;
@@ -442,9 +663,8 @@ class _SellerAddProductPageState
       );
       Navigator.of(context).pop();
     } else {
-      setState(() => _submitError =
-          ref.read(sellerProductsProvider).error ??
-              'Failed to create product.');
+      setState(() => _submitError = ref.read(sellerProductsProvider).error ??
+          'Failed to create product.');
     }
   }
 
@@ -502,8 +722,7 @@ class _SellerAddProductPageState
     }
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: _buildAppBar(isDark),
       body: Column(
         children: [
@@ -529,13 +748,11 @@ class _SellerAddProductPageState
 
   PreferredSizeWidget _buildAppBar(bool isDark) {
     return AppBar(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       elevation: 0,
       leading: IconButton(
         icon: Icon(Icons.arrow_back_ios_new,
-            size: 20,
-            color: isDark ? Colors.white : AppColors.charcoal),
+            size: 20, color: isDark ? Colors.white : AppColors.charcoal),
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: Column(
@@ -551,8 +768,8 @@ class _SellerAddProductPageState
           ),
           Text(
             'Step $_step of 3',
-            style: const TextStyle(
-                fontSize: 12, color: AppColors.mutedForeground),
+            style:
+                const TextStyle(fontSize: 12, color: AppColors.mutedForeground),
           ),
         ],
       ),
@@ -605,7 +822,9 @@ class _SellerAddProductPageState
                         ? const Color(0xFF10B981)
                         : isActive
                             ? AppColors.rosewood
-                            : (isDark ? AppColors.darkBorder : AppColors.border),
+                            : (isDark
+                                ? AppColors.darkBorder
+                                : AppColors.border),
                   ),
                   child: Center(
                     child: isDone
@@ -625,8 +844,7 @@ class _SellerAddProductPageState
                   labels[idx],
                   style: TextStyle(
                     fontSize: 10,
-                    fontWeight:
-                        isActive ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                     color: isActive
                         ? AppColors.rosewood
                         : AppColors.mutedForeground,
@@ -650,26 +868,46 @@ class _SellerAddProductPageState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionCard(
-          isDark: isDark, cardColor: cardColor, borderColor: borderColor,
-          title: 'Basic Information', icon: Icons.info_outline,
+          isDark: isDark,
+          cardColor: cardColor,
+          borderColor: borderColor,
+          title: 'Basic Information',
+          icon: Icons.info_outline,
           children: [
             _fieldLabel('Product Name *'),
-            _textField(controller: _nameCtrl, hint: 'e.g., Floral Maxi Dress', isDark: isDark, maxLines: 2),
+            _textField(
+                controller: _nameCtrl,
+                hint: 'e.g., Floral Maxi Dress',
+                isDark: isDark,
+                maxLines: 2),
             const SizedBox(height: 14),
             _fieldLabel('Brand *'),
-            _textField(controller: _brandCtrl, hint: 'e.g., Yamada Studio', isDark: isDark),
+            _textField(
+                controller: _brandCtrl,
+                hint: 'e.g., Yamada Studio',
+                isDark: isDark),
             const SizedBox(height: 14),
             _fieldLabel('Description *'),
-            _textField(controller: _descCtrl, hint: 'Describe your product in detail...', isDark: isDark, maxLines: 5),
+            _textField(
+                controller: _descCtrl,
+                hint: 'Describe your product in detail...',
+                isDark: isDark,
+                maxLines: 5),
             const SizedBox(height: 14),
             _fieldLabel('Tags (comma separated)'),
-            _textField(controller: _tagsCtrl, hint: 'e.g., summer, casual, floral', isDark: isDark),
+            _textField(
+                controller: _tagsCtrl,
+                hint: 'e.g., summer, casual, floral',
+                isDark: isDark),
           ],
         ),
         const SizedBox(height: 14),
         _sectionCard(
-          isDark: isDark, cardColor: cardColor, borderColor: borderColor,
-          title: 'Category', icon: Icons.category_outlined,
+          isDark: isDark,
+          cardColor: cardColor,
+          borderColor: borderColor,
+          title: 'Category',
+          icon: Icons.category_outlined,
           children: [
             if (_loadingCategories)
               const Center(
@@ -682,19 +920,27 @@ class _SellerAddProductPageState
               _fieldLabel('Category *'),
               const SizedBox(height: 8),
               Wrap(
-                spacing: 8, runSpacing: 8,
+                spacing: 8,
+                runSpacing: 8,
                 children: _visibleCategories.map((cat) {
                   final isSelected = _category == cat['id'];
                   return GestureDetector(
-                    onTap: () => setState(() {
-                      _category = cat['id']!;
-                      _subcategory = '';
-                    }),
+                    onTap: () {
+                      setState(() {
+                        _category = cat['id']!;
+                        _subcategory = '';
+                      });
+                      _initSizeChart();
+                    },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.rosewood
-                            : (isDark ? AppColors.darkBackground : AppColors.warmBeige),
+                        color: isSelected
+                            ? AppColors.rosewood
+                            : (isDark
+                                ? AppColors.darkBackground
+                                : AppColors.warmBeige),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: isSelected ? AppColors.rosewood : borderColor,
@@ -703,8 +949,11 @@ class _SellerAddProductPageState
                       child: Text(
                         cat['name']!,
                         style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w500,
-                          color: isSelected ? Colors.white : AppColors.mutedForeground,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.mutedForeground,
                         ),
                       ),
                     ),
@@ -716,30 +965,40 @@ class _SellerAddProductPageState
                 _fieldLabel('Subcategory'),
                 const SizedBox(height: 8),
                 Wrap(
-                  spacing: 8, runSpacing: 8,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: subs.map((sub) {
                     final isSelected = _subcategory == sub;
                     return GestureDetector(
-                      onTap: () => setState(() {
-                        _subcategory = isSelected ? '' : sub;
-                      }),
+                      onTap: () {
+                        setState(() {
+                          _subcategory = isSelected ? '' : sub;
+                        });
+                        _initSizeChart();
+                      },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppColors.rosewood.withOpacity(0.12)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isSelected ? AppColors.rosewood : borderColor,
+                            color:
+                                isSelected ? AppColors.rosewood : borderColor,
                           ),
                         ),
                         child: Text(
                           sub,
                           style: TextStyle(
                             fontSize: 12,
-                            color: isSelected ? AppColors.rosewood : AppColors.mutedForeground,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            color: isSelected
+                                ? AppColors.rosewood
+                                : AppColors.mutedForeground,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                         ),
                       ),
@@ -763,16 +1022,21 @@ class _SellerAddProductPageState
       children: [
         // ── Images ──────────────────────────────────────────────────────
         _sectionCard(
-          isDark: isDark, cardColor: cardColor, borderColor: borderColor,
-          title: 'Product Images', icon: Icons.photo_library_outlined,
+          isDark: isDark,
+          cardColor: cardColor,
+          borderColor: borderColor,
+          title: 'Product Images',
+          icon: Icons.photo_library_outlined,
           subtitle: 'Upload up to 6 images. First image is the cover.',
           children: [
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3, crossAxisSpacing: 10,
-                mainAxisSpacing: 10, childAspectRatio: 1,
+                crossAxisCount: 3,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 1,
               ),
               itemCount: _imageFiles.length < 6
                   ? _imageFiles.length + 1
@@ -783,7 +1047,9 @@ class _SellerAddProductPageState
                     onTap: _pickImages,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkBackground : AppColors.warmBeige,
+                        color: isDark
+                            ? AppColors.darkBackground
+                            : AppColors.warmBeige,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: borderColor),
                       ),
@@ -795,7 +1061,8 @@ class _SellerAddProductPageState
                           const SizedBox(height: 4),
                           Text(
                             _imageFiles.isEmpty ? 'Add Photo' : 'Add More',
-                            style: const TextStyle(fontSize: 11, color: AppColors.mutedForeground),
+                            style: const TextStyle(
+                                fontSize: 11, color: AppColors.mutedForeground),
                           ),
                         ],
                       ),
@@ -813,25 +1080,34 @@ class _SellerAddProductPageState
                     ),
                     if (index == 0)
                       Positioned(
-                        bottom: 6, left: 6,
+                        bottom: 6,
+                        left: 6,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.rosewood,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text('Cover',
-                              style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold)),
+                              style: TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
                         ),
                       ),
                     Positioned(
-                      top: 4, right: 4,
+                      top: 4,
+                      right: 4,
                       child: GestureDetector(
                         onTap: () => _removeImage(index),
                         child: Container(
-                          width: 22, height: 22,
-                          decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                          child: const Icon(Icons.close, size: 14, color: Colors.white),
+                          width: 22,
+                          height: 22,
+                          decoration: const BoxDecoration(
+                              color: Colors.red, shape: BoxShape.circle),
+                          child: const Icon(Icons.close,
+                              size: 14, color: Colors.white),
                         ),
                       ),
                     ),
@@ -845,8 +1121,11 @@ class _SellerAddProductPageState
 
         // ── Video (optional) ─────────────────────────────────────────────
         _sectionCard(
-          isDark: isDark, cardColor: cardColor, borderColor: borderColor,
-          title: 'Product Video', icon: Icons.videocam_outlined,
+          isDark: isDark,
+          cardColor: cardColor,
+          borderColor: borderColor,
+          title: 'Product Video',
+          icon: Icons.videocam_outlined,
           subtitle: 'Optional — add a short video to showcase your product.',
           children: [
             GestureDetector(
@@ -855,7 +1134,8 @@ class _SellerAddProductPageState
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkBackground : AppColors.warmBeige,
+                  color:
+                      isDark ? AppColors.darkBackground : AppColors.warmBeige,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: borderColor,
@@ -868,23 +1148,27 @@ class _SellerAddProductPageState
                         size: 28, color: AppColors.mutedForeground),
                     SizedBox(height: 6),
                     Text('Upload Video',
-                        style: TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
+                        style: TextStyle(
+                            fontSize: 13, color: AppColors.mutedForeground)),
                     SizedBox(height: 2),
                     Text('MP4, MOV — max 3 min',
-                        style: TextStyle(fontSize: 11, color: AppColors.mutedForeground)),
+                        style: TextStyle(
+                            fontSize: 11, color: AppColors.mutedForeground)),
                   ],
                 ),
               ),
             ),
             if (_videoFiles.isNotEmpty) ...[
               const SizedBox(height: 12),
-              ...List.generate(_videoFiles.length, (i) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _VideoPreviewCard(
-                  file: _videoFiles[i],
-                  onRemove: () => _removeVideo(i),
-                ),
-              )),
+              ...List.generate(
+                  _videoFiles.length,
+                  (i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _VideoPreviewCard(
+                          file: _videoFiles[i],
+                          onRemove: () => _removeVideo(i),
+                        ),
+                      )),
             ],
           ],
         ),
@@ -892,18 +1176,186 @@ class _SellerAddProductPageState
 
         // ── Product details ───────────────────────────────────────────────
         _sectionCard(
-          isDark: isDark, cardColor: cardColor, borderColor: borderColor,
-          title: 'Product Details', icon: Icons.description_outlined,
+          isDark: isDark,
+          cardColor: cardColor,
+          borderColor: borderColor,
+          title: 'Product Details',
+          icon: Icons.description_outlined,
           children: [
             _fieldLabel('Material'),
-            _textField(controller: _materialCtrl, hint: 'e.g., 100% Cotton, Linen blend', isDark: isDark),
+            _textField(
+                controller: _materialCtrl,
+                hint: 'e.g., 100% Cotton, Linen blend',
+                isDark: isDark),
             const SizedBox(height: 14),
             _fieldLabel('Care Instructions'),
-            _textField(controller: _careCtrl, hint: 'e.g., Machine wash cold, do not bleach', isDark: isDark, maxLines: 3),
+            _textField(
+                controller: _careCtrl,
+                hint: 'e.g., Machine wash cold, do not bleach',
+                isDark: isDark,
+                maxLines: 3),
           ],
         ),
+        const SizedBox(height: 14),
+
+        // ── Size chart (web client pattern) ─────────────────────────────
+        if (_sizeChartDef != null || _isShoeChart)
+          _buildSizeChart(isDark, cardColor, borderColor),
       ],
     );
+  }
+
+  // ── Size chart ─────────────────────────────────────────────────────────────
+
+  Widget _buildSizeChart(bool isDark, Color cardColor, Color borderColor) {
+    return _sectionCard(
+      isDark: isDark,
+      cardColor: cardColor,
+      borderColor: borderColor,
+      title: 'Size Chart',
+      icon: Icons.straighten_outlined,
+      subtitle:
+          'Optional — add measurements to help buyers choose the right fit.',
+      children: [
+        if (_isShoeChart)
+          ..._buildShoeChartInputs(isDark, borderColor)
+        else if (_sizeChartDef != null)
+          ..._buildClothingSizeChart(isDark, borderColor),
+      ],
+    );
+  }
+
+  List<Widget> _buildClothingSizeChart(bool isDark, Color borderColor) {
+    final def = _sizeChartDef!;
+    return [
+      const Text('Enter body measurements in cm for each size.',
+          style: TextStyle(fontSize: 11, color: AppColors.mutedForeground)),
+      const SizedBox(height: 10),
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowColor: WidgetStateProperty.all(
+              isDark ? AppColors.darkBackground : AppColors.warmBeige),
+          columnSpacing: 16,
+          dataRowMinHeight: 36,
+          columns: [
+            const DataColumn(
+                label: Text('Size',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+            ...def.measurements.map((m) => DataColumn(
+                label: Text(_sizeChartMeasurementLabels[m] ?? m,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 12)))),
+          ],
+          rows: _defaultSizes.map((label) {
+            final cms = _sizeChartCms[label] ?? {};
+            return DataRow(cells: [
+              DataCell(Text(label,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w500, fontSize: 12))),
+              ...def.measurements.map((m) => DataCell(
+                    SizedBox(
+                      width: 64,
+                      child: TextFormField(
+                        initialValue: cms[m] ?? '',
+                        onChanged: (val) {
+                          setState(() {
+                            _sizeChartCms.putIfAbsent(label, () => {});
+                            _sizeChartCms[label]![m] = val;
+                          });
+                        },
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))
+                        ],
+                        style: const TextStyle(fontSize: 12),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 6),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: BorderSide(color: borderColor)),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: BorderSide(color: borderColor)),
+                        ),
+                      ),
+                    ),
+                  )),
+            ]);
+          }).toList(),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildShoeChartInputs(bool isDark, Color borderColor) {
+    return [
+      const Text('Enter foot length for each US/EU size.',
+          style: TextStyle(fontSize: 11, color: AppColors.mutedForeground)),
+      const SizedBox(height: 10),
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowColor: WidgetStateProperty.all(
+              isDark ? AppColors.darkBackground : AppColors.warmBeige),
+          columnSpacing: 16,
+          dataRowMinHeight: 36,
+          columns: const [
+            DataColumn(
+                label: Text('US',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+            DataColumn(
+                label: Text('EU',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+            DataColumn(
+                label: Text('Foot length (cm)',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+          ],
+          rows: List.generate(_shoeSizeRows.length, (i) {
+            final row = _shoeSizeRows[i];
+            return DataRow(cells: [
+              DataCell(Text('${row.us}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w500, fontSize: 12))),
+              DataCell(Text('${row.eu}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w500, fontSize: 12))),
+              DataCell(SizedBox(
+                width: 80,
+                child: TextFormField(
+                  initialValue: row.footLengthCm,
+                  onChanged: (val) => setState(() => row.footLengthCm = val),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))
+                  ],
+                  style: const TextStyle(fontSize: 12),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(color: borderColor)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(color: borderColor)),
+                  ),
+                ),
+              )),
+            ]);
+          }).toList(),
+        ),
+      ),
+    ];
   }
 
   // ── Step 3: Pricing & Variations ─────────────────────────────────────────
@@ -915,58 +1367,107 @@ class _SellerAddProductPageState
       children: [
         // ── Pricing ──────────────────────────────────────────────────────
         _sectionCard(
-          isDark: isDark, cardColor: cardColor, borderColor: borderColor,
-          title: 'Pricing & Logistics', icon: Icons.payments_outlined,
+          isDark: isDark,
+          cardColor: cardColor,
+          borderColor: borderColor,
+          title: 'Pricing & Logistics',
+          icon: Icons.payments_outlined,
           children: [
             Row(children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _fieldLabel('Price (₱) *'),
-                _textField(controller: _priceCtrl, hint: '0.00', isDark: isDark,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))]),
-              ])),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    _fieldLabel('Price (₱) *'),
+                    _textField(
+                        controller: _priceCtrl,
+                        hint: '0.00',
+                        isDark: isDark,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))
+                        ]),
+                  ])),
               const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _fieldLabel('Sale Price (₱)'),
-                _textField(controller: _salePriceCtrl, hint: 'Optional', isDark: isDark,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))]),
-              ])),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    _fieldLabel('Sale Price (₱)'),
+                    _textField(
+                        controller: _salePriceCtrl,
+                        hint: 'Optional',
+                        isDark: isDark,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))
+                        ]),
+                  ])),
             ]),
             const SizedBox(height: 14),
             Row(children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _fieldLabel('Cost Price / COGS (₱)'),
-                _textField(controller: _costPriceCtrl, hint: 'Optional', isDark: isDark,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))]),
-              ])),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    _fieldLabel('Cost Price / COGS (₱)'),
+                    _textField(
+                        controller: _costPriceCtrl,
+                        hint: 'Optional',
+                        isDark: isDark,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))
+                        ]),
+                  ])),
               const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _fieldLabel('Weight (kg)'),
-                _textField(controller: _weightCtrl, hint: 'e.g., 0.5', isDark: isDark,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))]),
-              ])),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    _fieldLabel('Weight (kg)'),
+                    _textField(
+                        controller: _weightCtrl,
+                        hint: 'e.g., 0.5',
+                        isDark: isDark,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))
+                        ]),
+                  ])),
             ]),
             const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
                 'Cost Price is used for gross profit in sales reports. Not visible to buyers.',
-                style: TextStyle(fontSize: 11, color: AppColors.mutedForeground),
+                style:
+                    TextStyle(fontSize: 11, color: AppColors.mutedForeground),
               ),
             ),
             const SizedBox(height: 8),
             Row(children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _fieldLabel('Low Stock Alert'),
-                _textField(controller: _lowStockCtrl, hint: 'e.g., 3', isDark: isDark,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-              ])),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    _fieldLabel('Low Stock Alert'),
+                    _textField(
+                        controller: _lowStockCtrl,
+                        hint: 'e.g., 3',
+                        isDark: isDark,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ]),
+                  ])),
               const SizedBox(width: 12),
-              const Expanded(child: SizedBox()), // spacer to keep layout balanced
+              const Expanded(
+                  child: SizedBox()), // spacer to keep layout balanced
             ]),
             const SizedBox(height: 14),
             _fieldLabel('Condition'),
@@ -999,9 +1500,12 @@ class _SellerAddProductPageState
             ),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Container(
-                width: 20, height: 20,
+                width: 20,
+                height: 20,
                 decoration: BoxDecoration(
-                  color: _termsAgreed ? const Color(0xFF10B981) : Colors.transparent,
+                  color: _termsAgreed
+                      ? const Color(0xFF10B981)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(5),
                   border: Border.all(
                     color: _termsAgreed ? const Color(0xFF10B981) : borderColor,
@@ -1016,7 +1520,8 @@ class _SellerAddProductPageState
               const Expanded(
                 child: Text(
                   'I confirm that this product complies with marketplace policies and all information provided is accurate.',
-                  style: TextStyle(fontSize: 12, color: AppColors.mutedForeground),
+                  style:
+                      TextStyle(fontSize: 12, color: AppColors.mutedForeground),
                 ),
               ),
             ]),
@@ -1066,7 +1571,8 @@ class _SellerAddProductPageState
           child: Text(label,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w500,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
                 color: isSelected ? Colors.white : AppColors.mutedForeground,
               )),
         ),
@@ -1078,6 +1584,10 @@ class _SellerAddProductPageState
 
   Widget _buildVariationsSection(
       bool isDark, Color cardColor, Color borderColor) {
+    final totalStock = _colorGroups.fold<int>(
+      0,
+      (sum, g) => sum + g.rows.fold<int>(0, (s, r) => s + r.stock),
+    );
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1109,8 +1619,7 @@ class _SellerAddProductPageState
                             fontSize: 15, fontWeight: FontWeight.bold)),
                     Text('Add a color, then set sizes & stock below it',
                         style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.mutedForeground)),
+                            fontSize: 11, color: AppColors.mutedForeground)),
                   ]),
             ),
             GestureDetector(
@@ -1134,6 +1643,18 @@ class _SellerAddProductPageState
               ),
             ),
           ]),
+          if (totalStock > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(children: [
+                Icon(Icons.inventory_2_outlined,
+                    size: 14, color: AppColors.mutedForeground),
+                const SizedBox(width: 6),
+                Text('Total stock: $totalStock',
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.mutedForeground)),
+              ]),
+            ),
 
           // Empty state
           if (_colorGroups.isEmpty) ...[
@@ -1155,8 +1676,8 @@ class _SellerAddProductPageState
             const SizedBox(height: 8),
           ] else ...[
             const SizedBox(height: 14),
-            ..._colorGroups.map(
-                (g) => _buildColorGroupCard(g, isDark, borderColor)),
+            ..._colorGroups
+                .map((g) => _buildColorGroupCard(g, isDark, borderColor)),
           ],
         ],
       ),
@@ -1166,8 +1687,7 @@ class _SellerAddProductPageState
   Widget _buildColorGroupCard(
       _ColorGroup group, bool isDark, Color borderColor) {
     final isOther = group.color == 'Other';
-    final bgColor =
-        isDark ? AppColors.darkBackground : const Color(0xFFFDF6F9);
+    final bgColor = isDark ? AppColors.darkBackground : const Color(0xFFFDF6F9);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -1213,9 +1733,7 @@ class _SellerAddProductPageState
                             setState(() => group.customColor = val),
                         style: TextStyle(
                             fontSize: 13,
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.charcoal),
+                            color: isDark ? Colors.white : AppColors.charcoal),
                         decoration: _inputDecoration(
                             hint: 'e.g., Rose Beige',
                             isDark: isDark,
@@ -1263,7 +1781,7 @@ class _SellerAddProductPageState
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.mutedForeground))),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 const Expanded(
                     flex: 2,
                     child: Text('Stock',
@@ -1271,21 +1789,29 @@ class _SellerAddProductPageState
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.mutedForeground))),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 const Expanded(
-                    flex: 3,
-                    child: Text('SKU (optional)',
+                    flex: 2,
+                    child: Text('Price (₱)',
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.mutedForeground))),
-                const SizedBox(width: 34), // space for delete btn
+                const SizedBox(width: 6),
+                const Expanded(
+                    flex: 2,
+                    child: Text('SKU',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.mutedForeground))),
+                const SizedBox(width: 28),
               ]),
               const SizedBox(height: 6),
 
               // Size rows
-              ...group.rows.map((row) =>
-                  _buildSizeRow(group.id, row, isDark, borderColor)),
+              ...group.rows.map(
+                  (row) => _buildSizeRow(group.id, row, isDark, borderColor)),
 
               // Add size button
               const SizedBox(height: 10),
@@ -1338,7 +1864,7 @@ class _SellerAddProductPageState
             onChanged: (val) => setState(() => row.size = val ?? 'M'),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         // Stock
         Expanded(
           flex: 2,
@@ -1355,10 +1881,29 @@ class _SellerAddProductPageState
                 hint: '0', isDark: isDark, borderColor: borderColor),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
+        // Price per variant
+        Expanded(
+          flex: 2,
+          child: TextFormField(
+            initialValue: row.price?.toStringAsFixed(2) ?? '',
+            onChanged: (val) =>
+                setState(() => row.price = double.tryParse(val)),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+            ],
+            style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white : AppColors.charcoal),
+            decoration: _inputDecoration(
+                hint: '0.00', isDark: isDark, borderColor: borderColor),
+          ),
+        ),
+        const SizedBox(width: 6),
         // SKU
         Expanded(
-          flex: 3,
+          flex: 2,
           child: TextFormField(
             initialValue: row.sku,
             onChanged: (val) => setState(() => row.sku = val),
@@ -1366,25 +1911,23 @@ class _SellerAddProductPageState
                 fontSize: 13,
                 color: isDark ? Colors.white : AppColors.charcoal),
             decoration: _inputDecoration(
-                hint: 'e.g., BLK-M',
-                isDark: isDark,
-                borderColor: borderColor),
+                hint: 'e.g., BLK-M', isDark: isDark, borderColor: borderColor),
           ),
         ),
-        const SizedBox(width: 6),
-        // Remove row (only if more than 1 row)
+        const SizedBox(width: 2),
+        // Remove row
         GestureDetector(
           onTap: () => _removeSizeRow(groupId, row.id),
           child: Container(
-            width: 28,
-            height: 28,
+            width: 24,
+            height: 24,
             decoration: BoxDecoration(
               color: Colors.grey.withOpacity(0.12),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: borderColor),
             ),
             child: Icon(Icons.remove,
-                size: 14,
+                size: 12,
                 color: _colorGroups
                             .firstWhere((g) => g.id == groupId)
                             .rows
@@ -1475,7 +2018,8 @@ class _SellerAddProductPageState
                   ),
                   child: _isSubmitting
                       ? const SizedBox(
-                          width: 20, height: 20,
+                          width: 20,
+                          height: 20,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
@@ -1525,7 +2069,8 @@ class _SellerAddProductPageState
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(title,
                   style: const TextStyle(
                       fontSize: 15, fontWeight: FontWeight.bold)),
@@ -1565,8 +2110,7 @@ class _SellerAddProductPageState
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       style: TextStyle(
-          fontSize: 14,
-          color: isDark ? Colors.white : AppColors.charcoal),
+          fontSize: 14, color: isDark ? Colors.white : AppColors.charcoal),
       decoration: _inputDecoration(
         hint: hint,
         isDark: isDark,
@@ -1582,10 +2126,9 @@ class _SellerAddProductPageState
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(
-          fontSize: 13, color: AppColors.mutedForeground),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      hintStyle:
+          const TextStyle(fontSize: 13, color: AppColors.mutedForeground),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: borderColor)),
@@ -1594,8 +2137,7 @@ class _SellerAddProductPageState
           borderSide: BorderSide(color: borderColor)),
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide:
-              const BorderSide(color: AppColors.rosewood, width: 1.5)),
+          borderSide: const BorderSide(color: AppColors.rosewood, width: 1.5)),
       filled: true,
       fillColor: isDark ? AppColors.darkBackground : Colors.white,
     );
@@ -1625,8 +2167,7 @@ class _SellerAddProductPageState
           isExpanded: true,
           dropdownColor: isDark ? AppColors.darkCard : Colors.white,
           style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.white : AppColors.charcoal),
+              fontSize: 13, color: isDark ? Colors.white : AppColors.charcoal),
           items: items,
           onChanged: onChanged,
         ),

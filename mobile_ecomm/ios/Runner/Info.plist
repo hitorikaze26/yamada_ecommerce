@@ -70,5 +70,9 @@
 	<string>Yamada uses speech recognition so you can search products by voice.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Yamada needs microphone access for voice search.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Yamada uses your location to share live delivery tracking with buyers.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Yamada uses your location to share live delivery tracking with buyers even when the app is in the background.</string>
 </dict>
 </plist>

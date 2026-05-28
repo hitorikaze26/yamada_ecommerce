@@ -1,5 +1,6 @@
 "use client"
 import React, { Suspense, useEffect, useState } from "react"
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
@@ -34,6 +35,20 @@ import {
 } from "@/lib/buyer/order-status"
 import { formatPrice } from "@/lib/format"
 
+const RiderTrackingMap = dynamic(
+  () => import("@/components/rider/rider-tracking-map").then((m) => m.RiderTrackingMap),
+  { ssr: false },
+)
+
+interface RiderLocationData {
+  id?: number
+  riderId?: number
+  orderId?: number
+  latitude?: number
+  longitude?: number
+  timestamp?: string
+}
+
 interface OrderItemDetail {
   id: number
   productId: number
@@ -49,6 +64,7 @@ interface OrderItemDetail {
     id: number
     name: string
     price: number
+    slug?: string | null
     imageUrl?: string | null
   } | null
   reviewFormat?: string | null
@@ -136,6 +152,11 @@ function OrderContent({ orderId }: { orderId: string }) {
   const [deliveryPillOptions, setDeliveryPillOptions] = useState<string[]>([])
   const [orderDetailImageErrors, setOrderDetailImageErrors] = useState<Record<string, boolean>>({})
   const [highlightReview, setHighlightReview] = useState(false)
+  const [riderLocation, setRiderLocation] = useState<{
+    available: boolean
+    current?: RiderLocationData | null
+    history?: { latitude: number; longitude: number }[]
+  } | null>(null)
 
   const loadOrder = React.useCallback(async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) {
@@ -211,6 +232,7 @@ function OrderContent({ orderId }: { orderId: string }) {
                       id: Number(it.product.id ?? 0),
                       name: String(it.product.name ?? ""),
                       price: Number(it.product.price ?? 0),
+                      slug: String(it.product.slug ?? it.product.id ?? ""),
                       imageUrl:
                         resolveImageUrl(it.product.imageUrl ?? it.product.image_url) ?? null,
                     }
@@ -371,6 +393,27 @@ function OrderContent({ orderId }: { orderId: string }) {
       normalizedOrderStatus === "shipped" ||
       normalizedOrderStatus === "delivered" ||
       normalizedOrderStatus === "completed")
+
+  // Fetch rider location data when delivery tracking is active
+  useEffect(() => {
+    if (!order || !showDeliverySection) return
+    const fetchRiderLocation = async () => {
+      try {
+        const res = await ordersApi.getRiderLocation(order.id)
+        const data = res.data as {
+          available: boolean
+          current?: RiderLocationData | null
+          history?: { latitude: number; longitude: number }[]
+        }
+        setRiderLocation(data)
+      } catch {
+        setRiderLocation(null)
+      }
+    }
+    fetchRiderLocation()
+    const interval = setInterval(fetchRiderLocation, 15_000)
+    return () => clearInterval(interval)
+  }, [order?.id, showDeliverySection])
 
   const getShippingAddressParts = (
     raw: string | null,
@@ -672,7 +715,7 @@ function OrderContent({ orderId }: { orderId: string }) {
                           <div className="flex-1 min-w-0">
                             {item.product && (
                               <Link
-                                href={`/product/${item.product.id}`}
+                                href={`/product/${item.product.slug}`}
                                 className="font-medium hover:text-primary transition-colors line-clamp-2"
                               >
                                 {item.product.name}
@@ -820,6 +863,18 @@ function OrderContent({ orderId }: { orderId: string }) {
                                 <p className="font-medium">{order.riderDelivery.rider.licenseNumber}</p>
                               </div>
                             )}
+                          </div>
+                        )}
+                        {riderLocation?.available && (
+                          <div className="border-b">
+                            <RiderTrackingMap
+                              orderId={order.id}
+                              riderName={order.riderDelivery?.rider?.name}
+                              riderLatitude={riderLocation.current?.latitude}
+                              riderLongitude={riderLocation.current?.longitude}
+                              history={riderLocation.history}
+                              available={riderLocation.available}
+                            />
                           </div>
                         )}
                         {showProofInRiderCard && (

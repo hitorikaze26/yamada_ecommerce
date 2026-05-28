@@ -88,23 +88,6 @@ class _RiderDashboardState extends ConsumerState<RiderDashboard> {
     }
   }
 
-  Future<void> _navigateToDropoff(RiderDeliveryModel delivery) async {
-    final address = AddressUtils.formatShippingAddress(
-      shippingAddress: delivery.shippingAddress,
-      municipalityName: delivery.municipalityName,
-    );
-    final uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
-    );
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open maps')),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -436,9 +419,11 @@ class _RiderDashboardState extends ConsumerState<RiderDashboard> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () => _navigateToDropoff(delivery),
-                    icon: const Icon(Icons.navigation, size: 18),
-                    label: const Text('Navigate'),
+                    onPressed: () => context.push(
+                      AppRouter.riderLiveTrackingPath(delivery.id),
+                    ),
+                    icon: const Icon(Icons.map, size: 18),
+                    label: const Text('Track'),
                     style: FilledButton.styleFrom(
                       backgroundColor: kPrimaryPink,
                       foregroundColor: Colors.white,

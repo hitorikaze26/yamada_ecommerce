@@ -12,6 +12,7 @@ import '../../../data/models/category_model.dart';
 import '../../../data/providers/auth_notifier.dart';
 import '../../../data/services/auth_api.dart';
 import '../../widgets/address_selector.dart';
+import '../../widgets/email_verification_widget.dart';
 import '../../widgets/file_uploader.dart';
 import '../../widgets/hero_button.dart';
 
@@ -51,6 +52,10 @@ class _SellerRegisterPageState extends ConsumerState<SellerRegisterPage> {
   File? _birTin;
   File? _businessPermit;
   File? _validId;
+
+  // Post-registration: email verification
+  String? _registeredEmail;
+  bool _emailVerified = false;
 
   @override
   void dispose() {
@@ -186,15 +191,9 @@ class _SellerRegisterPageState extends ConsumerState<SellerRegisterPage> {
     );
 
     if (success && mounted) {
-      await AlertService.showSuccess(
-        context: context,
-        title: 'Registration Successful',
-        message: 'Your seller application has been submitted. Awaiting admin approval.',
-        confirmButtonText: 'Go to Login',
-        onConfirm: () {
-          context.go('${AppRouter.login}?role=seller');
-        },
-      );
+      setState(() {
+        _registeredEmail = _emailController.text.trim();
+      });
     } else if (mounted) {
       final authError = ref.read(authProvider).error;
       if (authError != null) {
@@ -207,51 +206,122 @@ class _SellerRegisterPageState extends ConsumerState<SellerRegisterPage> {
     }
   }
 
+  void _handleEmailVerified() {
+    setState(() => _emailVerified = true);
+    AlertService.showSnackBar(
+      context: context,
+      message: 'Email verified successfully!',
+      variant: AlertVariant.success,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(authLoadingProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Apply as Seller'),
         centerTitle: true,
-        leading: IconButton(
-          onPressed: _currentStep > 1 ? _prevStep : () => context.pushReplacement(AppRouter.landing),
-          icon: const Icon(Icons.arrow_back),
-        ),
+        leading: _registeredEmail != null
+            ? null
+            : IconButton(
+                onPressed: _currentStep > 1 ? _prevStep : () => context.pushReplacement(AppRouter.landing),
+                icon: const Icon(Icons.arrow_back),
+              ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStepIndicator(),
-              const SizedBox(height: 32),
-              Text(
-                _getStepTitle(),
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+          child: _registeredEmail != null
+              ? _buildVerificationSection(theme)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildStepIndicator(),
+                    const SizedBox(height: 32),
+                    Text(
+                      _getStepTitle(),
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _getStepDescription(),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 8),
+                    Text(
+                      _getStepDescription(),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                     ),
-              ),
-              const SizedBox(height: 24),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: _buildCurrentStep(),
-              ),
-              const SizedBox(height: 32),
-              _buildNavigationButtons(isLoading),
-            ],
-          ),
+                    const SizedBox(height: 24),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _buildCurrentStep(),
+                    ),
+                    const SizedBox(height: 32),
+                    _buildNavigationButtons(isLoading),
+                  ],
+                ),
         ),
       ),
+    );
+  }
+
+  Widget _buildVerificationSection(ThemeData theme) {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Center(
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(25),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.email_outlined, color: AppColors.primary, size: 32),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Verify Your Email',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Check your email for the verification code to activate your seller account',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Your shop application will be reviewed by admin after email verification',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 28),
+        EmailVerificationWidget(
+          email: _registeredEmail!,
+          onVerified: _handleEmailVerified,
+        ),
+        if (_emailVerified) ...[
+          const SizedBox(height: 24),
+          HeroButton(
+            onPressed: () {
+              context.go('${AppRouter.login}?role=seller');
+            },
+            text: 'Go to Login',
+          ),
+        ],
+      ],
     );
   }
 

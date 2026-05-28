@@ -144,11 +144,6 @@ function SearchContent() {
       })
     }
 
-    // Category filter
-    if (filters.category) {
-      result = result.filter((p) => p.category === filters.category)
-    }
-
     // Size filter
     if (filters.sizes.length > 0) {
       result = result.filter((p) => p.variations.some((v) => filters.sizes.includes(v.size)))
@@ -178,7 +173,22 @@ function SearchContent() {
     return result
   }, [products, query, filters, sort])
 
-  const categoryName = CATEGORIES.find((c) => c.id === filters.category)?.name
+  const categoryName = CATEGORIES.find((c) => c.id === categoryParam)?.name
+
+  const handleFilterChange = (newFilters: typeof filters) => {
+    const oldCategory = filters.category
+    const newCategory = newFilters.category
+    if (oldCategory !== newCategory) {
+      const params = new URLSearchParams(searchParams.toString())
+      if (newCategory) {
+        params.set("category", newCategory)
+      } else {
+        params.delete("category")
+      }
+      router.push(`/search?${params.toString()}`, { scroll: false })
+    }
+    setFilters(newFilters)
+  }
 
   const activeFiltersCount =
     (filters.category ? 1 : 0) +
@@ -207,7 +217,7 @@ function SearchContent() {
             {/* Desktop Filters Sidebar */}
             <aside className="hidden lg:block w-64 flex-shrink-0">
               <div className="sticky top-24">
-                <ProductFilters filters={filters} onChange={setFilters} />
+                <ProductFilters filters={filters} onChange={handleFilterChange} />
               </div>
             </aside>
 
@@ -238,18 +248,23 @@ function SearchContent() {
                       <SheetTitle>Filters</SheetTitle>
                     </SheetHeader>
                     <div className="mt-6">
-                      <ProductFilters filters={filters} onChange={setFilters} />
+                      <ProductFilters filters={filters} onChange={handleFilterChange} />
                     </div>
                   </SheetContent>
                 </Sheet>
 
                 {/* Active Filters Tags */}
                 <div className="hidden sm:flex items-center gap-2 flex-wrap flex-1">
-                  {filters.category && (
+                  {categoryParam && categoryName && (
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
                       {categoryName}
                       <button
-                        onClick={() => setFilters({ ...filters, category: "" })}
+                        onClick={() => {
+                          setFilters({ ...filters, category: "" })
+                          const params = new URLSearchParams(searchParams.toString())
+                          params.delete("category")
+                          router.push(`/search?${params.toString()}`, { scroll: false })
+                        }}
                         className="hover:text-primary/70"
                       >
                         <Icon name="cross" size="sm" />
@@ -312,7 +327,7 @@ function SearchContent() {
                   <h3 className="text-xl font-semibold mb-2">No products found</h3>
                   <p className="text-muted-foreground mb-6">Try adjusting your filters or search for something else</p>
                   <Button
-                    onClick={() =>
+                    onClick={() => {
                       setFilters({
                         category: "",
                         sizes: [],
@@ -320,7 +335,10 @@ function SearchContent() {
                         priceRange: [0, 5000],
                         sellers: [],
                       })
-                    }
+                      const params = new URLSearchParams(searchParams.toString())
+                      params.delete("category")
+                      router.push(`/search?${params.toString()}`, { scroll: false })
+                    }}
                   >
                     Clear all filters
                   </Button>

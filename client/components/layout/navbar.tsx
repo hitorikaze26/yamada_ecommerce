@@ -126,6 +126,17 @@ function NavbarContent() {
     return "dashboard"
   }
 
+  const getSettingsLink = () => {
+    switch (role) {
+      case "buyer":
+        return "/buyer/settings"
+      case "seller":
+        return "/seller/settings"
+      default:
+        return "/settings"
+    }
+  }
+
   const getRoleBadge = () => {
     if (!role || role === "buyer") return null
     const colors = {
@@ -282,7 +293,7 @@ function NavbarContent() {
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuItem asChild>
-                      <Link href="/settings">
+                      <Link href={getSettingsLink()}>
                         <Icon name="settings" className="mr-2" />
                         Settings
                       </Link>

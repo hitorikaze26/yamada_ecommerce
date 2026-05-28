@@ -95,7 +95,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     try {
       developer.log('Fetching saved addresses...', name: 'CheckoutScreen');
       final addresses = await AddressesApi.loadAddresses();
-      developer.log('Loaded ${addresses.length} addresses', name: 'CheckoutScreen');
+      developer.log('Loaded ${addresses.length} addresses',
+          name: 'CheckoutScreen');
 
       if (addresses.isNotEmpty) {
         setState(() {
@@ -104,15 +105,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             (a) => a.isDefault,
             orElse: () => addresses.first,
           );
-          developer.log('Selected address: ${_selectedAddress?.label}', name: 'CheckoutScreen');
+          developer.log('Selected address: ${_selectedAddress?.label}',
+              name: 'CheckoutScreen');
         });
         await _recalculateCheckoutShipping();
       } else {
         setState(() => _showNewAddressForm = true);
-        developer.log('No addresses available, showing new address form', name: 'CheckoutScreen');
+        developer.log('No addresses available, showing new address form',
+            name: 'CheckoutScreen');
       }
     } catch (e, stackTrace) {
-      developer.log('Error loading addresses: $e', name: 'CheckoutScreen', error: e, stackTrace: stackTrace);
+      developer.log('Error loading addresses: $e',
+          name: 'CheckoutScreen', error: e, stackTrace: stackTrace);
       if (mounted) {
         AlertService.showSnackBar(
           context: context,
@@ -130,7 +134,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Future<void> _loadUserProfile() async {
     final authState = ref.read(authProvider);
     final user = authState.user;
-    if (user != null && user.contactNumber != null && user.contactNumber!.isNotEmpty) {
+    if (user != null &&
+        user.contactNumber != null &&
+        user.contactNumber!.isNotEmpty) {
       if (mounted) {
         setState(() {
           _contactController.text = user.contactNumber!;
@@ -331,8 +337,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           return copy;
         }).toList();
 
-        final shippingFee =
-            cart.shippingFeeBySeller[sellerId] ?? 0.0;
+        final shippingFee = cart.shippingFeeBySeller[sellerId] ?? 0.0;
 
         try {
           final order = await OrdersApi.createOrder(
@@ -376,9 +381,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
       if (mounted) {
         setState(() => _isLoading = false);
-        final orderLines = placedOrders
-            .map((o) => 'Order #${o.orderNumber}')
-            .join('\n');
+        final orderLines =
+            placedOrders.map((o) => 'Order #${o.orderNumber}').join('\n');
         var body =
             '$orderLines\n\nTrack your orders under My Orders. You will get in-app updates.';
         if (failedStores.isNotEmpty) {
@@ -433,12 +437,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final cart = ref.watch(cartProvider);
     final subtotal = cart.checkoutSubtotal;
     final shipping = cart.checkoutShipping;
-    final discountedSubtotal = (subtotal - _couponDiscount).clamp(0.0, double.infinity);
+    final discountedSubtotal =
+        (subtotal - _couponDiscount).clamp(0.0, double.infinity);
     final total = discountedSubtotal + shipping;
 
     if (cart.checkoutItems.isEmpty) {
       return Scaffold(
-        backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+        backgroundColor:
+            isDark ? AppColors.darkBackground : AppColors.background,
         appBar: AppBar(
           title: const Text('Checkout'),
           elevation: 0,
@@ -450,7 +456,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               Icon(
                 Icons.shopping_cart_outlined,
                 size: 64,
-                color: isDark ? AppColors.darkMutedForeground : AppColors.mutedForeground,
+                color: isDark
+                    ? AppColors.darkMutedForeground
+                    : AppColors.mutedForeground,
               ),
               const SizedBox(height: 16),
               Text(
@@ -480,9 +488,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
 
     final fromSellerBrowse =
-        GoRouterState.of(context).uri.queryParameters['from'] == 'seller-browse';
-    final isSellerCheckout =
-        fromSellerBrowse || ref.watch(authProvider).user?.role == UserRole.seller;
+        GoRouterState.of(context).uri.queryParameters['from'] ==
+            'seller-browse';
+    final isSellerCheckout = fromSellerBrowse ||
+        ref.watch(authProvider).user?.role == UserRole.seller;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
@@ -511,9 +520,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             'Checking out as a customer — this order is separate from your seller dashboard.',
                             style: TextStyle(
                               fontSize: 12,
-                              color: isDark
-                                  ? Colors.white70
-                                  : AppColors.charcoal,
+                              color:
+                                  isDark ? Colors.white70 : AppColors.charcoal,
                             ),
                           ),
                         ),
@@ -537,16 +545,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           decoration: BoxDecoration(
                             color: _currentStep >= index
                                 ? AppColors.primary
-                                : isDark ? AppColors.darkMuted : const Color(0xFFE5E7EB),
+                                : isDark
+                                    ? AppColors.darkMuted
+                                    : const Color(0xFFE5E7EB),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text(
                               '${index + 1}',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
                                     color: _currentStep >= index
                                         ? Colors.white
-                                        : isDark ? AppColors.darkMutedForeground : AppColors.mutedForeground,
+                                        : isDark
+                                            ? AppColors.darkMutedForeground
+                                            : AppColors.mutedForeground,
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),
@@ -555,9 +570,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         const SizedBox(height: 8),
                         Text(
                           ['Address', 'Review & Place'][index],
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: isDark ? Colors.white : AppColors.foreground,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.foreground,
+                                  ),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -585,174 +603,217 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     if (_currentStep == 1)
                       _buildConfirmStep(total, subtotal, isDark),
                     const SizedBox(height: 24),
-                  // Order Summary
-                  Text(
-                    'Order Summary',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : AppColors.foreground,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCard : Colors.white,
-                      border: Border.all(
-                        color: isDark ? AppColors.darkBorder : AppColors.border,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
+                    // Order Summary
+                    Text(
+                      'Order Summary',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : AppColors.foreground,
+                          ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Subtotal',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: isDark ? Colors.white : AppColors.foreground,
-                                  ),
-                            ),
-                            Text(
-                            '${FormatUtils.peso(subtotal)}',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: isDark ? Colors.white : AppColors.foreground,
-                                  ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkCard : Colors.white,
+                        border: Border.all(
+                          color:
+                              isDark ? AppColors.darkBorder : AppColors.border,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Subtotal',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.foreground,
+                                    ),
+                              ),
+                              Text(
+                                '${FormatUtils.peso(subtotal)}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.foreground,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          if (_couponDiscount > 0) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Coupon discount',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.delivered,
+                                      ),
+                                ),
+                                Text(
+                                  '-${FormatUtils.peso(_couponDiscount)}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.delivered,
+                                      ),
+                                ),
+                              ],
                             ),
                           ],
-                        ),
-                        if (_couponDiscount > 0) ...[
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Coupon discount',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: AppColors.delivered,
+                                'Shipping',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.foreground,
                                     ),
                               ),
                               Text(
-                                '-${FormatUtils.peso(_couponDiscount)}',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: AppColors.delivered,
+                                '${FormatUtils.peso(shipping)}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.foreground,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Divider(
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.border),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Total',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.foreground,
+                                    ),
+                              ),
+                              Text(
+                                '${FormatUtils.peso(total)}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
                                     ),
                               ),
                             ],
                           ),
                         ],
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Shipping',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: isDark ? Colors.white : AppColors.foreground,
-                                  ),
-                            ),
-                            Text(
-                            '${FormatUtils.peso(shipping)}',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: isDark ? Colors.white : AppColors.foreground,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Divider(color: isDark ? AppColors.darkBorder : AppColors.border),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Total',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : AppColors.foreground,
-                                  ),
-                            ),
-                            Text(
-                            '${FormatUtils.peso(total)}',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Action Buttons
-                  Row(
-                    children: [
-                      if (_currentStep > 0)
+                    const SizedBox(height: 24),
+                    // Action Buttons
+                    Row(
+                      children: [
+                        if (_currentStep > 0)
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => setState(() => _currentStep--),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: AppColors.primary),
+                                foregroundColor: AppColors.primary,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text('Back'),
+                            ),
+                          ),
+                        if (_currentStep > 0) const SizedBox(width: 12),
                         Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => setState(() => _currentStep--),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: AppColors.primary),
-                              foregroundColor: AppColors.primary,
+                          flex: _currentStep > 0 ? 1 : 2,
+                          child: ElevatedButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    if (_currentStep < 1) {
+                                      _goToNextStep();
+                                    } else {
+                                      _placeOrder();
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text('Back'),
-                          ),
-                        ),
-                      if (_currentStep > 0) const SizedBox(width: 12),
-                      Expanded(
-                        flex: _currentStep > 0 ? 1 : 2,
-                        child: ElevatedButton(
-                          onPressed: _isLoading
-                              ? null
-                              : () {
-                                  if (_currentStep < 1) {
-                                    _goToNextStep();
-                                  } else {
-                                    _placeOrder();
-                                  }
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor:
+                                          AlwaysStoppedAnimation(Colors.white),
+                                    ),
+                                  )
+                                : Text(
+                                    _currentStep == 1
+                                        ? 'Place Order'
+                                        : 'Continue',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
                                   ),
-                                )
-                              : Text(
-                                  _currentStep == 1 ? 'Place Order' : 'Continue',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildAddressStep(bool isDark) {
     return Column(
@@ -855,7 +916,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Divider(color: isDark ? AppColors.darkBorder : AppColors.border),
+                  Divider(
+                      color: isDark ? AppColors.darkBorder : AppColors.border),
                   const SizedBox(height: 8),
                   // Build address lines dynamically, only showing non-empty fields
                   ..._buildAddressLines(_selectedAddress!.addressData, isDark),
@@ -1088,12 +1150,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
-                : isDark ? AppColors.darkBorder : AppColors.border,
+                : isDark
+                    ? AppColors.darkBorder
+                    : AppColors.border,
           ),
           borderRadius: BorderRadius.circular(12),
           color: isSelected
               ? AppColors.primary.withValues(alpha: 0.05)
-              : isDark ? AppColors.darkCard : Colors.white,
+              : isDark
+                  ? AppColors.darkCard
+                  : Colors.white,
         ),
         child: Row(
           children: [
@@ -1105,7 +1171,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 border: Border.all(
                   color: isSelected
                       ? AppColors.primary
-                      : isDark ? AppColors.darkBorder : AppColors.border,
+                      : isDark
+                          ? AppColors.darkBorder
+                          : AppColors.border,
                 ),
               ),
               child: isSelected
@@ -1136,7 +1204,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: isDark ? AppColors.darkMutedForeground : AppColors.mutedForeground,
+                          color: isDark
+                              ? AppColors.darkMutedForeground
+                              : AppColors.mutedForeground,
                         ),
                   ),
                 ],
@@ -1301,7 +1371,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             const SizedBox(width: 8),
             OutlinedButton(
-              onPressed: _validatingCoupon ? null : () => _applyCoupon(subtotal),
+              onPressed:
+                  _validatingCoupon ? null : () => _applyCoupon(subtotal),
               child: _validatingCoupon
                   ? const SizedBox(
                       width: 18,
@@ -1350,7 +1421,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     Text(
                       'Total: ${FormatUtils.peso(total)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: isDark ? Colors.white70 : AppColors.foreground,
+                            color:
+                                isDark ? Colors.white70 : AppColors.foreground,
                           ),
                     ),
                   ],
@@ -1389,7 +1461,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: items.map((item) => _buildCompactOrderItem(item, isDark)).toList(),
+            children: items
+                .map((item) => _buildCompactOrderItem(item, isDark))
+                .toList(),
           ),
         ),
       ],

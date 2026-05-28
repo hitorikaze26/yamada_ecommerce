@@ -144,8 +144,83 @@ def init_socketio(app) -> SocketIO:
         except Exception:
             pass
 
+    @socketio.on("rider:location")
+    def on_rider_location(data):
+        uid = request.environ.get("socket_user_id")
+        if uid is None:
+            return
+        try:
+            from app.models import User, RiderProfile, RiderDelivery
+            from app.services.rider_tracking_service import RiderTrackingService
+
+            user = User.query.get(int(uid))
+            if not user:
+                return
+            rider_profile = getattr(user, "rider_profile", None)
+            if not rider_profile:
+                return
+
+            order_id = None
+            lat = None
+            lng = None
+            if isinstance(data, dict):
+                order_id = data.get("orderId") or data.get("order_id")
+                lat = data.get("latitude") or data.get("lat")
+                lng = data.get("longitude") or data.get("lng")
+
+            if lat is None or lng is None:
+                return
+
+            try:
+                lat = float(lat)
+                lng = float(lng)
+            except (TypeError, ValueError):
+                return
+
+            if order_id:
+                order_id = int(order_id)
+
+            RiderTrackingService.update_rider_location(
+                rider_id=int(uid),
+                order_id=order_id,
+                latitude=lat,
+                longitude=lng,
+            )
+        except Exception:
+            pass
+
+    @socketio.on("rider:subscribe_order")
+    def on_rider_subscribe_order(data):
+        """Buyer subscribes to live rider location for a specific order."""
+        uid = request.environ.get("socket_user_id")
+        if uid is None:
+            return False
+        order_id = None
+        if isinstance(data, dict):
+            order_id = data.get("orderId") or data.get("order_id")
+        if order_id is None:
+            return False
+        try:
+            from app.models import Order, RiderDelivery
+
+            order = Order.query.get(int(order_id))
+            if not order:
+                return False
+            if int(order.buyer_id) != int(uid):
+                return False
+            room = f"order_track_{int(order_id)}"
+            join_room(room)
+            return True
+        except Exception:
+            return False
+
     return socketio
 
 
 def emit_to_user(user_id: int, event: str, payload: dict) -> None:
     socketio.emit(event, payload, room=user_room(user_id))
+
+
+def emit_rider_location(order_id: int, payload: dict) -> None:
+    """Emit rider location update to all subscribers of an order tracking room."""
+    socketio.emit("rider:location_update", payload, room=f"order_track_{order_id}")

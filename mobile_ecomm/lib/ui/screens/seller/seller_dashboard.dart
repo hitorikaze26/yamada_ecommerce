@@ -220,9 +220,8 @@ class _SellerDashboardState extends ConsumerState<SellerDashboard> {
     final isLoading = stats.isLoading || insightsState.isLoading;
     final insights = insightsState.insights;
 
-    String salesLabel = isLoading
-        ? '...'
-        : '₱${_formatNumber(stats.totalSales)}';
+    String salesLabel =
+        isLoading ? '...' : '₱${_formatNumber(stats.totalSales)}';
     String ordersLabel = isLoading ? '...' : '${stats.totalOrders}';
     String productsLabel = isLoading ? '...' : '${stats.totalProducts}';
 
@@ -355,8 +354,7 @@ class _SellerDashboardState extends ConsumerState<SellerDashboard> {
 
   // ─── Section title ─────────────────────────────────────────────────────────
 
-  Widget _buildSectionTitle(
-      BuildContext context, String title, bool isDark) {
+  Widget _buildSectionTitle(BuildContext context, String title, bool isDark) {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -379,7 +377,7 @@ class _SellerDashboardState extends ConsumerState<SellerDashboard> {
       children: [
         _buildActionButton(
           context,
-          'Browse Shop',
+          'Browse marketplace',
           Icons.storefront_outlined,
           () => context.push(AppRouter.sellerBrowse),
           isDark,
@@ -478,8 +476,7 @@ class _SellerDashboardState extends ConsumerState<SellerDashboard> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Icon(Icons.arrow_forward_ios,
-                size: 14, color: Colors.grey[400]),
+            Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey[400]),
           ],
         ),
       ),

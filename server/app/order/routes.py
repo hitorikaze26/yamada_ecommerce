@@ -25,6 +25,7 @@ from app.models import (
 )
 from app.services.commission_service import CommissionService
 from app.services.shipping_service import ShippingService
+from app.services.rider_tracking_service import RiderTrackingService
 from app.notifications.service import (
     create_notification,
     notify_buyer_order_status,
@@ -415,6 +416,7 @@ def _serialize_order(order: Order) -> dict:
                         "id": item.product.id,
                         "name": item.product.name,
                         "price": float(item.product.price),
+                        "slug": getattr(item.product, "slug", None) or str(item.product.id),
                         "imageUrl": _product_main_image_url(item.product),
                     }
                     if item.product is not None
@@ -2450,3 +2452,34 @@ def rider_dashboard():
     except Exception:
         db.session.rollback()
         return jsonify(msg="Error fetching rider dashboard"), 500
+
+
+@orders_bp.get("/orders/<int:order_id>/rider-location")
+@jwt_required()
+def get_rider_location(order_id: int):
+    """Return rider's current location + recent path for an order."""
+    try:
+        order = db.session.execute(
+            select(Order).where(Order.id == order_id)
+        ).scalar_one_or_none()
+        if not order:
+            return jsonify({"available": False, "error": "Order not found"}), 404
+
+        if int(order.buyer_id) != int(current_user.id):
+            return jsonify({"available": False, "error": "Unauthorized"}), 403
+
+        latest = RiderTrackingService.get_latest_location(order_id)
+        history = RiderTrackingService.get_location_history(order_id, limit=50)
+
+        if not latest:
+            return jsonify({"available": False, "error": "No rider location data yet"}), 200
+
+        return jsonify({
+            "available": True,
+            "current": latest,
+            "history": history,
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching rider location: {e}")
+        return jsonify({"available": False, "error": "Internal error"}), 500

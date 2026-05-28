@@ -198,7 +198,7 @@ class OrderItem {
       size: variation?['size']?.toString(),
       color: variation?['color']?.toString(),
       sku: variation?['sku']?.toString(),
-      productSlug: product?['slug'],
+        productSlug: product?['slug'] ?? product?['id']?.toString(),
       sellerId: json['sellerId']?.toString() ?? '',
       sellerName: json['sellerName'] ?? 'Unknown Seller',
     );

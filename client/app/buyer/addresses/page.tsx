@@ -9,6 +9,7 @@ import { AddressSelector } from "@/components/form/address-selector"
 import {
   addressesApi,
   buyerApi,
+  shippingApi,
   type AddressData,
   type SavedAddressDto,
   isAddressComplete,
@@ -136,13 +137,37 @@ export default function AddressesPage() {
     }
     setSaving(true)
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         label,
         ...addressData,
         isDefault: addresses.length === 0,
       }
+
+      // Geocode if lat/lng missing
+      if (!payload.latitude || !payload.longitude) {
+        const addressStr = [
+          addressData.streetAddress,
+          addressData.barangayName,
+          addressData.municipalityName,
+          addressData.provinceName,
+          addressData.regionName,
+          "Philippines",
+        ]
+          .filter(Boolean)
+          .join(", ")
+        try {
+          const geoRes = await shippingApi.geocode(addressStr)
+          if (geoRes.data.latitude && geoRes.data.longitude) {
+            payload.latitude = geoRes.data.latitude
+            payload.longitude = geoRes.data.longitude
+          }
+        } catch {
+          // Non-blocking: save without coordinates
+        }
+      }
+
       if (editing && editing.id !== "profile") {
-        await addressesApi.update(editing.id, payload)
+        await addressesApi.update(editing.id, payload as Partial<SavedAddressDto>)
         showAlert("Address updated.", "success")
       } else if (!editing || editing.id === "profile") {
         await addressesApi.create(payload as Omit<SavedAddressDto, "id">)

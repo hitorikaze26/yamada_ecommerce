@@ -1,6 +1,7 @@
 """Shipping API endpoints for real-world distance-based shipping"""
 
-from flask import Blueprint, request, jsonify
+import requests
+from flask import Blueprint, request, jsonify, current_app
 from app.services.shipping_service import ShippingService
 from flask_jwt_extended import jwt_required
 
@@ -182,6 +183,95 @@ def geocode_address():
             
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
+
+
+@shipping_bp.route('/shipping/autocomplete', methods=['POST', 'OPTIONS'])
+def autocomplete_address():
+    """
+    Autocomplete address query using Nominatim.
+    
+    Request body:
+    {
+        "q": str (search query, required),
+        "limit": int (optional, default 5, max 10)
+    }
+    
+    Response:
+    {
+        "results": [
+            {
+                "label": str,
+                "latitude": float,
+                "longitude": float,
+                "osmId": int,
+                "osmType": str,
+                "displayName": str,
+                "type": str
+            }
+        ]
+    }
+    """
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.get_json()
+        query = (data or {}).get('q', '').strip()
+        if not query or len(query) < 3:
+            return jsonify({'results': []}), 200
+
+        limit = min(int((data or {}).get('limit', 5)), 10)
+        
+        params = {
+            'q': query,
+            'format': 'json',
+            'limit': limit,
+            'addressdetails': 1,
+            'countrycodes': 'ph',
+        }
+        headers = {
+            'User-Agent': 'Yamada-Ecommerce/1.0 (autocomplete; contact@yamada.ph)'
+        }
+        
+        response = requests.get(
+            ShippingService.GEOCODING_API_URL,
+            params=params,
+            headers=headers,
+            timeout=10,
+        )
+        
+        if response.status_code != 200:
+            return jsonify({'results': []}), 200
+        
+        data = response.json()
+        results = []
+        for item in data:
+            label_parts = []
+            if item.get('name'):
+                label_parts.append(item['name'])
+            address = item.get('address', {})
+            city = address.get('city') or address.get('town') or address.get('municipality') or ''
+            province = address.get('state') or address.get('province') or ''
+            if city:
+                label_parts.append(city)
+            if province:
+                label_parts.append(province)
+            label_parts.append('Philippines')
+            
+            results.append({
+                'label': ', '.join(filter(None, label_parts)),
+                'latitude': float(item['lat']),
+                'longitude': float(item['lon']),
+                'osmId': item.get('osm_id'),
+                'osmType': item.get('osm_type'),
+                'displayName': item.get('display_name', ''),
+                'type': item.get('type', ''),
+            })
+        
+        return jsonify({'results': results}), 200
+        
+    except Exception:
+        return jsonify({'results': []}), 200
 
 
 @shipping_bp.route('/shipping/shop-coordinates/<int:shop_id>', methods=['GET'])

@@ -351,9 +351,20 @@ export const ordersApi = {
     },
   ) => apiClient.post(`/orders/${orderId}/reviews`, payload),
   getOrderReviews: (orderId: number) => apiClient.get(`/orders/${orderId}/reviews`),
+  getRiderLocation: (orderId: number) => apiClient.get(`/orders/${orderId}/rider-location`),
 }
 
 // Shipping API
+export interface AutocompleteResult {
+  label: string
+  latitude: number
+  longitude: number
+  osmId: number
+  osmType: string
+  displayName: string
+  type: string
+}
+
 export const shippingApi = {
   calculateFee: (data: {
     shop_id: number
@@ -361,7 +372,11 @@ export const shippingApi = {
     buyer_region_code?: string
     buyer_province_code?: string
     buyer_municipality_code?: string
-  }) => apiClient.post("/shipping/calculate", data)
+  }) => apiClient.post("/shipping/calculate", data),
+  autocomplete: (q: string, limit?: number) =>
+    apiClient.post<{ results: AutocompleteResult[] }>("/shipping/autocomplete", { q, limit }),
+  geocode: (address: string) =>
+    apiClient.post<{ latitude: number; longitude: number; error?: string }>("/shipping/geocode", { address }),
 }
 
 // Rider API
@@ -633,68 +648,34 @@ export const adminApi = {
     apiClient.get(`/admin/riders/${userId}`),
   getRiderDeliveries: (userId: number) =>
     apiClient.get(`/admin/users/${userId}/deliveries`),
-  getStores: () => apiClient.get("/admin/stores"),
-  getStoreDetail: (storeId: number) => apiClient.get(`/admin/stores/${storeId}`),
-  getCategories: () => apiClient.get("/admin/categories"),
-  getProducts: (params?: ProductQueryParams & { status?: string; storeId?: number }) =>
-    apiClient.get("/admin/products", { params }),
-  getProductModerationQueue: () => apiClient.get("/admin/products/moderation-queue"),
-  updateProductModeration: (
-    productId: number,
-    data: { status: string; reason?: string; editRequestNote?: string },
-  ) => apiClient.patch(`/admin/products/${productId}/moderation`, data),
-  requestProductEdits: (productId: number, note: string) =>
-    apiClient.post(`/admin/products/${productId}/request-edits`, { note }),
-  getProductModerationLogs: (productId: number) =>
-    apiClient.get(`/admin/products/${productId}/moderation-logs`),
-  approveProduct: (productId: number) => apiClient.post(`/admin/products/${productId}/approve`),
-  rejectProduct: (productId: number) => apiClient.post(`/admin/products/${productId}/reject`),
-  getRefundRequests: (params?: { queue?: string; all?: boolean | string }) =>
-    apiClient.get("/admin/refund-requests", { params }),
-  approveRefund: (refundId: number) =>
-    apiClient.post(`/admin/refund-requests/${refundId}/approve`),
-  rejectRefund: (refundId: number, note?: string) =>
-    apiClient.post(`/admin/refund-requests/${refundId}/reject`, note ? { note } : {}),
-  requestRefundEvidence: (refundId: number, note: string) =>
-    apiClient.post(`/admin/refund-requests/${refundId}/request-evidence`, { note }),
-  freezeRefund: (refundId: number) =>
-    apiClient.post(`/admin/refund-requests/${refundId}/freeze`),
-  getOrderRefunds: () => apiClient.get("/admin/orders/refunds"),
-  getOrders: (params?: OrderQueryParams) => apiClient.get("/admin/orders", { params }),
-  getOrderById: (id: number) => apiClient.get(`/admin/orders/${id}`),
-  getAnalytics: (days: number = 30) =>
-    apiClient.get(`/admin/analytics?days=${days}`),
-  getCommissionAnalytics: () =>
-    apiClient.get("/admin/commission/analytics"),
-  getCommissionSettings: () => apiClient.get("/admin/commission/settings"),
-  updateCommissionSettings: (data: {
-    commissionRate: number
-    appliesToProductPriceOnly: boolean
-  }) => apiClient.post("/admin/commission/settings", data),
-  getShippingSettings: () => apiClient.get("/admin/commission/shipping-settings"),
-  createShippingSetting: (data: {
-    regionName: string
-    provinceName?: string
-    cityName?: string
-    shippingFee: number
-    storeId?: number
-  }) => apiClient.post("/admin/commission/shipping-settings", data),
-  getProblemReports: (params?: { status?: string; reporterRole?: string; targetRole?: string }) =>
-    apiClient.get("/admin/problem-reports", { params }),
-  updateProblemReport: (reportId: number, data: { status: string }) =>
-    apiClient.patch(`/admin/problem-reports/${reportId}`, data),
-  getCoupons: (params?: { scope?: string; storeId?: number }) =>
-    apiClient.get("/admin/coupons", { params }),
-  createCoupon: (data: Record<string, unknown>) =>
-    apiClient.post("/admin/coupons", data),
-  updateCoupon: (couponId: number, data: Record<string, unknown>) =>
-    apiClient.put(`/admin/coupons/${couponId}`, data),
-  deleteCoupon: (couponId: number) =>
-    apiClient.delete(`/admin/coupons/${couponId}`),
-  downloadReport: (days: number = 30, format: string = "pdf") =>
-    apiClient.get(`/admin/analytics/download?days=${days}&format=${format}`, {
-      responseType: "blob",
-    }),
+  getActiveDeliveries: () =>
+    apiClient.get<{ deliveries: ActiveDeliveryDto[] }>("/admin/deliveries/active"),
+}
+
+export interface ActiveDeliveryDto {
+  deliveryId: number
+  orderId: number
+  status: string
+  distanceKm: number
+  fee: number
+  createdAt: string | null
+  updatedAt: string | null
+  rider: {
+    id: number
+    name: string | null
+  } | null
+  buyer: {
+    id: number
+    name: string | null
+  } | null
+  riderLocation: {
+    latitude: number
+    longitude: number
+  } | null
+  destination: {
+    latitude: number
+    longitude: number
+  } | null
 }
 
 // Buyer API
@@ -710,9 +691,7 @@ export const buyerApi = {
   uploadAvatar: (file: File) => {
     const formData = new FormData()
     formData.append("avatar", file)
-    return apiClient.post("/accounts/buyer/avatar", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
+    return apiClient.post("/accounts/buyer/avatar", formData)
   },
   getWishlist: () => apiClient.get("/accounts/buyer/wishlist"),
   addToWishlist: (productId: number) =>
@@ -761,6 +740,20 @@ export const storesApi = {
       reviews: Record<string, unknown>[]
       breakdown: Record<string, number>
     }>(`/stores/${storeId}/reviews`, { params: { limit: params?.limit } }),
+  withCoordinates: () =>
+    apiClient.get<{ stores: StoreWithCoords[] }>("/stores/with-coordinates"),
+}
+
+export interface StoreWithCoords {
+  id: number
+  storeId: number
+  storeName: string
+  name: string
+  address: string | null
+  latitude: number
+  longitude: number
+  logoUrl: string | null
+  tagline: string | null
 }
 
 export interface SavedAddressDto {
@@ -776,6 +769,8 @@ export interface SavedAddressDto {
   barangayName: string
   streetAddress?: string
   postalCode?: string
+  latitude?: number | null
+  longitude?: number | null
   isDefault?: boolean
 }
 
@@ -996,6 +991,8 @@ export interface AddressData {
   barangayName: string
   streetAddress?: string
   postalCode?: string
+  latitude?: number | null
+  longitude?: number | null
 }
 
 export function isAddressComplete(address: Partial<AddressData>): boolean {

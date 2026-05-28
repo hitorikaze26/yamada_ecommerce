@@ -54,6 +54,7 @@ import '../../ui/screens/rider/rider_earnings_page.dart';
 import '../../ui/screens/rider/rider_history_page.dart';
 import '../../ui/screens/rider/rider_profile_page.dart';
 import '../../ui/screens/rider/rider_settings_page.dart';
+import '../../ui/screens/rider/rider_live_tracking_page.dart';
 import '../../ui/screens/admin/admin_dashboard.dart';
 import '../../ui/screens/chat/chat_list_page.dart';
 import '../../ui/screens/chat/chat_thread_page.dart';
@@ -104,6 +105,8 @@ class AppRouter {
   static const String riderSettings = '/rider/settings';
   static const String riderEarnings = '/rider/earnings';
   static const String riderHistory = '/rider/history';
+  static const String riderLiveTracking = '/rider/live-tracking';
+  static String riderLiveTrackingPath(int orderId) => '$riderLiveTracking?orderId=$orderId';
   static const String adminDashboard = '/admin';
   static const String orders = '/orders';
   /// Buyer order detail — use [push] so back returns to the orders list.
@@ -653,6 +656,13 @@ class AppRouter {
         GoRoute(
           path: riderSettings,
           builder: (context, state) => const RiderSettingsPage(),
+        ),
+        GoRoute(
+          path: riderLiveTracking,
+          builder: (context, state) {
+            final orderId = int.tryParse(state.uri.queryParameters['orderId'] ?? '');
+            return RiderLiveTrackingPage(orderId: orderId);
+          },
         ),
         GoRoute(
           path: adminDashboard,
