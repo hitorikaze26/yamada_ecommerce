@@ -198,14 +198,7 @@ function NavbarContent() {
               </DropdownMenu>
 
               <Link
-                href="/landing"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Why us
-              </Link>
-
-              <Link
-                href="/about"
+                href="#"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 About
@@ -292,12 +285,12 @@ function NavbarContent() {
                         </Link>
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem asChild>
-                      <Link href={getSettingsLink()}>
+                    {/* <DropdownMenuItem asChild>
+                      <Link href="/settings">
                         <Icon name="settings" className="mr-2" />
                         Settings
                       </Link>
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                       <Icon name="sign-out-alt" className="mr-2" />
@@ -366,13 +359,6 @@ function NavbarContent() {
                           </Link>
                         ))}
                       </div>
-                      <Link
-                        href="/landing"
-                        className="text-lg font-medium border-t pt-4"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Why us
-                      </Link>
                       <Link
                         href="/about"
                         className="text-lg font-medium border-t pt-4"

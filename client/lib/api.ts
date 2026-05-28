@@ -49,8 +49,8 @@ export async function resolvePrivateDocUrl(
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 120000,
   withCredentials: true,
-  timeout: 30_000,
 })
 
 // ✅ interceptor AFTER creation
@@ -681,6 +681,32 @@ export interface ActiveDeliveryDto {
 // Buyer API
 export const buyerApi = {
   getProfile: () => apiClient.get("/accounts/buyer/profile"),
+  // getProfile: (() => {
+  //   const TTL = 60 * 1000 // 60 seconds
+  //   let cache: { ts: number; res: unknown } | null = null
+  //   let pending: Promise<unknown> | null = null
+
+  //   return async () => {
+  //     const now = Date.now()
+  //     if (cache && now - cache.ts < TTL) {
+  //       return cache.res
+  //     }
+  //     if (pending) return pending
+
+  //     pending = apiClient.get("/accounts/buyer/profile")
+  //       .then((res) => {
+  //         cache = { ts: Date.now(), res }
+  //         pending = null
+  //         return res
+  //       })
+  //       .catch((error) => {
+  //         pending = null
+  //         throw error
+  //       })
+
+  //     return pending
+  //   }
+  // })(),
   updateProfile: (data: {
     givenName?: string
     surname?: string

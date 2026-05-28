@@ -193,10 +193,7 @@ export async function GET(
 
   try {
     console.log(`[API /cities-municipalities] Fetching for province: ${provinceCode} (normalized to 9-digit: ${normalized})`)
-    const response = await axios.get(
-      `${PH_SGG_BASE_URL}/provinces/${normalized}/cities-municipalities`,
-      { timeout: 30000 }
-    )
+    const response = await axios.get(`${PH_SGG_BASE_URL}/provinces/${normalized}/cities-municipalities`)
     // PSGC API may return {value: [...]} or just [...]
     const data = response.data?.value || response.data || []
     console.log(`[API /cities-municipalities] Province ${provinceCode} returned ${data.length} items:`, data)

@@ -40,6 +40,7 @@ class CommissionService:
             select(CommissionSettings)
             .where(CommissionSettings.is_active == True)
             .order_by(CommissionSettings.created_at.desc())
+            .limit(1)
         ).scalar_one_or_none()
         
         return commission_setting.commission_rate if commission_setting else 0.10
@@ -57,6 +58,7 @@ class CommissionService:
                     ShippingSettings.is_active == True
                 )
                 .order_by(ShippingSettings.created_at.desc())
+                .limit(1)
             ).scalar_one_or_none()
             
             if shipping_setting:

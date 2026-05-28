@@ -367,7 +367,7 @@ def unread_count():
 
 @chat.post("/upload")
 @jwt_required()
-@limiter.limit("20 per minute")
+# @limiter.limit("20 per minute")
 def upload_attachment():
     if "file" not in request.files:
         return jsonify(msg="No file provided"), 400

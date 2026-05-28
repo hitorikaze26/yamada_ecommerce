@@ -54,9 +54,8 @@ function SellerLayoutInner({ children }: { children: React.ReactNode }) {
     const fetchProfile = async () => {
       try {
         await refreshSellerProfile()
-        const res = await sellerAccountApi.getProfile()
-        const profile = res.data.profile
-        const status = profile?.storeStatus as string | null
+        // Get store status from the updated user in context (already loaded by refreshSellerProfile)
+        const status = user?.storeStatus as string | null
         if (status) {
           setStoreStatusLabel(status)
           setIsStoreApproved(status === "ACCEPTED")
@@ -69,7 +68,7 @@ function SellerLayoutInner({ children }: { children: React.ReactNode }) {
     }
 
     void fetchProfile()
-  }, [refreshSellerProfile])
+  }, [refreshSellerProfile, user?.storeStatus])
 
   useEffect(() => {
     if (isStoreApproved === false && isSellerRestrictedPath(pathname)) {

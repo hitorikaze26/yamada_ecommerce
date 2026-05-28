@@ -251,7 +251,7 @@ def _session_snapshot(user: User) -> dict:
 
 
 @auth_bp.post('/login')
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def login():
     if not request.is_json:
         current_app.logger.error("Login failed: Request is not JSON")
@@ -512,7 +512,7 @@ def delete_account():
 
 
 @auth_bp.post('/register')
-@limiter.limit("5 per minute")
+# @limiter.limit("5 per minute")
 def register():
     """Legacy simple register endpoint (kept for compatibility)."""
     if not request.is_json:
@@ -541,7 +541,7 @@ def register():
 
 
 @auth_bp.post('/register-rider')
-@limiter.limit("5 per minute")
+# @limiter.limit("5 per minute")
 def register_rider():
 	"""Full rider registration: create User + RiderProfile.
 
@@ -656,7 +656,7 @@ def register_rider():
 
 
 @auth_bp.post('/register-seller')
-@limiter.limit("5 per minute")
+# @limiter.limit("5 per minute")
 def register_seller():
     """Full seller registration: create User + Seller + StoreRegistration.
 
@@ -880,7 +880,7 @@ def register_seller():
 
 
 @auth_bp.post('/register-buyer')
-@limiter.limit("5 per minute")
+# @limiter.limit("5 per minute")
 def register_buyer():
     """Full buyer registration: create User + BuyerProfile with pending verification.
 
@@ -979,9 +979,9 @@ def register_buyer():
     except IntegrityError:
         db.session.rollback()
         return jsonify(msg="Email already exists!"), 400
-    except Exception:
+    except Exception as e:
         db.session.rollback()
-        return jsonify(msg="An error occurred!"), 500
+        return jsonify(msg=str(e)), 500
     
 def _get_current_access_token() -> str | None:
     auth_header = request.headers.get("Authorization", "")
@@ -1041,6 +1041,7 @@ def _serialize_buyer_profile(user, buyer_profile=None):
     }
 
 
+@limiter.exempt
 @auth_bp.get('/buyer/profile')
 @jwt_required()
 @buyer_required()
@@ -1188,6 +1189,7 @@ def _build_rider_profile_payload(user: User, rider_profile: RiderProfile) -> dic
 
 
 @auth_bp.get('/rider/profile')
+@limiter.limit("30 per minute")
 @jwt_required()
 @rider_required()
 def get_rider_profile():
@@ -1667,6 +1669,7 @@ def upload_seller_banner():
 
 
 @auth_bp.get('/seller/profile')
+@limiter.limit("30 per minute")
 @jwt_required()
 @seller_required()
 def get_seller_profile():
@@ -2340,7 +2343,7 @@ def _get_active_reset_code(user_id: int):
 
 
 @auth_bp.post("/forgot-password/contact-lookup")
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def forgot_password_contact_lookup():
     """Return saved contact number for an account email (for SMS prefill)."""
     if not request.is_json:
@@ -2359,7 +2362,7 @@ def forgot_password_contact_lookup():
 
 
 @auth_bp.post("/forgot-password")
-@limiter.limit("5 per minute")
+# @limiter.limit("5 per minute")
 def forgot_password():
     """Request a 6-digit reset PIN via email or SMS."""
     if not request.is_json:
@@ -2464,7 +2467,7 @@ def forgot_password():
 
 
 @auth_bp.post("/verify-pin")
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def verify_pin():
     """Validate reset PIN before setting a new password."""
     if not request.is_json:
@@ -2508,7 +2511,7 @@ def verify_pin():
 
 
 @auth_bp.post("/reset-password")
-@limiter.limit("5 per minute")
+# @limiter.limit("5 per minute")
 def reset_password():
     """Set a new password using a verified PIN."""
     if not request.is_json:

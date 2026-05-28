@@ -488,7 +488,7 @@ class Store(Base):
 class Product(Base):
     __tablename__='products'
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, unique=True)
     store_id: Mapped[int] = mapped_column(ForeignKey('stores.id', ondelete='CASCADE'))
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(TEXT, nullable=True)
@@ -746,6 +746,8 @@ class RecentlyViewedProduct(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id', ondelete='CASCADE'))
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id', ondelete='CASCADE'))
     viewed_at: Mapped[datetime.datetime] = mapped_column(default=lambda: datetime.datetime.now())
+
+    product: Mapped["Product"] = relationship()
 
 
 @dataclass

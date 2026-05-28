@@ -79,7 +79,6 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    print("Alembic: preparing database connection...", flush=True)
 
     # this callback is used to prevent an auto-migration from being generated
     # when there are no changes to the schema
@@ -96,10 +95,8 @@ def run_migrations_online():
         conf_args["process_revision_directives"] = process_revision_directives
 
     connectable = get_engine()
-    print("Alembic: connecting (timeout 15s for remote DB)...", flush=True)
 
     with connectable.connect() as connection:
-        print("Alembic: connected. Running migrations...", flush=True)
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),

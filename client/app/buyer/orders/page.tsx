@@ -40,9 +40,20 @@ type OrderWithRider = Order & {
   store?: { id: number; name: string }
 }
 
-function parseVariation(variation?: { id?: string; size?: string; color?: string } | null): { color?: string; size?: string } {
+function parseVariation(
+  variation?: { color?: string; size?: string } | string | null,
+): { color?: string; size?: string } {
   if (!variation) return {}
-  return { color: variation.color, size: variation.size }
+  if (typeof variation === "object") {
+    return { color: variation.color, size: variation.size }
+  }
+
+  try {
+    const parsed = JSON.parse(variation) as { color?: string; size?: string }
+    return { color: parsed.color, size: parsed.size }
+  } catch {
+    return {}
+  }
 }
 
 function BuyerOrdersContent() {
@@ -55,6 +66,7 @@ function BuyerOrdersContent() {
   const [error, setError] = useState<string | null>(null)
   const [orderImageErrors, setOrderImageErrors] = useState<Record<string, boolean>>({})
   const { getRole, isVerified } = useAuth()
+  const { isBusy, openBuyerOrder } = useChatOpen()
   const role = getRole()
   const buyerUnverified = role === "buyer" && !isVerified()
   const { isBusy, openBuyerOrder } = useChatOpen()
@@ -185,6 +197,95 @@ function BuyerOrdersContent() {
       getEffectiveOrderStatus(order.status, rd?.status, rd?.proofPhotoUrl),
     )
   }
+
+  const handleMessageSeller = useCallback(
+    async (order: OrderWithRider) => {
+      const storeId = resolveStoreIdFromOrder(order)
+      if (!storeId) {
+        await Swal.fire({ icon: "info", title: "Store not available for chat." })
+        return
+      }
+
+      const firstItem = order.items[0]
+      await openBuyerOrder(`buyer-order-${order.id}`, {
+        orderId: Number(order.id),
+        storeId,
+        productName:
+          firstItem?.product?.name ?? order.orderNumber ?? `Order #${order.id}`,
+        productImageUrl:
+          firstItem?.product?.imageUrl ?? firstItem?.product?.image_url ?? null,
+        status: order.status,
+        totalAmount: order.total ?? 0,
+        displayId: order.orderNumber ?? String(order.id),
+      })
+    },
+    [openBuyerOrder],
+  )
+
+  const handleCancelOrder = useCallback(
+    async (orderId: string) => {
+      const result = await Swal.fire({
+        title: "Cancel order?",
+        showCancelButton: true,
+        confirmButtonColor: "#dc2626",
+        confirmButtonText: "Cancel order",
+      })
+      if (!result.isConfirmed) return
+
+      try {
+        await ordersApi.cancel(String(orderId))
+        await fetchOrders()
+        await Swal.fire({ icon: "success", title: "Order cancelled", timer: 1500, showConfirmButton: false })
+      } catch (e: any) {
+        await Swal.fire({ icon: "error", title: e?.response?.data?.msg ?? "Could not cancel" })
+      }
+    },
+    [fetchOrders],
+  )
+
+  const handleConfirmReceived = useCallback(
+    async (orderId: string) => {
+      try {
+        await ordersApi.confirmReceived(String(orderId))
+        await fetchOrders()
+        await Swal.fire({ icon: "success", title: "Order marked as received", timer: 1500, showConfirmButton: false })
+      } catch (e: any) {
+        await Swal.fire({ icon: "error", title: e?.response?.data?.msg ?? "Could not confirm receipt" })
+      }
+    },
+    [fetchOrders],
+  )
+
+  const handleRequestRefund = useCallback(
+    async (orderId: string) => {
+      const result = await Swal.fire({
+        title: "Request refund",
+        input: "textarea",
+        inputLabel: "Reason",
+        inputPlaceholder: "Tell us why you want a refund",
+        showCancelButton: true,
+        confirmButtonText: "Submit request",
+        preConfirm: (value) => {
+          if (!value || !String(value).trim()) {
+            Swal.showValidationMessage("Reason is required")
+            return null
+          }
+          return String(value).trim()
+        },
+      })
+
+      if (!result.isConfirmed || !result.value) return
+
+      try {
+        await ordersApi.requestRefund(String(orderId), result.value)
+        await fetchOrders()
+        await Swal.fire({ icon: "success", title: "Refund requested", timer: 1500, showConfirmButton: false })
+      } catch (e: any) {
+        await Swal.fire({ icon: "error", title: e?.response?.data?.msg ?? "Could not request refund" })
+      }
+    },
+    [fetchOrders],
+  )
 
   return (
     <div className="space-y-6">
