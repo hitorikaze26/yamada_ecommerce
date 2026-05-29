@@ -178,7 +178,27 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                   >
                     <Icon name="minus" />
                   </button>
-                  <span className="w-12 text-center font-semibold text-lg">{quantity}</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (val === "") { setQuantity(0); return }
+                      const num = parseInt(val, 10)
+                      if (isNaN(num)) return
+                      setQuantity(num)
+                    }}
+                    onBlur={() => {
+                      setQuantity((prev) => {
+                        if (prev <= 0) return 1
+                        const max = selectedVariation ? selectedVariation.inventory || 0 : 0
+                        return max > 0 ? Math.min(prev, max) : prev
+                      })
+                    }}
+                    className="w-12 text-center font-semibold text-lg bg-transparent border-0 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
                   <button
                     onClick={() => setQuantity(quantity + 1)}
                     className="w-11 h-11 sm:w-10 sm:h-10 rounded-md border flex items-center justify-center hover:bg-muted transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

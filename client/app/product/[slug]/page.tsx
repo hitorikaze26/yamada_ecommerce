@@ -684,7 +684,27 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
                     >
                       <Icon name="minus" />
                     </button>
-                    <span className="w-16 text-center font-medium">{quantity}</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={quantity}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (val === "") { setQuantity(0); return }
+                        const num = parseInt(val, 10)
+                        if (isNaN(num)) return
+                        setQuantity(num)
+                      }}
+                      onBlur={() => {
+                        setQuantity((prev) => {
+                          if (prev <= 0) return 1
+                          const max = selectedVariation ? selectedVariation.inventory || 0 : 0
+                          return max > 0 ? Math.min(prev, max) : prev
+                        })
+                      }}
+                      className="w-16 text-center font-medium bg-transparent border-0 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
                     {(() => {
                       const maxQty = selectedVariation ? selectedVariation.inventory || 0 : 0
                       const isAtMax = maxQty > 0 && quantity >= maxQty
