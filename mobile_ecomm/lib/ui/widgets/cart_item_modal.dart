@@ -37,18 +37,21 @@ class _CartItemModalState extends ConsumerState<CartItemModal> {
   ProductVariation? _selectedVariation;
   int _quantity = 1;
   late PageController _imagePageController;
+  late TextEditingController _quantityController;
 
   @override
   void initState() {
     super.initState();
     _imagePageController = PageController();
     _quantity = widget.cartItem.quantity;
+    _quantityController = TextEditingController(text: '$_quantity');
     _fetchProduct();
   }
 
   @override
   void dispose() {
     _imagePageController.dispose();
+    _quantityController.dispose();
     super.dispose();
   }
 
@@ -719,7 +722,10 @@ class _CartItemModalState extends ConsumerState<CartItemModal> {
             children: [
               IconButton(
                 onPressed: _quantity > 1
-                    ? () => setState(() => _quantity--)
+                    ? () {
+                        setState(() => _quantity--);
+                        _quantityController.text = '$_quantity';
+                      }
                     : null,
                 icon: const Icon(Icons.remove),
                 style: IconButton.styleFrom(
@@ -730,18 +736,47 @@ class _CartItemModalState extends ConsumerState<CartItemModal> {
               Container(
                 width: 50,
                 alignment: Alignment.center,
-                child: Text(
-                  '$_quantity',
+                child: TextField(
+                  controller: _quantityController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: (value) {
+                    final parsed = int.tryParse(value);
+                    if (parsed != null && parsed >= 1) {
+                      setState(() => _quantity = parsed);
+                    }
+                  },
+                  onSubmitted: (value) {
+                    final parsed = int.tryParse(value) ?? 1;
+                    setState(() => _quantity = parsed);
+                    _quantityController.text = '$_quantity';
+                    _quantityController.selection = TextSelection.collapsed(
+                      offset: _quantityController.text.length,
+                    );
+                  },
+                  onTapOutside: (_) {
+                    final parsed = int.tryParse(_quantityController.text) ?? 1;
+                    setState(() => _quantity = parsed);
+                    _quantityController.text = '$_quantity';
+                    FocusScope.of(context).unfocus();
+                  },
                 ),
               ),
               IconButton(
                 onPressed: (_selectedVariation != null && _quantity < _selectedVariation!.inventory) ||
                         (_selectedVariation == null && _quantity < 99)
-                    ? () => setState(() => _quantity++)
+                    ? () {
+                        setState(() => _quantity++);
+                        _quantityController.text = '$_quantity';
+                      }
                     : null,
                 icon: const Icon(Icons.add),
                 style: IconButton.styleFrom(

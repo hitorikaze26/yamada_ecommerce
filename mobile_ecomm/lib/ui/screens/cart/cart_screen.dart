@@ -485,7 +485,7 @@ class _SellerSection extends ConsumerWidget {
   }
 }
 
-class _CartItemCard extends ConsumerWidget {
+class _CartItemCard extends ConsumerStatefulWidget {
   final CartItem item;
   final int index;
   final int delay;
@@ -501,10 +501,20 @@ class _CartItemCard extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_CartItemCard> createState() => _CartItemCardState();
+}
+
+class _CartItemCardState extends ConsumerState<_CartItemCard> {
+  String? _pendingQtyValue;
+
+  @override
+  Widget build(BuildContext context) {
     final cart = ref.watch(cartProvider);
     final cartNotifier = ref.read(cartProvider.notifier);
+    final item = widget.item;
     final isSelected = cart.isSelected(item.id);
+    final isDark = widget.isDark;
+    final isLastItem = widget.isLastItem;
 
     return Dismissible(
       key: Key(item.id),
@@ -728,6 +738,7 @@ class _CartItemCard extends ConsumerWidget {
                                   color: isDark ? Colors.white : AppColors.foreground,
                                 ),
                                 onPressed: () {
+                                  _pendingQtyValue = null;
                                   cartNotifier.updateQuantity(
                                     item.id,
                                     item.quantity - 1,
@@ -739,7 +750,8 @@ class _CartItemCard extends ConsumerWidget {
                               width: 50,
                               alignment: Alignment.center,
                               child: TextFormField(
-                                initialValue: '${item.quantity}',
+                                key: ValueKey('qty-${item.id}-${item.quantity}'),
+                                initialValue: _pendingQtyValue ?? '${item.quantity}',
                                 textAlign: TextAlign.center,
                                 keyboardType: TextInputType.number,
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -750,13 +762,29 @@ class _CartItemCard extends ConsumerWidget {
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.zero,
                                 ),
+                                onChanged: (value) {
+                                  _pendingQtyValue = value;
+                                },
                                 onFieldSubmitted: (value) {
-                                  final newQuantity = int.tryParse(value) ?? item.quantity;
-                                  if (newQuantity > 0 && newQuantity != item.quantity) {
-                                    cartNotifier.updateQuantity(item.id, newQuantity);
+                                  _pendingQtyValue = null;
+                                  final parsed = int.tryParse(value);
+                                  if (parsed != null && parsed > 0) {
+                                    cartNotifier.updateQuantity(item.id, parsed);
+                                  } else {
+                                    cartNotifier.updateQuantity(item.id, 1);
                                   }
                                 },
                                 onTapOutside: (event) {
+                                  final pending = _pendingQtyValue;
+                                  _pendingQtyValue = null;
+                                  if (pending != null) {
+                                    final parsed = int.tryParse(pending);
+                                    if (parsed != null && parsed > 0) {
+                                      cartNotifier.updateQuantity(item.id, parsed);
+                                    } else {
+                                      cartNotifier.updateQuantity(item.id, 1);
+                                    }
+                                  }
                                   FocusScope.of(context).unfocus();
                                 },
                               ),
@@ -772,6 +800,7 @@ class _CartItemCard extends ConsumerWidget {
                                   color: isDark ? Colors.white : AppColors.foreground,
                                 ),
                                 onPressed: () {
+                                  _pendingQtyValue = null;
                                   cartNotifier.updateQuantity(
                                     item.id,
                                     item.quantity + 1,
@@ -798,17 +827,12 @@ class _CartItemCard extends ConsumerWidget {
             ),
           ],
         ),
-      )
-          .animate()
-          .fadeIn(duration: 300.ms, delay: Duration(milliseconds: delay ~/ 2))
-          .slideX(begin: 0.1, duration: 300.ms, delay: Duration(milliseconds: delay ~/ 2)),
+      ),
     );
   }
 
-  Color _getColorFromString(String color) {
-    switch (color.toLowerCase()) {
-      case 'pink':
-        return AppColors.primary;
+  Color _getColorFromString(String colorName) {
+    switch (colorName.toLowerCase()) {
       case 'black':
         return Colors.black;
       case 'white':
@@ -817,12 +841,27 @@ class _CartItemCard extends ConsumerWidget {
         return Colors.red;
       case 'blue':
         return Colors.blue;
-      case 'navy':
-        return AppColors.navy;
+      case 'green':
+        return Colors.green;
+      case 'yellow':
+        return Colors.yellow;
+      case 'pink':
+        return Colors.pink;
+      case 'purple':
+        return Colors.purple;
+      case 'orange':
+        return Colors.orange;
       case 'gray':
+      case 'grey':
         return Colors.grey;
-      case 'gold':
-        return Colors.amber;
+      case 'brown':
+        return Colors.brown;
+      case 'navy':
+        return const Color(0xFF000080);
+      case 'beige':
+        return const Color(0xFFF5F5DC);
+      case 'cream':
+        return const Color(0xFFFFFDD0);
       default:
         return Colors.grey;
     }

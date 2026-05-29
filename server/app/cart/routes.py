@@ -14,6 +14,7 @@ from flask_jwt_extended import (
     current_user
 )
 from sqlalchemy import select
+from sqlalchemy.orm.exc import StaleDataError
 from app.models import (
     Cart,
     CartItem,
@@ -161,7 +162,7 @@ def updateCartItem(item_id):
             return jsonify(msg='quantity must be at least 1'), 400
 
         cart_item = db.session.execute(
-            select(CartItem).where(CartItem.id == item_id)
+            select(CartItem).where(CartItem.id == item_id).with_for_update()
         ).scalars().first()
 
         if not cart_item:
@@ -173,9 +174,17 @@ def updateCartItem(item_id):
         cart_item.quantity = quantity
         cart_item.updated_at = datetime.datetime.now()
         cart_item.cart.updated_at = datetime.datetime.now()
-        db.session.commit()
+
+        try:
+            db.session.commit()
+        except StaleDataError:
+            db.session.rollback()
+            return jsonify(msg='Cart item was modified or deleted. Please refresh.'), 409
 
         return jsonify(msg='Cart item updated', cart=_resolve_cart_json(cart_item.cart.to_json())), 200
+    except StaleDataError:
+        db.session.rollback()
+        return jsonify(msg='Cart item was modified or deleted. Please refresh.'), 409
     except Exception as e:
         db.session.rollback()
         current_app.logger.error("Error in updateCartItem: %s", str(e))
