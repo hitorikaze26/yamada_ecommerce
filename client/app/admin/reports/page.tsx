@@ -20,6 +20,18 @@ interface ProblemReportListDto {
   storeId: number | null
   orderId: number | null
   createdAt: string | null
+  reporterName?: string | null
+  targetName?: string | null
+  productNames?: string[] | null
+  store?: { id: number; name: string | null } | null
+  order?: {
+    id: number
+    displayId: string
+    status: string
+    totalAmount: number
+    grandTotal: number
+    createdAt: string | null
+  } | null
 }
 
 const STATUS_OPTIONS = ["pending", "under_review", "investigating", "resolved", "dismissed"] as const
@@ -169,8 +181,8 @@ export default function AdminReportsPage() {
                     <span className="capitalize text-xs font-medium bg-muted px-2 py-0.5 rounded-full">
                       {report.reporterRole}
                     </span>
-                    <span className="block text-xs text-muted-foreground mt-0.5">
-                      ID: {report.reporterUserId}
+                    <span className="block text-xs font-medium mt-0.5">
+                      {report.reporterName || `User #${report.reporterUserId}`}
                     </span>
                   </td>
                   <td className="p-4 max-w-[120px]">
@@ -186,14 +198,29 @@ export default function AdminReportsPage() {
                   <td className="p-4 text-xs text-muted-foreground">
                     {report.targetRole ? (
                       <>
-                        <span className="capitalize">{report.targetRole}</span>
-                        <span className="block">ID: {report.targetUserId}</span>
+                        <span className="capitalize font-medium text-foreground">{report.targetRole}</span>
+                        <span className="block">{report.targetName || `User #${report.targetUserId}`}</span>
                       </>
                     ) : (
                       "—"
                     )}
-                    {report.storeId != null && <span className="block">Store: {report.storeId}</span>}
-                    {report.orderId != null && <span className="block">Order: {report.orderId}</span>}
+                    {report.store && (
+                      <span className="block mt-1 font-medium text-foreground">{report.store.name || `Store #${report.store.id}`}</span>
+                    )}
+                    {report.storeId != null && !report.store && (
+                      <span className="block mt-1">Store #{report.storeId}</span>
+                    )}
+                    {report.order && (
+                      <span className="block">{report.order.displayId} ({report.order.status})</span>
+                    )}
+                    {report.orderId != null && !report.order && (
+                      <span className="block">Order #{report.orderId}</span>
+                    )}
+                    {report.productNames && report.productNames.length > 0 && (
+                      <span className="block text-xs truncate max-w-[160px]" title={report.productNames.join(", ")}>
+                        {report.productNames.slice(0, 2).join(", ")}{report.productNames.length > 2 ? "..." : ""}
+                      </span>
+                    )}
                   </td>
                   <td className="p-4">
                     <div className="flex flex-col gap-1">

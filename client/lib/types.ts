@@ -696,6 +696,9 @@ export interface ProblemReportDto {
     grandTotal: number
     createdAt: string | null
   } | null
+  reporterName?: string | null
+  targetName?: string | null
+  productNames?: string[] | null
   adminNotes: string | null
   resolvedBy: number | null
   evidence: ReportEvidenceDto[]

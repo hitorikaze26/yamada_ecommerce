@@ -185,8 +185,12 @@ export default function AdminReportDetailPage() {
         <div>
           <h1 className="text-2xl font-bold">Report #{report.id}</h1>
           <p className="text-sm text-muted-foreground">
-            Filed by {report.reporterRole} ({report.reporterUserId})
-            {report.targetRole && <> against {report.targetRole} ({report.targetUserId})</>}
+            Filed by <span className="font-medium text-foreground">{report.reporterName || `User #${report.reporterUserId}`}</span>
+            {" ("}{report.reporterRole}{")"}
+            {report.targetRole && (
+              <> against <span className="font-medium text-foreground">{report.targetName || `User #${report.targetUserId}`}</span>
+              {" ("}{report.targetRole}{")"}</>
+            )}
           </p>
         </div>
       </div>
@@ -213,10 +217,31 @@ export default function AdminReportDetailPage() {
               <p className="text-sm whitespace-pre-wrap">{report.description}</p>
             </div>
 
-            {report.storeId && (
+            {report.store && (
+              <div className="text-xs">
+                <span className="text-muted-foreground">Store: </span>
+                <span className="font-medium text-foreground">{report.store.name || `Store #${report.store.id}`}</span>
+              </div>
+            )}
+            {report.storeId != null && !report.store && (
               <p className="text-xs text-muted-foreground">Store ID: {report.storeId}</p>
             )}
-            {report.orderId && (
+            {report.order && (
+              <div className="text-xs space-y-0.5">
+                <div>
+                  <span className="text-muted-foreground">Order: </span>
+                  <span className="font-medium text-foreground">{report.order.displayId}</span>
+                  <span className="ml-1 text-muted-foreground">({report.order.status})</span>
+                </div>
+                {report.productNames && report.productNames.length > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">Products: </span>
+                    <span className="text-foreground">{report.productNames.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            {report.orderId != null && !report.order && (
               <p className="text-xs text-muted-foreground">Order ID: {report.orderId}</p>
             )}
 

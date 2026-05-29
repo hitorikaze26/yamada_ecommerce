@@ -30,7 +30,7 @@ from . import (
 from app.decorators import admin_required
 from app.reports.validation import TYPE_PUNISHMENT_DEFAULTS, validate_and_resolve_report
 from app.notifications.service import create_notification
-from app.models import Role, RoleTypes, UserRole, Store, Order
+from app.models import Role, RoleTypes, UserRole, Store, Order, OrderItem
 from app.utils.static_urls import public_static_url
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf'}
@@ -159,6 +159,71 @@ def _enrich_reports_for_reporter(
             data['targetLabel'] = target_role.capitalize()
         else:
             data['targetLabel'] = None
+        enriched.append(data)
+    return enriched
+
+
+def _enrich_admin_reports(reports: list[ProblemReport]) -> list[dict]:
+    """Add store names, order details, user names, and product names to admin report views."""
+    store_ids = {r.store_id for r in reports if r.store_id}
+    order_ids = {r.order_id for r in reports if r.order_id}
+    user_ids = set()
+    for r in reports:
+        if r.reporter_user_id:
+            user_ids.add(r.reporter_user_id)
+        if r.target_user_id:
+            user_ids.add(r.target_user_id)
+
+    stores_by_id: dict[int, Store] = {}
+    if store_ids:
+        for s in db.session.execute(select(Store).where(Store.id.in_(store_ids))).scalars():
+            stores_by_id[s.id] = s
+
+    orders_by_id: dict[int, Order] = {}
+    order_products: dict[int, list[str]] = {}
+    if order_ids:
+        for o in db.session.execute(select(Order).where(Order.id.in_(order_ids))).scalars():
+            orders_by_id[o.id] = o
+        items = db.session.execute(
+            select(OrderItem).where(OrderItem.order_id.in_(order_ids)).options(selectinload(OrderItem.product))
+        ).scalars().all()
+        for item in items:
+            if item.product:
+                order_products.setdefault(item.order_id, []).append(item.product.name)
+
+    users_by_id: dict[int, User] = {}
+    if user_ids:
+        for u in db.session.execute(select(User).where(User.id.in_(user_ids))).scalars():
+            users_by_id[u.id] = u
+
+    enriched: list[dict] = []
+    for r in reports:
+        data = serialize_report(r)
+        store = stores_by_id.get(r.store_id) if r.store_id else None
+        order = orders_by_id.get(r.order_id) if r.order_id else None
+        reporter = users_by_id.get(r.reporter_user_id) if r.reporter_user_id else None
+        target = users_by_id.get(r.target_user_id) if r.target_user_id else None
+
+        if store:
+            data['store'] = {'id': store.id, 'name': store.store_name}
+        if order:
+            data['order'] = {
+                'id': order.id,
+                'displayId': f'ORD-{order.id}',
+                'status': order.status.value if hasattr(order.status, 'value') else str(order.status),
+                'totalAmount': float(order.total_amount or 0),
+                'grandTotal': float(order.grand_total),
+                'createdAt': order.created_at.isoformat() if order.created_at else None,
+            }
+        if order and order.id in order_products:
+            data['productNames'] = order_products[order.id]
+        if reporter:
+            name = ' '.join(filter(None, [reporter.given_name, reporter.surname])) or reporter.username
+            data['reporterName'] = name
+        if target:
+            name = ' '.join(filter(None, [target.given_name, target.surname])) or target.username
+            data['targetName'] = name
+
         enriched.append(data)
     return enriched
 
@@ -481,7 +546,8 @@ def admin_list_reports():
         stmt = stmt.where(ProblemReport.report_type_id == report_type_id)
 
     reports = db.session.execute(stmt).scalars().all()
-    return jsonify(reports=[serialize_report(r) for r in reports]), 200
+    enriched = _enrich_admin_reports(reports)
+    return jsonify(reports=enriched), 200
 
 
 @reports_bp.get('/admin/<int:report_id>')
@@ -499,7 +565,8 @@ def admin_get_report(report_id: int):
     ).scalar_one_or_none()
     if report is None:
         return jsonify(msg='Report not found'), 404
-    return jsonify(report=serialize_report(report)), 200
+    enriched = _enrich_admin_reports([report])
+    return jsonify(report=enriched[0]), 200
 
 
 @reports_bp.patch('/admin/<int:report_id>')
