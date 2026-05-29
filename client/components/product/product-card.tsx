@@ -94,7 +94,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             type="button"
             disabled={wishlistBusy}
             onClick={(e) => void handleWishlistClick(e)}
-            className="absolute top-2 right-2 w-7 h-7 md:w-8 md:h-8 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background hover:scale-110 transition-all shadow-sm disabled:opacity-60"
+            className="absolute top-2 right-2 w-7 h-7 md:w-8 md:h-8 rounded-full bg-background/90 flex items-center justify-center hover:bg-background hover:scale-110 transition-all shadow-sm disabled:opacity-60"
             aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
           >
             <Icon
@@ -109,7 +109,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-x-0 bottom-0 p-2 md:p-3 bg-gradient-to-t from-black/60 to-transparent"
+            className="absolute inset-x-0 bottom-0 p-2 md:p-3 bg-gradient-to-t from-charcoal/60 to-transparent"
           >
             <Button
               variant="secondary"

@@ -90,7 +90,7 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative border-b bg-[--color-off-white] dark:bg-navy dark:border-muted">
-          <div className="container mx-auto px-4 py-10 lg:py-16">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
             <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] items-center">
               {/* Left: Text */}
               <motion.div
@@ -113,7 +113,7 @@ export default function LandingPage() {
                   <span className="text-[--color-rosewood]">Shop the Yamada Collection.</span>
                 </h1>
 
-                <p className="max-w-xl text-sm sm:text-base text-[--color-muted-foreground] mb-4">
+                <p className="max-w-prose text-sm sm:text-base text-[--color-muted-foreground] mb-4">
                   Discover curated women&apos;s fashion, from elegant dresses to everyday essentials.
                   Style, comfort, and confidence delivered to your door.
                 </p>
@@ -186,7 +186,7 @@ export default function LandingPage() {
 
         {/* Middle Cards: Deliver / Partner */}
         <section className="bg-[--color-off-white] dark:bg-navy/95 py-10 lg:py-14">
-          <div className="container mx-auto px-4 space-y-6">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               {/* Deliver card */}
               <motion.div
@@ -257,7 +257,7 @@ export default function LandingPage() {
 
         {/* Why Shop with Yamada */}
         <section className="bg-white dark:bg-navy py-12 lg:py-16">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial="hidden"
               whileInView="visible"
@@ -274,7 +274,7 @@ export default function LandingPage() {
             </motion.div>
 
             <div className="overflow-hidden rounded-3xl border border-[--color-warm-gray] dark:border-muted bg-[--color-off-white] dark:bg-card shadow-sm px-6 py-8 sm:px-10 sm:py-10">
-              <div className="grid gap-8 md:grid-cols-4">
+              <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
                 {[
                   {
                     title: "Trendy & Curated Collections",
@@ -306,7 +306,7 @@ export default function LandingPage() {
                     whileInView="visible"
                     viewport={{ once: true, amount: 0.4 }}
                     variants={fadeInUp(0.1 + index * 0.1)}
-                    className="flex flex-col items-start gap-3 border-b last:border-b-0 md:border-b-0 md:border-r last:md:border-r-0 border-[--color-warm-gray]/60 pb-6 last:pb-0 md:pb-0 md:pr-6 last:md:pr-0 transition-all duration-300 hover:opacity-80"
+                    className="flex flex-col items-start gap-3 border-b last:border-b-0 sm:border-r last:sm:border-r-0 sm:border-b-0 border-[--color-warm-gray]/60 pb-6 last:pb-0 sm:pb-0 sm:pr-6 last:sm:pr-0 transition-all duration-300 hover:opacity-80"
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[--color-secondary] dark:bg-muted text-lg text-[--color-charcoal] dark:text-[--color-foreground]">
                       <Icon name={item.icon} size="lg" />

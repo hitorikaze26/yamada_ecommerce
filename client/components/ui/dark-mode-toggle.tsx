@@ -11,7 +11,7 @@ export function DarkModeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative min-w-11 min-h-11 lg:min-w-0 lg:min-h-0">
           <Icon name={resolvedTheme === "dark" ? "moon" : "sun"} size="lg" />
           <span className="sr-only">Toggle theme</span>
         </Button>

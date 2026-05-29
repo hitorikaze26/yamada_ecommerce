@@ -206,7 +206,7 @@ function NavbarContent() {
             </nav>
 
             {/* Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-md mx-4">
+            <div className="hidden lg:flex flex-1 max-w-md mx-4">
               <SearchBox onSearch={(q) => router.push(`/search?q=${encodeURIComponent(q)}`)} />
             </div>
 
@@ -217,7 +217,7 @@ function NavbarContent() {
               {/* Messages - only show if authenticated */}
               {isAuthenticated && role !== "seller" && role !== "rider" && role !== "admin" && (
                 <ChatInboxButton
-                  className="hidden sm:flex relative"
+                  className="hidden md:flex relative"
                   iconSize="lg"
                   openConversationId={openChatParam}
                   onOpenConversationHandled={handleOpenChatHandled}
@@ -229,12 +229,12 @@ function NavbarContent() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="hidden sm:flex relative"
+                  className="hidden md:flex relative"
                   onClick={() => setIsNotificationOpen(true)}
                 >
                   <Icon name="bell" size="lg" />
                   {unreadNotificationCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-[10px] leading-none rounded-full flex items-center justify-center">
                       {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
                     </span>
                   )}
@@ -243,10 +243,10 @@ function NavbarContent() {
               )}
 
               {/* Cart */}
-              <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartOpen(true)}>
+              <Button variant="ghost" size="icon" className="relative min-w-11 min-h-11 lg:min-w-0 lg:min-h-0" onClick={() => setIsCartOpen(true)}>
                 <Icon name="shopping-cart" size="lg" />
                 {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-[10px] leading-none rounded-full flex items-center justify-center">
                     {itemCount > 99 ? "99+" : itemCount}
                   </span>
                 )}
@@ -257,7 +257,7 @@ function NavbarContent() {
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative">
+                    <Button variant="ghost" size="icon" className="relative min-w-11 min-h-11 lg:min-w-0 lg:min-h-0">
                       <Icon name="user" size="lg" />
                       <span className="sr-only">Profile menu</span>
                     </Button>
@@ -303,7 +303,7 @@ function NavbarContent() {
                   variant="default"
                   size="sm"
                   onClick={() => router.push("/auth/login?role=buyer")}
-                  className="hidden sm:flex"
+                  className="hidden md:flex"
                 >
                   Sign In
                 </Button>
@@ -312,7 +312,7 @@ function NavbarContent() {
               {/* Mobile Menu Toggle */}
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden">
+                  <Button variant="ghost" size="icon" className="lg:hidden min-w-11 min-h-11">
                     <Icon name="menu-burger" size="lg" />
                     <span className="sr-only">Menu</span>
                   </Button>
@@ -320,7 +320,7 @@ function NavbarContent() {
                 <SheetContent side="right" className="w-80">
                   <div className="flex flex-col gap-6 mt-6">
                     {/* Mobile Search */}
-                    <div className="md:hidden">
+                    <div className="lg:hidden">
                       <SearchBox
                         onSearch={(q) => {
                           router.push(`/search?q=${encodeURIComponent(q)}`)

@@ -76,7 +76,7 @@ export function ReviewDisplayCard({
       {review.deliverySatisfaction != null && review.deliverySatisfaction > 0 && (
         <div className="text-xs">
           <span className="text-muted-foreground">Delivery satisfaction: </span>
-          <span className="text-amber-500 font-medium">{review.deliverySatisfaction}/5</span>
+          <span className="text-muted-foreground font-medium">{review.deliverySatisfaction}/5</span>
         </div>
       )}
 

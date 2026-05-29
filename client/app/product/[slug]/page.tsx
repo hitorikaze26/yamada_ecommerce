@@ -408,8 +408,19 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">Loading product...</p>
+        <main className="flex-1">
+          <div className="container mx-auto px-5 md:px-8 lg:px-40 py-8 animate-pulse">
+            <div className="h-4 bg-muted rounded w-1/4 mb-6" />
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+              <div className="aspect-square bg-muted rounded-2xl" />
+              <div className="space-y-6">
+                <div className="h-8 bg-muted rounded w-3/4" />
+                <div className="h-4 bg-muted rounded w-1/2" />
+                <div className="h-10 bg-muted rounded w-1/3" />
+                <div className="h-12 bg-muted rounded w-full" />
+              </div>
+            </div>
+          </div>
         </main>
         <Footer />
       </div>
@@ -498,7 +509,7 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
                       })
                       .finally(() => setWishlistBusy(false))
                   }}
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors disabled:opacity-60"
+                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/90 flex items-center justify-center hover:bg-background transition-colors disabled:opacity-60"
                   aria-label={
                     product && isWishlisted(product.id) ? "Remove from wishlist" : "Add to wishlist"
                   }
@@ -635,7 +646,7 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
                     <span className="font-semibold">{product.rating}</span>
                   </div>
                   <span className="text-muted-foreground">{product.reviewCount} reviews</span>
-                  <span className="text-muted-foreground">|</span>
+                  <span className="w-px h-4 bg-border" aria-hidden="true" />
                   <span className="text-muted-foreground">
                     {product.variations.reduce((sum, v) => sum + v.inventory, 0)} in stock
                   </span>
@@ -665,10 +676,10 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
               <div>
                 <label className="text-sm font-medium mb-3 block">Quantity</label>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center border rounded-xl">
+                  <div className="flex items-center border rounded-md">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-12 h-12 flex items-center justify-center hover:bg-muted transition-colors rounded-l-xl"
+                      className="w-12 h-12 flex items-center justify-center hover:bg-muted transition-colors rounded-l-md"
                       aria-label="Decrease quantity"
                     >
                       <Icon name="minus" />
@@ -693,7 +704,7 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
                             }
                           }}
                           disabled={isDisabled}
-                          className={`w-12 h-12 flex items-center justify-center rounded-r-xl transition-colors ${
+                          className={`w-12 h-12 flex items-center justify-center rounded-r-md transition-colors ${
                             isDisabled
                               ? "cursor-not-allowed opacity-50 bg-muted"
                               : "hover:bg-muted"
@@ -715,7 +726,7 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
               {/* Actions */}
               {isOwnProduct ? (
                 <div className="space-y-3">
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+                  <div className="rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
                     This is your product. You cannot purchase from your own store.
                   </div>
                   <Button size="lg" className="w-full" onClick={() => setEditDialogOpen(true)}>
@@ -935,7 +946,18 @@ export default function ProductPage(props: { params: Promise<{ slug: string }> }
 
               <TabsContent value="reviews" className="mt-6">
                 {isLoadingReviews ? (
-                  <div className="text-center py-8 text-muted-foreground">Loading reviews...</div>
+                  <div className="space-y-4 py-4 animate-pulse">
+                    <div className="border rounded-xl p-4 space-y-3">
+                      <div className="h-4 bg-muted rounded w-1/4" />
+                      <div className="h-3 bg-muted rounded w-1/3" />
+                      <div className="h-16 bg-muted rounded w-full" />
+                    </div>
+                    <div className="border rounded-xl p-4 space-y-3">
+                      <div className="h-4 bg-muted rounded w-1/3" />
+                      <div className="h-3 bg-muted rounded w-1/4" />
+                      <div className="h-12 bg-muted rounded w-full" />
+                    </div>
+                  </div>
                 ) : reviews.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
