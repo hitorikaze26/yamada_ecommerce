@@ -650,6 +650,60 @@ export const adminApi = {
     apiClient.get(`/admin/users/${userId}/deliveries`),
   getActiveDeliveries: () =>
     apiClient.get<{ deliveries: ActiveDeliveryDto[] }>("/admin/deliveries/active"),
+
+  // ── Products ──
+  getProducts: (params?: Record<string, unknown>) =>
+    apiClient.get("/admin/products", { params }),
+  updateProductModeration: (productId: number, data: { status: string; reason?: string }) =>
+    apiClient.patch(`/admin/products/${productId}/moderation`, data),
+  approveProduct: (productId: number) =>
+    apiClient.post(`/admin/products/${productId}/approve`),
+  rejectProduct: (productId: number) =>
+    apiClient.post(`/admin/products/${productId}/reject`),
+
+  // ── Orders ──
+  getOrders: () => apiClient.get("/admin/orders"),
+  getOrderById: (orderId: number) => apiClient.get(`/admin/orders/${orderId}`),
+
+  // ── Stores ──
+  getStores: () => apiClient.get("/admin/stores"),
+  getStoreDetail: (storeId: number) => apiClient.get(`/admin/stores/${storeId}`),
+
+  // ── Categories ──
+  getCategories: () => apiClient.get("/admin/categories"),
+
+  // ── Refunds ──
+  getRefundRequests: (params?: { queue?: string; all?: boolean }) =>
+    apiClient.get("/admin/refund-requests", { params }),
+  approveRefund: (refundId: number) =>
+    apiClient.post(`/admin/refund-requests/${refundId}/approve`),
+  rejectRefund: (refundId: number, note?: string) =>
+    apiClient.post(`/admin/refund-requests/${refundId}/reject`, { note }),
+  requestRefundEvidence: (refundId: number, note: string) =>
+    apiClient.post(`/admin/refund-requests/${refundId}/request-evidence`, { adminNote: note }),
+  freezeRefund: (refundId: number) =>
+    apiClient.post(`/admin/refund-requests/${refundId}/freeze`),
+
+  // ── Coupons ──
+  getCoupons: () => apiClient.get("/admin/coupons"),
+  createCoupon: (data: Record<string, unknown>) => apiClient.post("/admin/coupons", data),
+  updateCoupon: (couponId: number, data: Record<string, unknown>) =>
+    apiClient.put(`/admin/coupons/${couponId}`, data),
+  deleteCoupon: (couponId: number) => apiClient.delete(`/admin/coupons/${couponId}`),
+
+  // ── Analytics ──
+  getAnalytics: (days: number = 30) => apiClient.get("/admin/analytics", { params: { days } }),
+  downloadReport: (days: number = 30, format: string = "pdf") =>
+    apiClient.get("/admin/analytics/download", { params: { days, format }, responseType: "blob" }),
+
+  // ── Commission / Shipping (routes may not exist on server yet) ──
+  getCommissionSettings: () => apiClient.get("/admin/commission/settings"),
+  getShippingSettings: () => apiClient.get("/admin/commission/shipping"),
+  getCommissionAnalytics: () => apiClient.get("/admin/commission/analytics"),
+  updateCommissionSettings: (data: Record<string, unknown>) =>
+    apiClient.put("/admin/commission/settings", data),
+  createShippingSetting: (data: Record<string, unknown>) =>
+    apiClient.post("/admin/commission/shipping", data),
 }
 
 export interface ActiveDeliveryDto {
