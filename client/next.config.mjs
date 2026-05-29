@@ -4,9 +4,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   devIndicators: false,
   images: {
     unoptimized: process.env.NODE_ENV !== "production",

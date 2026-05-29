@@ -768,6 +768,24 @@ export const storesApi = {
     }>(`/stores/${storeId}/reviews`, { params: { limit: params?.limit } }),
   withCoordinates: () =>
     apiClient.get<{ stores: StoreWithCoords[] }>("/stores/with-coordinates"),
+  getFeatured: (limit?: number) =>
+    apiClient.get<{ stores: StoreCard[] }>("/stores/featured", {
+      params: { limit },
+    }),
+}
+
+export interface StoreCard {
+  id: number
+  store_id: number
+  store_name: string
+  name: string
+  tagline: string | null
+  logo_url: string | null
+  image_url: string | null
+  rating: number
+  review_count: number
+  product_count: number
+  is_verified: boolean
 }
 
 export interface StoreWithCoords {

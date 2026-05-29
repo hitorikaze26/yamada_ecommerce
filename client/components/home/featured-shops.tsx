@@ -4,18 +4,10 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
-
-interface Shop {
-  id: string
-  name: string
-  logo: string
-  tagline: string
-  rating: number
-  productCount: number
-}
+import type { StoreCard } from "@/lib/api"
 
 interface FeaturedShopsProps {
-  shops: Shop[]
+  shops: StoreCard[]
 }
 
 const containerVariants = {
@@ -75,7 +67,7 @@ export function FeaturedShops({ shops }: FeaturedShopsProps) {
                 <div className="flex items-center gap-4 mb-4">
                   <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden bg-muted ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
                     <Image
-                      src={shop.logo || "/placeholder.svg"}
+                      src={shop.logo_url || "/placeholder.svg"}
                       alt={shop.name}
                       fill
                       className="object-cover"
@@ -95,7 +87,7 @@ export function FeaturedShops({ shops }: FeaturedShopsProps) {
                     <span className="text-muted-foreground">rating</span>
                   </div>
                   <span className="text-muted-foreground bg-muted px-2 py-0.5 rounded-full text-xs">
-                    {shop.productCount} products
+                    {shop.product_count} products
                   </span>
                 </div>
               </Link>

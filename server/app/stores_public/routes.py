@@ -71,6 +71,13 @@ def _serialize_store_card(store: Store) -> dict:
     registration = seller.registration if seller else None
     rating, review_count = _store_rating_stats(store.id)
     logo = _public_image_url(getattr(seller, "avatar_path", None)) if seller else None
+    product_count = db.session.execute(
+        select(func.count(Product.id)).where(
+            Product.store_id == store.id,
+            Product.moderation_status == ProductModerationStatus.ACTIVE,
+            Product.is_live.is_(True),
+        )
+    ).scalar() or 0
     return {
         "id": store.id,
         "store_id": store.id,
@@ -81,6 +88,7 @@ def _serialize_store_card(store: Store) -> dict:
         "image_url": logo,
         "rating": round(rating, 1),
         "review_count": review_count,
+        "product_count": product_count,
         "is_verified": bool(
             registration
             and registration.request_status.name == StoreRequestStatus.ACCEPTED.name

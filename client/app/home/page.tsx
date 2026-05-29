@@ -13,15 +13,16 @@ import { NewsletterSection } from "@/components/home/newsletter-section"
 import { PromoBanner } from "@/components/home/promo-banner"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icon"
-import { mockCarouselSlides, mockFeaturedShops } from "@/lib/mock-data"
+import { mockCarouselSlides } from "@/lib/mock-data"
 import type { Product } from "@/lib/types"
-import { productsApi, type ProductQueryParams } from "@/lib/api"
+import { productsApi, storesApi, type ProductQueryParams, type StoreCard } from "@/lib/api"
 import { normalizeProductList } from "@/lib/normalizers"
 import { SellerShoppingBanner } from "@/components/seller/seller-shopping-banner"
 
 export default function HomePage() {
   const [newArrivals, setNewArrivals] = useState<Product[]>([])
   const [bestSellers, setBestSellers] = useState<Product[]>([])
+  const [featuredShops, setFeaturedShops] = useState<StoreCard[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,9 +41,10 @@ export default function HomePage() {
           sort: "popular",
         }
 
-        const [newestRes, popularRes] = await Promise.all([
+        const [newestRes, popularRes, featuredRes] = await Promise.all([
           productsApi.getAll(newestParams),
           productsApi.getAll(popularParams),
+          storesApi.getFeatured(),
         ])
 
         const newestApi: any[] = (newestRes.data as any)?.products ?? []
@@ -53,11 +55,13 @@ export default function HomePage() {
 
         setNewArrivals(newestProducts)
         setBestSellers(popularProducts)
+        setFeaturedShops(featuredRes.data.stores ?? [])
         setError(null)
       } catch (error) {
         console.error("Failed to load products for homepage", error)
         setNewArrivals([])
         setBestSellers([])
+        setFeaturedShops([])
         setError("Failed to load products. Please try again later.")
       } finally {
         setIsLoading(false)
@@ -132,7 +136,7 @@ export default function HomePage() {
           </>
         )}
 
-        <FeaturedShops shops={mockFeaturedShops} />
+        <FeaturedShops shops={featuredShops} />
         <NewsletterSection />
       </main>
       <Footer />
