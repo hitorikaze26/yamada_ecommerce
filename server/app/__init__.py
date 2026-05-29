@@ -7,7 +7,7 @@ from .models import (
     db,
     Role
 )
-from .seed_commands import seed_roles_command, seed_admin_command, seed_report_types_command, seed_categories_command
+from .seed_commands import geofill_stores_command, seed_roles_command, seed_admin_command, seed_report_types_command, seed_categories_command
 from .extensions import (
     csrf, 
     jwt,

@@ -284,6 +284,9 @@ def login():
     if user is None:
         current_app.logger.warning(f"Login failed: User not found for {username_input}")
         return jsonify(msg="User does not exist!"), 401
+    if user.active == False:
+        current_app.logger.warning(f"Login failed: User {username_input} is inactive. Contact Yamada Support.")
+        return jsonify(msg="User is inactive! Contact Yamada Support."), 401
     
     current_app.logger.info(f"User found: {user.email}, checking password...")
     

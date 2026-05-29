@@ -650,7 +650,6 @@ export const adminApi = {
     apiClient.get(`/admin/users/${userId}/deliveries`),
   getActiveDeliveries: () =>
     apiClient.get<{ deliveries: ActiveDeliveryDto[] }>("/admin/deliveries/active"),
-<<<<<<< Updated upstream
 
   // ── Products ──
   getProducts: (params?: Record<string, unknown>) =>
@@ -699,30 +698,12 @@ export const adminApi = {
 
   // ── Commission / Shipping (routes may not exist on server yet) ──
   getCommissionSettings: () => apiClient.get("/admin/commission/settings"),
-  getShippingSettings: () => apiClient.get("/admin/commission/shipping"),
+  getShippingSettings: () => apiClient.get("/seller/settings/shipping"),
   getCommissionAnalytics: () => apiClient.get("/admin/commission/analytics"),
   updateCommissionSettings: (data: Record<string, unknown>) =>
     apiClient.put("/admin/commission/settings", data),
   createShippingSetting: (data: Record<string, unknown>) =>
     apiClient.post("/admin/commission/shipping", data),
-=======
-  getCategories: () =>
-    apiClient.get("/admin/categories"),
-  getProducts: () =>
-    apiClient.get("/admin/products"),
-  getOrders: () =>
-    apiClient.get("/admin/orders"),
-  getCoupons: () =>
-    apiClient.get("/admin/coupons"),
-  getCommissionSettings: () =>
-    apiClient.get("/admin/commission/settings"),
-  getRefundRequests: () =>
-    apiClient.get("/orders/refunds"),
-  getShippingSettings: () =>
-    apiClient.get("/seller/settings/shipping"),
-  getCommissionAnalytics: () =>
-    apiClient.get("/admin/commission/analytics"),
->>>>>>> Stashed changes
 }
 
 export interface ActiveDeliveryDto {
