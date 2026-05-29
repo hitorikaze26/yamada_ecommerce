@@ -69,7 +69,6 @@ function BuyerOrdersContent() {
   const { isBusy, openBuyerOrder } = useChatOpen()
   const role = getRole()
   const buyerUnverified = role === "buyer" && !isVerified()
-  const { isBusy, openBuyerOrder } = useChatOpen()
 
   const placedParam = searchParams.get("placed")
   useEffect(() => {
@@ -116,46 +115,6 @@ function BuyerOrdersContent() {
       if (!opts?.silent) setIsLoading(false)
     }
   }, [])
-
-  const handleCancelOrder = useCallback(async (orderId: string) => {
-    const result = await Swal.fire({
-      title: "Cancel order?",
-      text: "Are you sure you want to cancel this order?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, cancel it",
-      cancelButtonText: "No",
-    })
-    if (!result.isConfirmed) return
-    try {
-      await ordersApi.cancel(orderId)
-      void Swal.fire({ title: "Cancelled", text: "Order has been cancelled.", icon: "success", timer: 2000, showConfirmButton: false })
-      void fetchOrders({ silent: true })
-    } catch {
-      void Swal.fire({ title: "Error", text: "Failed to cancel order.", icon: "error" })
-    }
-  }, [fetchOrders])
-
-  const handleMessageSeller = useCallback(async (order: OrderWithRider) => {
-    const storeId = resolveStoreIdFromOrder(order)
-    if (storeId != null) {
-      await openBuyerOrder(`buyer-order-${order.id}`, { orderId: Number(order.id), storeId })
-    }
-  }, [openBuyerOrder])
-
-  const handleConfirmReceived = useCallback(async (orderId: string) => {
-    try {
-      await ordersApi.confirmReceived(orderId)
-      void Swal.fire({ title: "Confirmed", text: "Order marked as received.", icon: "success", timer: 2000, showConfirmButton: false })
-      void fetchOrders({ silent: true })
-    } catch {
-      void Swal.fire({ title: "Error", text: "Failed to confirm receipt.", icon: "error" })
-    }
-  }, [fetchOrders])
-
-  const handleRequestRefund = useCallback((orderId: string) => {
-    router.push(`/buyer/refunds?orderId=${orderId}`)
-  }, [router])
 
   useEffect(() => {
     void fetchOrders()
