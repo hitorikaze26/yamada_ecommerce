@@ -118,7 +118,7 @@ export default function AdminDashboard() {
               title="Open Refund Disputes"
               value={stats.openRefundDisputes}
               fillPercent={Math.round((stats.openRefundDisputes / maxStat) * 100)}
-              icon="receipt-refund"
+              icon="refund-alt"
               pillColor="#EF4444"
               barColor="#EF4444"
             />

@@ -28,6 +28,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
 
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [cartImageErrors, setCartImageErrors] = useState<Record<string, boolean>>({})
+  const [qtyInputs, setQtyInputs] = useState<Record<string, string>>({})
   const [buyerProfile, setBuyerProfile] = useState<any>(null)
   const [shippingBySeller, setShippingBySeller] = useState<Record<string, ShippingCalculation>>({})
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false)
@@ -330,7 +331,36 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                               >
                                 <Icon name="minus" size="sm" />
                               </button>
-                              <span className="text-sm w-8 text-center">{item.quantity}</span>
+                              {(() => {
+                                const qtyVal = qtyInputs[item.id] ?? String(item.quantity)
+                                return (
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={qtyVal}
+                                    onChange={(e) => {
+                                      setQtyInputs((prev) => ({ ...prev, [item.id]: e.target.value }))
+                                    }}
+                                    onBlur={() => {
+                                      const raw = qtyInputs[item.id]
+                                      if (raw === undefined) return
+                                      const num = parseInt(raw, 10)
+                                      if (isNaN(num) || num < 1) {
+                                        updateQuantity(item.id, 1)
+                                      } else {
+                                        updateQuantity(item.id, num)
+                                      }
+                                      setQtyInputs((prev) => {
+                                        const next = { ...prev }
+                                        delete next[item.id]
+                                        return next
+                                      })
+                                    }}
+                                    className="text-sm w-8 text-center bg-transparent border-0 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                )
+                              })()}
                               <button
                                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
                                 className="w-6 h-6 rounded-full bg-background border flex items-center justify-center hover:bg-muted transition-colors"

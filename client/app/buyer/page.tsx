@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/icon"
 import { formatPrice } from "@/lib/format"
 import { ordersApi, productsApi, reportsApi } from "@/lib/api"
 import { productCoverImage } from "@/lib/product-images"
+import { normalizeProductList } from "@/lib/normalizers/product"
 import type { Order, Product, ProblemReportDto } from "@/lib/types"
 import { useAuth } from "@/context/auth-context"
 import {
@@ -39,7 +40,8 @@ export default function BuyerDashboard() {
         ])
 
         setOrders(unwrapBuyerList<Order>(ordersRes.data, ["orders"]))
-        setProducts(unwrapBuyerList<Product>(productsRes.data, ["products"]))
+        const rawProducts = unwrapBuyerList<Record<string, unknown>>(productsRes.data, ["products"])
+        setProducts(normalizeProductList(rawProducts))
         setReports(unwrapBuyerList<ProblemReportDto>(reportsRes.data, ["reports"]))
       } catch (err) {
         console.error("Failed to load buyer dashboard data", err)

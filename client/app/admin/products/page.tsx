@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { adminApi, productsApi, API_BASE_ORIGIN, resolveImageUrl } from "@/lib/api"
+import { adminApi, productsApi, resolveImageUrl } from "@/lib/api"
 import { Icon } from "@/components/ui/icon"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -405,7 +405,7 @@ export default function AdminProductsPage() {
                 const modStatus = (product.moderationStatus || product.status || "active").toLowerCase()
                 const badgeClass = moderationBadge[modStatus] ?? "bg-muted text-muted-foreground"
                 const thumbnailUrl = product.thumbnail_url || 
-                  (product.media && product.media[0] ? `${API_BASE_ORIGIN}/static/${product.media[0].path}` : null)
+                  (product.media && product.media[0] ? resolveImageUrl(product.media[0].path) : null)
                 
                 return (
                   <tr key={String(product.id ?? Math.random())} className="border-t hover:bg-muted/30 transition-colors">

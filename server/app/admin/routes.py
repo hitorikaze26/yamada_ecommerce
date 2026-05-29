@@ -31,6 +31,7 @@ from app.models import (
     Notification,
     PaymentTransaction,
     PaymentStatus,
+    ProductMedia,
     RefundRequest,
     RefundStatus,
     Order,
@@ -73,7 +74,7 @@ from app.notifications.service import (
 from flask_jwt_extended import (
     jwt_required,
 )
-from sqlalchemy import inspect as sa_inspect, select, func
+from sqlalchemy import inspect as sa_inspect, select, func, cast, Date
 from sqlalchemy.orm import load_only, noload, selectinload
 from datetime import datetime, timedelta
 
@@ -89,6 +90,7 @@ def _admin_product_list_options(existing: set[str]):
         "name",
         "price",
         "store_id",
+        "image_url",
         "is_live",
         "moderation_status",
         "moderation_reason",
@@ -103,6 +105,9 @@ def _admin_product_list_options(existing: set[str]):
         opts.append(
             selectinload(Product.store).load_only(Store.id, Store.store_name)
         )
+    opts.append(
+        selectinload(Product.media).load_only(ProductMedia.id, ProductMedia.path, ProductMedia.media_type)
+    )
     return opts
 
 
@@ -687,6 +692,12 @@ def list_categories():
 @admin_required()
 def get_store_detail(store_id):
     """Return store + seller basic info for admin inspection."""
+    from app.utils.upload import public_url_for_stored_path
+
+    def doc_url(path: str | None) -> str | None:
+        if not path:
+            return None
+        return public_url_for_stored_path(path, allow_private=True) or None
 
     store = db.session.execute(
         select(Store)
@@ -743,9 +754,9 @@ def get_store_detail(store_id):
             "categories": categories,
             "requestedAt": registration.created_at.isoformat() if getattr(registration, "created_at", None) else None,
             "documents": {
-                "dti": registration.dti_path if registration else None,
-                "birTin": registration.bir_tin_path if registration else None,
-                "businessPermit": registration.business_permit_path if registration else None,
+                "dti": doc_url(registration.dti_path) if registration else None,
+                "birTin": doc_url(registration.bir_tin_path) if registration else None,
+                "businessPermit": doc_url(registration.business_permit_path) if registration else None,
             } if registration else None,
         },
     }
@@ -1195,11 +1206,25 @@ def list_products():
             edit_at = None
             if "edit_requested_at" in existing and p.edit_requested_at:
                 edit_at = p.edit_requested_at.isoformat()
+            thumb = None
+            if "image_url" in existing and p.image_url:
+                thumb = public_static_url(p.image_url)
+            if not thumb and getattr(p, "media", None):
+                for m in p.media:
+                    if m.media_type == "image" and m.path:
+                        thumb = public_static_url(m.path)
+                        break
             result.append(
                 {
                     "id": p.id,
                     "name": getattr(p, 'name', None),
                     "price": float(getattr(p, 'price', 0) or 0),
+                    "image_url": public_static_url(p.image_url) if "image_url" in existing and p.image_url else None,
+                    "thumbnail_url": thumb,
+                    "media": [
+                        {"path": public_static_url(m.path), "media_type": m.media_type}
+                        for m in (getattr(p, "media", None) or [])
+                    ] if getattr(p, "media", None) else [],
                     "isLive": bool(p.is_live) if "is_live" in existing else True,
                     "moderationStatus": mod_status,
                     "moderationReason": p.moderation_reason if "moderation_reason" in existing else None,
@@ -1532,138 +1557,121 @@ def get_admin_analytics():
     try:
         days = request.args.get('days', 30, type=int)
         since = datetime.utcnow() - timedelta(days=days)
-
-        # Summary stats
-        total_revenue = db.session.execute(
-            select(func.sum(Order.total_amount)).where(
-                Order.created_at >= since,
-                Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
-            )
-        ).scalar() or 0
-
-        total_orders = db.session.execute(
-            select(func.count(Order.id)).where(
-                Order.created_at >= since
-            )
-        ).scalar() or 0
-
-        total_users = db.session.execute(
-            select(func.count(User.id)).where(
-                User.created_at >= since
-            )
-        ).scalar() or 0
-
-        total_sellers = db.session.execute(
-            select(func.count(Seller.id)).where(
-                Seller.created_at >= since
-            )
-        ).scalar() or 0
-
-        # Previous period for growth calculation
         prev_since = since - timedelta(days=days)
-        prev_revenue = db.session.execute(
-            select(func.sum(Order.total_amount)).where(
-                Order.created_at >= prev_since,
-                Order.created_at < since,
-                Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
-            )
-        ).scalar() or 0
 
-        prev_orders = db.session.execute(
-            select(func.count(Order.id)).where(
-                Order.created_at >= prev_since,
-                Order.created_at < since
+        # ── Batched summary stats (2 queries instead of 6) ──
+        summary_row = db.session.execute(
+            select(
+                func.sum(Order.total_amount).filter(
+                    Order.created_at >= since,
+                    Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
+                ).label("revenue"),
+                func.count(Order.id).filter(
+                    Order.created_at >= since
+                ).label("orders"),
+                func.count(User.id).filter(
+                    User.created_at >= since
+                ).label("users"),
+                func.count(Seller.id).filter(
+                    Seller.created_at >= since
+                ).label("sellers"),
             )
-        ).scalar() or 0
+        ).one()
+        total_revenue = summary_row.revenue or 0
+        total_orders = summary_row.orders or 0
+        total_users = summary_row.users or 0
+        total_sellers = summary_row.sellers or 0
+
+        prev_row = db.session.execute(
+            select(
+                func.sum(Order.total_amount).filter(
+                    Order.created_at >= prev_since,
+                    Order.created_at < since,
+                    Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
+                ).label("revenue"),
+                func.count(Order.id).filter(
+                    Order.created_at >= prev_since,
+                    Order.created_at < since
+                ).label("orders"),
+            )
+        ).one()
+        prev_revenue = prev_row.revenue or 0
+        prev_orders = prev_row.orders or 0
 
         # Calculate growth
         revenue_growth = 0
         if prev_revenue > 0:
             revenue_growth = ((total_revenue - prev_revenue) / prev_revenue) * 100
-
         orders_growth = 0
         if prev_orders > 0:
             orders_growth = ((total_orders - prev_orders) / prev_orders) * 100
 
-        # Generate sales chart data (daily for last N days)
+        # ── Sales chart — single GROUP BY query ──
+        sales_rows = db.session.execute(
+            select(
+                cast(Order.created_at, Date).label("day"),
+                func.sum(Order.total_amount).filter(
+                    Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
+                ).label("revenue"),
+                func.count(Order.id).label("orders"),
+            ).where(Order.created_at >= since)
+             .group_by(cast(Order.created_at, Date))
+             .order_by(cast(Order.created_at, Date))
+        ).all()
+        sales_map = {}
+        for row in sales_rows:
+            sales_map[row.day] = {"revenue": float(row.revenue or 0), "orders": row.orders or 0}
         sales_chart = []
         for i in range(days):
-            day_start = since + timedelta(days=i)
-            day_end = day_start + timedelta(days=1)
-            
-            day_revenue = db.session.execute(
-                select(func.sum(Order.total_amount)).where(
-                    Order.created_at >= day_start,
-                    Order.created_at < day_end,
-                    Order.status.in_([OrderStatus.COMPLETED, OrderStatus.DELIVERED])
-                )
-            ).scalar() or 0
-            
-            day_orders = db.session.execute(
-                select(func.count(Order.id)).where(
-                    Order.created_at >= day_start,
-                    Order.created_at < day_end
-                )
-            ).scalar() or 0
-            
-            sales_chart.append({
-                "name": day_start.strftime("%m/%d"),
-                "revenue": float(day_revenue),
-                "orders": day_orders
-            })
+            day = (since + timedelta(days=i)).date()
+            label = day.strftime("%m/%d")
+            entry = sales_map.get(day, {"revenue": 0.0, "orders": 0})
+            sales_chart.append({"name": label, "revenue": entry["revenue"], "orders": entry["orders"]})
 
-        # Generate user growth data (weekly aggregation for longer periods)
+        # ── User growth — single GROUP BY query per entity ──
+        user_rows = db.session.execute(
+            select(
+                cast(User.created_at, Date).label("day"),
+                func.count(User.id).label("count"),
+            ).where(User.created_at >= since)
+             .group_by(cast(User.created_at, Date))
+             .order_by(cast(User.created_at, Date))
+        ).all()
+        seller_rows = db.session.execute(
+            select(
+                cast(Seller.created_at, Date).label("day"),
+                func.count(Seller.id).label("count"),
+            ).where(Seller.created_at >= since)
+             .group_by(cast(Seller.created_at, Date))
+             .order_by(cast(Seller.created_at, Date))
+        ).all()
+        user_counts = {r.day: r.count for r in user_rows}
+        seller_counts = {r.day: r.count for r in seller_rows}
+
         user_growth = []
         if days <= 30:
-            # Daily
             for i in range(days):
-                day_start = since + timedelta(days=i)
-                day_end = day_start + timedelta(days=1)
-                
-                day_users = db.session.execute(
-                    select(func.count(User.id)).where(
-                        User.created_at >= day_start,
-                        User.created_at < day_end
-                    )
-                ).scalar() or 0
-                
-                day_sellers = db.session.execute(
-                    select(func.count(Seller.id)).where(
-                        Seller.created_at >= day_start,
-                        Seller.created_at < day_end
-                    )
-                ).scalar() or 0
-                
+                day = (since + timedelta(days=i)).date()
                 user_growth.append({
-                    "name": day_start.strftime("%m/%d"),
-                    "users": day_users,
-                    "sellers": day_sellers
+                    "name": day.strftime("%m/%d"),
+                    "users": user_counts.get(day, 0),
+                    "sellers": seller_counts.get(day, 0),
                 })
         else:
-            # Weekly
             weeks = days // 7
             for i in range(weeks):
                 week_start = since + timedelta(weeks=i)
-                week_end = week_start + timedelta(weeks=1)
-                
-                week_users = db.session.execute(
-                    select(func.count(User.id)).where(
-                        User.created_at >= week_start,
-                        User.created_at < week_end
-                    )
-                ).scalar() or 0
-                
-                week_sellers = db.session.execute(
-                    select(func.count(Seller.id)).where(
-                        Seller.created_at >= week_start,
-                        Seller.created_at < week_end
-                    )
-                ).scalar() or 0
-                
+                w_users = 0
+                w_sellers = 0
+                for j in range(7):
+                    day = (week_start + timedelta(days=j)).date()
+                    if day <= (since + timedelta(days=days - 1)).date():
+                        w_users += user_counts.get(day, 0)
+                        w_sellers += seller_counts.get(day, 0)
                 user_growth.append({
                     "name": f"Week {i+1}",
-                    "users": week_users,
-                    "sellers": week_sellers
+                    "users": w_users,
+                    "sellers": w_sellers,
                 })
 
         return jsonify({

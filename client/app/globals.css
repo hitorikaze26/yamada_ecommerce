@@ -209,33 +209,4 @@ html {
   background: var(--secondary);
 }
 
-/* Landing hero header focus-in animation */
-.focus-in-contract {
-  -webkit-animation: focus-in-contract 0.8s ease-out 0.1s both;
-  animation: focus-in-contract 0.8s ease-out 0.1s both;
-  will-change: filter, letter-spacing;
-}
 
-@-webkit-keyframes focus-in-contract {
-  0% {
-    letter-spacing: 0.4em;
-    -webkit-filter: blur(6px);
-    filter: blur(6px);
-  }
-  100% {
-    -webkit-filter: blur(0px);
-    filter: blur(0px);
-  }
-}
-
-@keyframes focus-in-contract {
-  0% {
-    letter-spacing: 0.4em;
-    -webkit-filter: blur(6px);
-    filter: blur(6px);
-  }
-  100% {
-    -webkit-filter: blur(0px);
-    filter: blur(0px);
-  }
-}

@@ -28,6 +28,7 @@ export default function CartPage() {
 
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
+  const [qtyInputs, setQtyInputs] = useState<Record<string, string>>({})
 
   // Helper function to normalize image URLs
   // Select all items by default when cart loads
@@ -280,7 +281,36 @@ export default function CartPage() {
                                 >
                                   <Icon name="minus" size="sm" />
                                 </button>
-                                <span className="w-10 text-center font-medium">{item.quantity}</span>
+                                {(() => {
+                                  const qtyInputVal = qtyInputs[item.id] ?? String(item.quantity)
+                                  return (
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      pattern="[0-9]*"
+                                      value={qtyInputVal}
+                                      onChange={(e) => {
+                                        setQtyInputs((prev) => ({ ...prev, [item.id]: e.target.value }))
+                                      }}
+                                      onBlur={() => {
+                                        const raw = qtyInputs[item.id]
+                                        if (raw === undefined) return
+                                        const num = parseInt(raw, 10)
+                                        if (isNaN(num) || num < 1) {
+                                          updateQuantity(item.id, 1)
+                                        } else {
+                                          updateQuantity(item.id, num)
+                                        }
+                                        setQtyInputs((prev) => {
+                                          const next = { ...prev }
+                                          delete next[item.id]
+                                          return next
+                                        })
+                                      }}
+                                      className="w-10 text-center font-medium bg-transparent border-0 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                  )
+                                })()}
                                 <button
                                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             className="w-8 h-8 rounded-lg border flex items-center justify-center hover:bg-muted transition-colors"
