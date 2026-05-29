@@ -48,7 +48,7 @@ bool canBuyerConfirmReceipt(
     riderProofPhotoUrl: riderProofPhotoUrl,
     riderHasProofPhoto: riderHasProofPhoto,
   );
-  return effective == 'delivered' || raw == 'out_for_delivery';
+  return effective == 'delivered';
 }
 
 bool shouldPollOrderStatus(

@@ -245,7 +245,7 @@ def _buyer_can_confirm_receipt(order: Order) -> bool:
         OrderStatus.PENDING,
     }:
         return False
-    if current in {OrderStatus.DELIVERED, OrderStatus.OUT_FOR_DELIVERY}:
+    if current == OrderStatus.DELIVERED:
         return True
 
     delivery = _latest_rider_delivery(order)
@@ -2356,40 +2356,6 @@ def upload_rider_delivery_proof(delivery_id: int):
         delivery.proof_photo_path = stored_path
         if note:
             delivery.proof_note = note
-
-        # When proof is uploaded in transit, complete delivery and update the order.
-        current_delivery_status = (
-            delivery.status
-            if isinstance(delivery.status, DeliveryStatus)
-            else DeliveryStatus(str(delivery.status))
-        )
-        if current_delivery_status == DeliveryStatus.TRANSIT:
-            delivery.status = DeliveryStatus.DELIVERED
-            delivery.updated_at = dt.datetime.utcnow()
-            order = delivery.order
-            if order is not None:
-                order.status = OrderStatus.DELIVERED
-                order.updated_at = dt.datetime.utcnow()
-                if order.buyer_id is not None:
-                    create_notification(
-                        user_id=order.buyer_id,
-                        title="Order delivered",
-                        message=f"Your order #{order.id} has been delivered.",
-                        role="buyer",
-                        page="/orders",
-                    )
-                if order.store_id is not None:
-                    store = db.session.execute(
-                        select(Store).where(Store.id == order.store_id)
-                    ).scalar_one_or_none()
-                    if store is not None and store.user_id is not None:
-                        create_notification(
-                            user_id=store.user_id,
-                            title="Order delivered",
-                            message=f"Order #{order.id} has been delivered to the buyer.",
-                            role="seller",
-                            page="/seller",
-                        )
 
         db.session.commit()
 

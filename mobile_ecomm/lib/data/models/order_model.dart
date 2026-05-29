@@ -44,7 +44,7 @@ bool canBuyerConfirmReceiptForOrder(Order order) {
     return false;
   }
   final effective = effectiveOrderStatusForOrder(order);
-  return effective == 'delivered' || raw == 'out_for_delivery';
+  return effective == 'delivered';
 }
 
 bool canBuyerLeaveReviewForOrder(Order order) {
