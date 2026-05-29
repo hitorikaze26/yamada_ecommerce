@@ -12,6 +12,10 @@ import {
 import { notificationsApi, riderApi, type NotificationDto } from "@/lib/api"
 import type { NotificationItem } from "@/components/notifications/notification-modal"
 import { useAuth } from "@/context/auth-context"
+import { notificationSocket } from "@/lib/notifications/socket"
+
+const TOKEN_STORAGE_KEY = "yamada-access-token"
+const POLL_INTERVAL = 30000
 
 interface NotificationContextType {
   notifications: NotificationItem[]
@@ -30,6 +34,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false)
   const mountedRef = useRef(true)
   const abortRef = useRef<AbortController | null>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const role = getRole()
 
@@ -110,11 +115,44 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     mountedRef.current = true
     void fetchNotifications()
+
+    if (isAuthenticated) {
+      const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+      if (token) {
+        notificationSocket.connect(token, {
+          onNotification: (payload) => {
+            const item: NotificationItem = {
+              id: String(payload.id ?? ""),
+              title: String(payload.title ?? ""),
+              description: String(payload.description ?? ""),
+              createdAt: String(payload.createdAt ?? new Date().toISOString()),
+              read: Boolean(payload.read),
+            }
+            if (item.id) {
+              setNotifications((prev) => [item, ...prev])
+            }
+          },
+          onNotificationsRead: () => {
+            void fetchNotifications()
+          },
+        })
+      }
+
+      pollRef.current = setInterval(() => {
+        void fetchNotifications()
+      }, POLL_INTERVAL)
+    }
+
     return () => {
       mountedRef.current = false
       abortRef.current?.abort()
+      notificationSocket.disconnect()
+      if (pollRef.current) {
+        clearInterval(pollRef.current)
+        pollRef.current = null
+      }
     }
-  }, [fetchNotifications])
+  }, [isAuthenticated, fetchNotifications])
 
   const markAsRead = useCallback(async (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
