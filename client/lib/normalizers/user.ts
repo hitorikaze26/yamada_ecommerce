@@ -172,7 +172,7 @@ export function userNeedsApproval(user: NormalizedAdminUser): boolean {
 
 export function userCanArchive(user: NormalizedAdminUser, isAdmin = false): boolean {
   if (isAdmin || user.isArchived || userNeedsApproval(user)) return false
-  return !user["User active"]
+  return true
 }
 
 export function adminUserDisplayName(user: NormalizedAdminUser | Record<string, unknown>): string {
