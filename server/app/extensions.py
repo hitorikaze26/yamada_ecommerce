@@ -1,3 +1,4 @@
+import os
 from flask_wtf.csrf import CSRFProtect
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
@@ -10,4 +11,9 @@ from flask_limiter.util import get_remote_address
 csrf = CSRFProtect()
 jwt = JWTManager()
 bcrypt = Bcrypt()
-limiter = Limiter(key_func=get_remote_address, default_limits=["1000 per day", "200 per hour"])
+_storage_uri = os.environ.get("REDIS_URL") or os.environ.get("REDIS_TLS_URL")
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["1000 per day", "200 per hour"],
+    storage_uri=_storage_uri or "memory://",
+)

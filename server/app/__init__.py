@@ -7,7 +7,7 @@ from .models import (
     db,
     Role
 )
-from .seed_commands import seed_roles_command, seed_admin_command, seed_report_types_command, seed_categories_command
+from .seed_commands import seed_roles_command, seed_admin_command, seed_report_types_command, seed_categories_command, geofill_stores_command
 from .extensions import (
     csrf, 
     jwt,
@@ -168,6 +168,10 @@ def create_app(test_config=None):
     from .security import register_security_hooks
 
     register_security_hooks(app)
+
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        db.session.remove()
 
     # Register CLI commands
     app.cli.add_command(seed_roles_command)

@@ -1695,48 +1695,56 @@ def seller_create_coupon():
 @jwt_required()
 @seller_required()
 def seller_update_coupon(coupon_id: int):
-    _, store = _seller_store_for_user()
-    if store is None:
-        return jsonify(msg='Store not found'), 404
-    coupon = db.session.execute(
-        select(Coupon).where(Coupon.id == coupon_id, Coupon.store_id == store.id)
-    ).scalar_one_or_none()
-    if coupon is None:
-        return jsonify(msg='Coupon not found'), 404
-    data = request.get_json() or {}
-    for attr, key in [
-        ('title', 'title'),
-        ('description', 'description'),
-        ('discount_type', 'discountType'),
-        ('discount_value', 'discountValue'),
-        ('min_order_amount', 'minOrderAmount'),
-        ('max_uses', 'maxUses'),
-        ('is_active', 'isActive'),
-    ]:
-        if data.get(key) is not None or data.get(attr) is not None:
-            setattr(coupon, attr, data.get(key) or data.get(attr))
-    if data.get('code'):
-        coupon.code = str(data['code']).strip().upper()
-    if data.get('expiresAt'):
-        coupon.expires_at = datetime.datetime.fromisoformat(
-            data['expiresAt'].replace('Z', '+00:00')
-        )
-    db.session.commit()
-    return jsonify(coupon=serialize_coupon(coupon)), 200
+    try:
+        _, store = _seller_store_for_user()
+        if store is None:
+            return jsonify(msg='Store not found'), 404
+        coupon = db.session.execute(
+            select(Coupon).where(Coupon.id == coupon_id, Coupon.store_id == store.id)
+        ).scalar_one_or_none()
+        if coupon is None:
+            return jsonify(msg='Coupon not found'), 404
+        data = request.get_json() or {}
+        for attr, key in [
+            ('title', 'title'),
+            ('description', 'description'),
+            ('discount_type', 'discountType'),
+            ('discount_value', 'discountValue'),
+            ('min_order_amount', 'minOrderAmount'),
+            ('max_uses', 'maxUses'),
+            ('is_active', 'isActive'),
+        ]:
+            if data.get(key) is not None or data.get(attr) is not None:
+                setattr(coupon, attr, data.get(key) or data.get(attr))
+        if data.get('code'):
+            coupon.code = str(data['code']).strip().upper()
+        if data.get('expiresAt'):
+            coupon.expires_at = datetime.datetime.fromisoformat(
+                data['expiresAt'].replace('Z', '+00:00')
+            )
+        db.session.commit()
+        return jsonify(coupon=serialize_coupon(coupon)), 200
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 @seller_bp.delete('/coupons/<int:coupon_id>')
 @jwt_required()
 @seller_required()
 def seller_delete_coupon(coupon_id: int):
-    _, store = _seller_store_for_user()
-    if store is None:
-        return jsonify(msg='Store not found'), 404
-    coupon = db.session.execute(
-        select(Coupon).where(Coupon.id == coupon_id, Coupon.store_id == store.id)
-    ).scalar_one_or_none()
-    if coupon is None:
-        return jsonify(msg='Coupon not found'), 404
-    db.session.delete(coupon)
-    db.session.commit()
-    return jsonify(msg='Coupon deleted'), 200
+    try:
+        _, store = _seller_store_for_user()
+        if store is None:
+            return jsonify(msg='Store not found'), 404
+        coupon = db.session.execute(
+            select(Coupon).where(Coupon.id == coupon_id, Coupon.store_id == store.id)
+        ).scalar_one_or_none()
+        if coupon is None:
+            return jsonify(msg='Coupon not found'), 404
+        db.session.delete(coupon)
+        db.session.commit()
+        return jsonify(msg='Coupon deleted'), 200
+    except Exception:
+        db.session.rollback()
+        raise

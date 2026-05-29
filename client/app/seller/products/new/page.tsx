@@ -5,7 +5,7 @@ import type React from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Icon } from "@/components/ui/icon"
-import { sellerApi, sellerAccountApi } from "@/lib/api"
+import { sellerApi } from "@/lib/api"
 import { toast } from "@/hooks/use-toast"
 import { ProductVariantBuilder } from "@/components/seller/variant/variant-builder"
 import type { VariantEntry } from "@/components/seller/variant/types"
@@ -186,7 +186,6 @@ function NewProductPageContent() {
   const [videos, setVideos] = useState<string[]>([])
   const [videoFiles, setVideoFiles] = useState<File[]>([])
   const [variants, setVariants] = useState<VariantEntry[]>([])
-  const [allowedCategories, setAllowedCategories] = useState<string[] | null>(null)
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -234,29 +233,6 @@ function NewProductPageContent() {
     const next = createInitialSizeChartMatrix(formData.category, formData.subcategory)
     setSizeChartMatrix(next)
   }, [formData.category, formData.subcategory])
-
-  useEffect(() => {
-    const fetchSellerCategories = async () => {
-      try {
-        const res = await sellerAccountApi.getProfile()
-        const profile = (res.data as any)?.profile
-        const cats: string[] | undefined = profile?.categories
-        if (Array.isArray(cats)) {
-          const normalized = Array.from(
-            new Set(cats.map((c) => normalizeCategoryId(c)).filter((c): c is string => Boolean(c))),
-          )
-          // If we cannot normalize server categories, do not hard-block the form.
-          setAllowedCategories(normalized.length > 0 ? normalized : null)
-        } else {
-          setAllowedCategories(null)
-        }
-      } catch {
-        setAllowedCategories(null)
-      }
-    }
-
-    void fetchSellerCategories()
-  }, [])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -573,10 +549,7 @@ function NewProductPageContent() {
                     required
                   >
                     <option value="">Select a category</option>
-                    {(allowedCategories && allowedCategories.length > 0
-                      ? CATEGORIES.filter((cat) => allowedCategories.includes(cat.id))
-                      : CATEGORIES
-                    ).map((cat) => (
+                    {CATEGORIES.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
                       </option>

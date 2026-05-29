@@ -16,7 +16,7 @@ import {
 } from "@/lib/admin-user"
 import { getAdminFetchError, unwrapAdminList } from "@/lib/admin-fetch"
 
-const tabs = ["all", "active", "inactive"]
+const tabs = ["all", "active", "inactive", "archived"]
 
 const buildStaticUrl = (path: string | null | undefined) => resolveImageUrl(path) || ""
 
@@ -43,7 +43,7 @@ function AdminUsersContent() {
   const [detailData, setDetailData] = useState<unknown>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
-  const [confirmAction, setConfirmAction] = useState<"approve" | "reject" | "archive" | null>(null)
+  const [confirmAction, setConfirmAction] = useState<"approve" | "reject" | "archive" | "unarchive" | null>(null)
   const [confirmUser, setConfirmUser] = useState<AdminUserDto | null>(null)
   const [confirmLoading, setConfirmLoading] = useState(false)
   const [rejectReason, setRejectReason] = useState("")
@@ -109,7 +109,7 @@ function AdminUsersContent() {
 
   const getDisplayName = (user: AdminUserDto): string => adminUserDisplayName(user)
 
-  const openConfirmDialog = (action: "approve" | "reject" | "archive", user: AdminUserDto) => {
+  const openConfirmDialog = (action: "approve" | "reject" | "archive" | "unarchive", user: AdminUserDto) => {
     setConfirmAction(action)
     setConfirmUser(user)
     if (action === "reject") {
@@ -132,8 +132,10 @@ function AdminUsersContent() {
         await handleApproveBuyer(confirmUser)
       } else if (confirmAction === "reject") {
         await handleRejectBuyer(confirmUser, rejectReason)
-      } else {
+      } else if (confirmAction === "archive") {
         await handleArchiveUser(confirmUser)
+      } else if (confirmAction === "unarchive") {
+        await handleUnarchiveUser(confirmUser)
       }
       closeConfirmDialog()
     } catch (err) {
@@ -144,10 +146,12 @@ function AdminUsersContent() {
 
   const filteredUsers = users.filter((user) => {
     const isActive = user["User active"]
+    const isArchived = user.isArchived
     const matchesTab =
       activeTab === "all" ||
       (activeTab === "active" && isActive) ||
-      (activeTab === "inactive" && !isActive)
+      (activeTab === "inactive" && !isActive && !isArchived) ||
+      (activeTab === "archived" && isArchived)
 
     const name = getDisplayName(user)
     const email = user["User email"] ?? ""
@@ -212,6 +216,22 @@ function AdminUsersContent() {
     } catch (err) {
       console.error("Failed to archive user", err)
       showAlert("Failed to archive user. Please try again.", "error")
+      throw err
+    }
+  }
+
+  const handleUnarchiveUser = async (user: AdminUserDto) => {
+    try {
+      await adminApi.unarchiveUser(user.id)
+      patchUserLocal(user.id, {
+        isArchived: false,
+        active: true,
+        "User active": true,
+      })
+      showAlert("User restored from archive.", "success")
+    } catch (err) {
+      console.error("Failed to unarchive user", err)
+      showAlert("Failed to unarchive user. Please try again.", "error")
       throw err
     }
   }
@@ -424,6 +444,16 @@ function AdminUsersContent() {
                                 <span>Reject</span>
                               </button>
                             </>
+                          )}
+                          {!isAdmin && user.isArchived && (
+                            <button
+                              onClick={() => openConfirmDialog("unarchive", user)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+                              type="button"
+                            >
+                              <Icon name="box" size="sm" />
+                              <span>Unarchive</span>
+                            </button>
                           )}
                           {!isAdmin && showArchive && (
                             <button
@@ -979,7 +1009,7 @@ function AdminUsersContent() {
         )}
       </AnimatePresence>
 
-      {/* Approve / Reject / Archive confirmation */}
+      {/* Approve / Reject / Archive / Unarchive confirmation */}
       <AnimatePresence>
         {confirmAction && confirmUser && (
           <motion.div
@@ -1004,7 +1034,9 @@ function AdminUsersContent() {
                         ? "bg-green-500/10 text-green-600 dark:text-green-400"
                         : confirmAction === "reject"
                           ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                          : "bg-slate-500/10 text-slate-600 dark:text-slate-400"
+                          : confirmAction === "unarchive"
+                            ? "bg-teal-500/10 text-teal-600 dark:text-teal-400"
+                            : "bg-slate-500/10 text-slate-600 dark:text-slate-400"
                     }`}
                   >
                     <Icon
@@ -1013,7 +1045,9 @@ function AdminUsersContent() {
                           ? "check"
                           : confirmAction === "reject"
                             ? "ban"
-                            : "box"
+                            : confirmAction === "unarchive"
+                              ? "box"
+                              : "box"
                       }
                     />
                   </div>
@@ -1023,14 +1057,18 @@ function AdminUsersContent() {
                         ? "Approve buyer"
                         : confirmAction === "reject"
                           ? "Reject buyer"
-                          : "Archive account"}
+                          : confirmAction === "unarchive"
+                            ? "Restore account"
+                            : "Archive account"}
                     </h2>
                     <p className="text-xs text-muted-foreground">
                       {confirmAction === "approve"
                         ? "This will allow the buyer to use their account on the platform."
                         : confirmAction === "reject"
                           ? "This will deactivate the account. Use only for new registrations you are declining."
-                          : "Soft-archive keeps their data. If they sign in again, the account is restored automatically."}
+                          : confirmAction === "unarchive"
+                            ? "This will restore the user to active status."
+                            : "Soft-archive keeps their data. If they sign in again, the account is restored automatically."}
                     </p>
                   </div>
                 </div>
@@ -1088,7 +1126,9 @@ function AdminUsersContent() {
                       ? "bg-green-600 hover:bg-green-700"
                       : confirmAction === "reject"
                         ? "bg-red-600 hover:bg-red-700"
-                        : "bg-slate-600 hover:bg-slate-700"
+                        : confirmAction === "unarchive"
+                          ? "bg-teal-600 hover:bg-teal-700"
+                          : "bg-slate-600 hover:bg-slate-700"
                   }`}
                   disabled={confirmLoading}
                 >
@@ -1097,12 +1137,16 @@ function AdminUsersContent() {
                       ? "Approving..."
                       : confirmAction === "reject"
                         ? "Rejecting..."
-                        : "Archiving..."
+                        : confirmAction === "unarchive"
+                          ? "Restoring..."
+                          : "Archiving..."
                     : confirmAction === "approve"
                       ? "Confirm approve"
                       : confirmAction === "reject"
                         ? "Confirm reject"
-                        : "Confirm archive"}
+                        : confirmAction === "unarchive"
+                          ? "Confirm restore"
+                          : "Confirm archive"}
                 </button>
               </div>
             </motion.div>

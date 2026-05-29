@@ -529,17 +529,9 @@ def createProduct():
             allowed_category_ids,
         )
 
-        # Enforce that selected categories are restricted to those registered for this seller
+        # Filter to categories registered for this seller (informational only — don't hard-block)
         if allowed_category_ids:
             category_ids = [cid for cid in category_ids if cid in allowed_category_ids]
-
-        if categories_raw and not category_ids:
-            current_app.logger.warning(
-                "[createProduct] rejected category seller_id=%s raw=%s",
-                current_user.id if current_user else None,
-                categories_raw,
-            )
-            raise ValueError("Selected category is not allowed for this seller")
 
         if not name:
             return jsonify(msg="Product name is required"), 400

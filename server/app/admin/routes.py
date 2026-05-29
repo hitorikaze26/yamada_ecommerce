@@ -836,6 +836,28 @@ def archive_user(user_id: int):
         return jsonify(msg='Error occurred!'), 500
 
 
+@admin_bp.post('/users/<int:user_id>/unarchive')
+@jwt_required()
+@admin_required()
+def unarchive_user(user_id: int):
+    """Restore an archived user to active status."""
+
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(msg='User not found'), 404
+
+    if not user.is_archived:
+        return jsonify(msg='User is not archived', user=user.to_json()), 200
+
+    try:
+        user.restore_from_archive()
+        db.session.commit()
+        return jsonify(msg='User restored from archive', user=user.to_json()), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify(msg='Error occurred!'), 500
+
+
 @admin_bp.post('/buyers/<int:user_id>/reject')
 @jwt_required()
 @admin_required()

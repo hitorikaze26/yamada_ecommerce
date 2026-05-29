@@ -27,12 +27,32 @@ def _engine_options_for_uri(uri: str | None) -> dict:
     if uri and "postgresql" in uri:
         return {
             "pool_pre_ping": True,
+            "pool_size": 20,
+            "pool_recycle": 300,
+            "pool_timeout": 30,
             "connect_args": {
                 "connect_timeout": 15,
                 "sslmode": "require",
+                "options": "-c lock_timeout=5000",
             },
         }
-    return {"pool_pre_ping": True}
+    if uri and "mysql" in uri:
+        return {
+            "pool_pre_ping": True,
+            "pool_size": 20,
+            "pool_recycle": 300,
+            "pool_timeout": 30,
+            "connect_args": {
+                "connect_timeout": 15,
+            },
+            "pool_reset_on_return": "rollback",
+        }
+    return {
+        "pool_pre_ping": True,
+        "pool_size": 20,
+        "pool_recycle": 300,
+        "pool_timeout": 30,
+    }
 
 
 def _resolve_frontend_url() -> str:
@@ -73,7 +93,12 @@ class Config:
     JWT_ACCESS_COOKIE_NAME = "access_token_cookie"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_size": 20,
+        "pool_recycle": 300,
+        "pool_timeout": 30,
+    }
 
     YAMADA_MAIL_CONSOLE = os.environ.get("YAMADA_MAIL_CONSOLE", "false")
 

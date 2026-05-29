@@ -635,6 +635,8 @@ export const adminApi = {
     apiClient.post(`/admin/buyers/${userId}/reject`, { reason }),
   archiveUser: (userId: number) =>
     apiClient.post(`/admin/users/${userId}/archive`),
+  unarchiveUser: (userId: number) =>
+    apiClient.post(`/admin/users/${userId}/unarchive`),
   approveRider: (userId: number) => apiClient.post(`/admin/riders/${userId}/approve`),
   rejectRider: (userId: number, reason?: string) =>
     apiClient.post(`/admin/riders/${userId}/reject`, { reason }),
