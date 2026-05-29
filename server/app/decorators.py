@@ -97,7 +97,7 @@ def seller_required():
         @wraps(fn)
         def decorator(*args, **kwargs):
             verify_jwt_in_request()
-            if _claim_or_db_role("is_seller", RoleTypes.SELLER):
+            if _claim_or_db_role("is_seller", RoleTypes.SELLER) or _claim_or_db_role("is_admin", RoleTypes.ADMIN):
                 return fn(*args, **kwargs)
             return jsonify(msg="Sellers only!"), 403
 
