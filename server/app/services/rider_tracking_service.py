@@ -1,4 +1,5 @@
 from flask import current_app, has_app_context
+from sqlalchemy import select
 from app.models import db, RiderLocation, Order
 from app.notifications.realtime import emit_rider_location
 import logging
@@ -40,12 +41,11 @@ class RiderTrackingService:
     @classmethod
     def get_latest_location(cls, order_id: int) -> dict | None:
         try:
-            location = (
-                RiderLocation.query
+            location = db.session.execute(
+                select(RiderLocation)
                 .filter_by(order_id=order_id)
                 .order_by(RiderLocation.timestamp.desc())
-                .first()
-            )
+            ).scalar()
             if not location:
                 return None
             return {
@@ -64,13 +64,12 @@ class RiderTrackingService:
     @classmethod
     def get_location_history(cls, order_id: int, limit: int = 50) -> list[dict]:
         try:
-            locations = (
-                RiderLocation.query
+            locations = db.session.execute(
+                select(RiderLocation)
                 .filter_by(order_id=order_id)
                 .order_by(RiderLocation.timestamp.desc())
                 .limit(limit)
-                .all()
-            )
+            ).scalars().all()
             return [
                 {
                     "id": loc.id,
