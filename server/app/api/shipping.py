@@ -7,7 +7,6 @@ from flask_jwt_extended import jwt_required
 
 shipping_bp = Blueprint('shipping', __name__)
 
-
 @shipping_bp.route('/shipping/calculate', methods=['GET', 'POST', 'OPTIONS'])
 def calculate_shipping():
     """
@@ -121,9 +120,6 @@ def calculate_shipping():
         
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
-
-
-
 
 @shipping_bp.route('/shipping/geocode', methods=['POST', 'OPTIONS'])
 def geocode_address():

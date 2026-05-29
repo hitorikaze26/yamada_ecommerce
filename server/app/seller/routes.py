@@ -732,7 +732,7 @@ def get_shipping_settings():
         return jsonify(shippingSettings=[s.to_json() for s in settings]), 200
     except Exception as e:
         current_app.logger.exception(f"[get_shipping_settings] Error: {e}")
-        return jsonify(msg='Error occurred'), 500
+        return jsonify(msg='Error occurred',error=str(e)), 500
 
 
 @seller_bp.post('/settings/shipping')

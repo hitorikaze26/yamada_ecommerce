@@ -1160,11 +1160,11 @@ def list_products():
             query = query.where(Product.name.ilike(f"%{search}%"))
 
         status_map = {
-            'active': ProductModerationStatus.ACTIVE,
-            'under_review': ProductModerationStatus.UNDER_REVIEW,
-            'hidden': ProductModerationStatus.HIDDEN,
-            'removed': ProductModerationStatus.REMOVED,
-            'restricted': ProductModerationStatus.RESTRICTED,
+            'active': ProductModerationStatus.ACTIVE.value,
+            'under_review': ProductModerationStatus.UNDER_REVIEW.value,
+            'hidden': ProductModerationStatus.HIDDEN.value,
+            'removed': ProductModerationStatus.REMOVED.value,
+            'restricted': ProductModerationStatus.RESTRICTED.value,
         }
         if status in status_map and "moderation_status" in existing:
             query = query.where(Product.moderation_status == status_map[status])
@@ -2088,7 +2088,6 @@ def admin_active_deliveries():
                 selectinload(RiderDelivery.order).selectinload(Order.buyer),
             )
             .where(RiderDelivery.status.in_(active_statuses))
-            .order_by(RiderDelivery.updated_at.desc().nullslast())
         ).scalars().all()
 
         result = []
@@ -2167,4 +2166,4 @@ def admin_active_deliveries():
 
     except Exception as e:
         current_app.logger.error(f"Failed to fetch active deliveries: {e}")
-        return jsonify(deliveries=[], error="Internal error"), 500
+        return jsonify(error=str(e)), 500

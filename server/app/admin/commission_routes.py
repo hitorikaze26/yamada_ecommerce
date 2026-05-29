@@ -33,12 +33,13 @@ commission_bp = Blueprint('commission', __name__)
 def get_commission_settings():
     """Get current commission settings."""
     try:
-        settings = db.session.execute(
+        active_settings = db.session.execute(
             select(CommissionSettings)
-            .where(CommissionSettings.is_active == True)
+            .where(CommissionSettings.is_active.is_(True))
             .order_by(CommissionSettings.created_at.desc())
-        ).scalar_one_or_none()
+        ).scalars().all()
         
+        settings = active_settings[0] if active_settings else None
         if not settings:
             # Create default settings if none exist
             settings = CommissionSettings(
@@ -48,11 +49,16 @@ def get_commission_settings():
             )
             db.session.add(settings)
             db.session.commit()
+        elif len(active_settings) > 1:
+            # Cleanup duplicate active settings and keep the latest
+            for duplicate in active_settings[1:]:
+                duplicate.is_active = False
+            db.session.commit()
         
         return jsonify(settings=settings.to_json()), 200
-    except Exception:
+    except Exception as e:
         db.session.rollback()
-        return jsonify(msg="Error fetching commission settings"), 500
+        return jsonify(msg="Error fetching commission settings", error=str(e)), 500
 
 
 @commission_bp.post("/settings")
@@ -68,18 +74,13 @@ def update_commission_settings():
     applies_to_product_price_only = data.get("appliesToProductPriceOnly", True)
     
     try:
-        # Deactivate existing settings
-        db.session.execute(
+        # Deactivate any existing active commission settings
+        existing_settings = db.session.execute(
             select(CommissionSettings)
-            .where(CommissionSettings.is_active == True)
-        ).scalar_one_or_none()
+            .where(CommissionSettings.is_active.is_(True))
+        ).scalars().all()
         
-        existing = db.session.execute(
-            select(CommissionSettings)
-            .where(CommissionSettings.is_active == True)
-        ).scalar_one_or_none()
-        
-        if existing:
+        for existing in existing_settings:
             existing.is_active = False
         
         # Create new settings
@@ -184,8 +185,14 @@ def get_commission_analytics():
             select(CommissionSettings)
             .where(CommissionSettings.is_active.is_(True))
             .order_by(CommissionSettings.created_at.desc())
-        ).scalar_one_or_none()
-        commission_rate = float(active_settings.commission_rate) if active_settings else 0.10
+        ).scalars().all()
+        commission_setting = active_settings[0] if active_settings else None
+        if len(active_settings) > 1:
+            for duplicate in active_settings[1:]:
+                duplicate.is_active = False
+            db.session.commit()
+
+        commission_rate = float(commission_setting.commission_rate) if commission_setting else 0.10
 
         total_orders = db.session.execute(
             select(Order).where(Order.admin_commission > 0)
