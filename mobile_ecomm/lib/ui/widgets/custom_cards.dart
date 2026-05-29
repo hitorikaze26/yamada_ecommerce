@@ -479,22 +479,6 @@ class _ProductCardState extends ConsumerState<ProductCard> {
                             ),
                           ),
                         ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: GestureDetector(
-                          onTap: _onHeartTap,
-                          child: Icon(
-                            _isLiked ? Icons.favorite : Icons.favorite_border,
-                            size: 20,
-                            color: _isLiked
-                                ? AppColors.primary
-                                : (isDark
-                                    ? AppColors.darkForeground
-                                    : Colors.white),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -600,16 +584,17 @@ class _ProductCardState extends ConsumerState<ProductCard> {
                           ),
                         ),
                         const Spacer(),
-                        if (widget.onAddToCart != null)
-                          GestureDetector(
-                            onTap: widget.onAddToCart,
-                            behavior: HitTestBehavior.opaque,
-                            child: Icon(
-                              Icons.add_shopping_cart_outlined,
-                              size: 20,
-                              color: AppColors.primary,
-                            ),
+                        GestureDetector(
+                          onTap: _onHeartTap,
+                          behavior: HitTestBehavior.opaque,
+                          child: Icon(
+                            _isLiked ? Icons.favorite : Icons.favorite_border,
+                            size: 20,
+                            color: _isLiked
+                                ? AppColors.primary
+                                : AppColors.mutedForeground,
                           ),
+                        ),
                       ],
                     ),
                   ],

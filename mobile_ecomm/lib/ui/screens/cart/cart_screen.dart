@@ -192,22 +192,28 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     ),
                   ),
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    itemCount: itemsBySeller.length,
-                    itemBuilder: (context, index) {
-                      final sellerId = itemsBySeller.keys.elementAt(index);
-                      final items = itemsBySeller[sellerId]!;
-                      final sellerName = items.first.sellerName;
-                      
-                      return _SellerSection(
-                        sellerId: sellerId,
-                        sellerName: sellerName,
-                        items: items,
-                        isDark: isDark,
-                        delay: 200 + (index * 100),
-                      );
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      await ref.read(cartProvider.notifier).loadCart();
+                      await _loadBuyerProfile();
                     },
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      itemCount: itemsBySeller.length,
+                      itemBuilder: (context, index) {
+                        final sellerId = itemsBySeller.keys.elementAt(index);
+                        final items = itemsBySeller[sellerId]!;
+                        final sellerName = items.first.sellerName;
+                        
+                        return _SellerSection(
+                          sellerId: sellerId,
+                          sellerName: sellerName,
+                          items: items,
+                          isDark: isDark,
+                          delay: 200 + (index * 100),
+                        );
+                      },
+                    ),
                   ),
                 ),
                 _buildBottomBar(
@@ -352,8 +358,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       ),
     )
         .animate()
-        .fadeIn(duration: 600.ms, delay: 300.ms)
-        .slideY(begin: 0.2, duration: 600.ms, delay: 300.ms);
+        .fadeIn(duration: 300.ms, delay: 150.ms)
+        .slideY(begin: 0.2, duration: 300.ms, delay: 150.ms);
   }
 
   Widget _buildEmptyState(BuildContext context, bool isDark) {
@@ -458,8 +464,8 @@ class _SellerSection extends ConsumerWidget {
             ),
           )
               .animate()
-              .fadeIn(duration: 600.ms, delay: Duration(milliseconds: delay))
-              .slideX(begin: -0.2, duration: 600.ms, delay: Duration(milliseconds: delay)),
+              .fadeIn(duration: 300.ms, delay: Duration(milliseconds: delay ~/ 2))
+              .slideX(begin: -0.2, duration: 300.ms, delay: Duration(milliseconds: delay ~/ 2)),
 
           // Items in this seller
           ...items.asMap().entries.map((entry) {
@@ -794,8 +800,8 @@ class _CartItemCard extends ConsumerWidget {
         ),
       )
           .animate()
-          .fadeIn(duration: 600.ms, delay: Duration(milliseconds: delay))
-          .slideX(begin: 0.1, duration: 600.ms, delay: Duration(milliseconds: delay)),
+          .fadeIn(duration: 300.ms, delay: Duration(milliseconds: delay ~/ 2))
+          .slideX(begin: 0.1, duration: 300.ms, delay: Duration(milliseconds: delay ~/ 2)),
     );
   }
 

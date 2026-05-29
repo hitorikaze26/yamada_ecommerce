@@ -1,7 +1,6 @@
 "use client"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { motion } from "framer-motion"
 import { Icon } from "@/components/ui/icon"
 import { sellerAccountApi, sellerApi, sellerInsightsApi } from "@/lib/api"
 import { formatPrice } from "@/lib/format"
@@ -184,35 +183,30 @@ export default function SellerDashboard() {
           </div>
         )}
         {!isLoading && !error &&
-          stats.map((stat, index) => (
-            <motion.div
+          stats.map((stat) => (
+            <StatCard
               key={stat.label}
-              initial={false}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <StatCard
-                title={stat.label}
-                value={stat.value}
-                percent="20%"
-                trend="up"
-                fillPercent={76}
-                icon={stat.icon}
-                pillColor={
-                  stat.color === "bg-green-500"
-                    ? "#10B981"
-                    : stat.color === "bg-amber-500"
-                    ? "#F59E0B"
-                    : "#3B82F6"
-                }
-                barColor={
-                  stat.color === "bg-green-500"
-                    ? "#10B981"
-                    : stat.color === "bg-amber-500"
-                    ? "#F59E0B"
-                    : "#3B82F6"
-                }
-              />
-            </motion.div>
+              title={stat.label}
+              value={stat.value}
+              percent="20%"
+              trend="up"
+              fillPercent={76}
+              icon={stat.icon}
+              pillColor={
+                stat.color === "bg-green-500"
+                  ? "#10B981"
+                  : stat.color === "bg-amber-500"
+                  ? "#F59E0B"
+                  : "#3B82F6"
+              }
+              barColor={
+                stat.color === "bg-green-500"
+                  ? "#10B981"
+                  : stat.color === "bg-amber-500"
+                  ? "#F59E0B"
+                  : "#3B82F6"
+              }
+            />
           ))}
       </div>
 

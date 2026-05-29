@@ -740,39 +740,19 @@ class _ProductVariantModalState extends ConsumerState<ProductVariantModal> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _addToCart,
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(0, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  side: BorderSide(
-                    color: AppColors.primary.withValues(alpha: 0.55),
-                  ),
-                ),
-                child: const Text('Add to Cart'),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: widget.isBuyNow ? _buyNow : _addToCart,
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(0, 50),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: ElevatedButton(
-                onPressed: _buyNow,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(0, 50),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                ),
-                child: Text(widget.isBuyNow ? 'Buy Now' : 'Confirm'),
-              ),
-            ),
-          ],
+            child: Text(widget.isBuyNow ? 'Buy Now' : 'Add to Cart'),
+          ),
         ),
       ),
     );

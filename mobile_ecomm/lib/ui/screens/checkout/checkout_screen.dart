@@ -381,34 +381,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
       if (mounted) {
         setState(() => _isLoading = false);
-        final orderLines =
-            placedOrders.map((o) => 'Order #${o.orderNumber}').join('\n');
-        var body =
-            '$orderLines\n\nTrack your orders under My Orders. You will get in-app updates.';
-        if (failedStores.isNotEmpty) {
-          body +=
-              '\n\nSome stores could not be checked out: ${failedStores.join(', ')}. '
-              'Those items remain in your cart.';
-        }
-        showDialog(
+        final msg = placedOrders.length > 1
+            ? 'Orders placed!'
+            : 'Order #${placedOrders.first.orderNumber} placed!';
+        AlertService.showSnackBar(
           context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: Text(
-              placedOrders.length > 1 ? 'Orders placed!' : 'Order placed!',
-            ),
-            content: Text(body),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.go('${AppRouter.buyerDashboard}?tab=orders');
-                },
-                child: const Text('View Orders'),
-              ),
-            ],
-          ),
+          message: msg,
+          variant: AlertVariant.success,
         );
+        if (failedStores.isNotEmpty) {
+          AlertService.showSnackBar(
+            context: context,
+            message:
+                'Some stores could not be checked out: ${failedStores.join(', ')}. '
+                'Those items remain in your cart.',
+            variant: AlertVariant.warning,
+          );
+        }
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (!mounted) return;
+          if (placedOrders.length == 1) {
+            context.go(AppRouter.buyerOrderPath(placedOrders.first.id));
+          } else {
+            context.go('${AppRouter.buyerDashboard}?tab=orders');
+          }
+        });
       }
     } catch (e, stackTrace) {
       developer.log(

@@ -804,14 +804,6 @@ class _StoreProfilePageState extends ConsumerState<StoreProfilePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionTitle(title: 'Categories', isDark: isDark),
-          const SizedBox(height: 8),
-          _StoreCategoryChips(
-            labels: _storeCategoryLabels(store),
-            isDark: isDark,
-            emptyHint: 'Categories will appear once this boutique lists products.',
-          ),
-          const SizedBox(height: 20),
           _SectionTitle(title: 'Vouchers', isDark: isDark),
           const SizedBox(height: 8),
           _GlassPanel(
